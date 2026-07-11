@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proving LLM Inference — An Operator Atlas</title>
+<meta name="description" content="Every algorithm inside an LLM forward pass that a zkSNARK must prove, and how each proving scheme handles it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
+<style>
+  :root{
+    --void:#0a0c0e; --ink:#0f1316; --surface:#141a1e; --surface-2:#1a2228;
+    --line:#28323a; --line-bright:#3b4750;
+    --paper:#e9e4d9; --paper-dim:#a8a89f; --muted:#6f7d86;
+    --amber:#d99a3f; --amber-dim:#7a5a26;
+    --cyan:#5fb0b7; --rose:#c96a5e; --lime:#a8c256; --violet:#9b8bc4;
+    --serif:"Newsreader",Georgia,serif;
+    --display:"Instrument Serif",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    --sidebar:296px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--void);color:var(--paper);font-family:var(--serif);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;opacity:.03;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E")}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{color:#f0b755}
+
+  /* ===== shell ===== */
+  .shell{display:flex;min-height:100vh}
+
+  aside.sidebar{
+    width:var(--sidebar);flex:0 0 var(--sidebar);
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+    border-right:1px solid var(--line);background:var(--ink);
+    padding:26px 0 60px;scrollbar-width:thin;scrollbar-color:var(--line-bright) transparent;
+  }
+  aside.sidebar::-webkit-scrollbar{width:7px}
+  aside.sidebar::-webkit-scrollbar-thumb{background:var(--line-bright)}
+
+  .brand{padding:0 24px 22px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .brand .mark{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .brand .mark i{width:5px;height:5px;background:var(--amber);border-radius:50%;box-shadow:0 0 10px var(--amber)}
+  .brand h1{font-family:var(--display);font-weight:400;font-size:27px;line-height:1.1;margin:12px 0 0;letter-spacing:-.01em}
+  .brand h1 em{font-style:italic;color:var(--amber)}
+
+  .filter{margin:0 20px 20px;position:relative}
+  .filter input{
+    width:100%;background:var(--void);border:1px solid var(--line);color:var(--paper);
+    font-family:var(--mono);font-size:11.5px;padding:9px 11px 9px 30px;outline:none;letter-spacing:.05em;
+  }
+  .filter input:focus{border-color:var(--amber-dim)}
+  .filter input::placeholder{color:var(--muted)}
+  .filter svg{position:absolute;left:10px;top:9px;width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:2}
+
+  .navgroup{font-family:var(--mono);font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);padding:20px 24px 8px}
+  aside a.nav{
+    display:flex;align-items:baseline;gap:9px;padding:7px 24px 7px 22px;
+    border-left:2px solid transparent;color:var(--paper-dim);font-size:15px;line-height:1.35;
+  }
+  aside a.nav:hover{background:var(--surface);color:var(--paper)}
+  aside a.nav.on{border-left-color:var(--amber);background:var(--surface);color:var(--paper)}
+  aside a.nav .n{font-family:var(--mono);font-size:9.5px;color:var(--muted);min-width:16px}
+  aside a.nav.on .n{color:var(--amber)}
+  aside a.nav .miss{margin-left:auto;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--rose);opacity:.75;align-self:center}
+
+  main{flex:1;min-width:0;padding:0 0 120px}
+  .page{max-width:900px;padding:56px 56px 0}
+  @media(max-width:1080px){.page{padding:44px 28px 0}}
+
+  .burger{display:none}
+  @media(max-width:900px){
+    .shell{display:block}
+    aside.sidebar{position:fixed;z-index:120;transform:translateX(-100%);transition:transform .28s ease;width:290px}
+    aside.sidebar.open{transform:none}
+    .burger{display:flex;position:fixed;z-index:130;top:14px;left:14px;width:42px;height:42px;align-items:center;justify-content:center;
+      background:var(--surface);border:1px solid var(--line);color:var(--paper);font-size:17px;cursor:pointer}
+    .page{padding-top:74px}
+  }
+
+  /* ===== page furniture ===== */
+  .crumb{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  .crumb b{color:var(--amber);font-weight:400}
+  h2.ptitle{font-family:var(--display);font-weight:400;font-size:clamp(38px,5.2vw,62px);line-height:1.02;letter-spacing:-.015em;margin:0}
+  h2.ptitle em{font-style:italic;color:var(--amber)}
+  .psub{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:12px}
+  .lede{font-size:19px;font-weight:300;color:var(--paper-dim);max-width:66ch;margin:26px 0 0;border-left:2px solid var(--amber-dim);padding-left:18px}
+  .lede strong{color:var(--paper);font-weight:500}
+
+  .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;padding:4px 9px;border:1px solid var(--line-bright);color:var(--paper-dim);white-space:nowrap}
+  .tag.hostile{border-color:#5c2f2b;color:var(--rose);background:rgba(201,106,94,.07)}
+  .tag.friendly{border-color:#3d5240;color:var(--lime);background:rgba(168,194,86,.06)}
+  .tag.mid{border-color:#4a4529;color:var(--amber);background:rgba(217,154,63,.06)}
+
+  h3.head{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);
+    margin:58px 0 20px;display:flex;align-items:center;gap:16px}
+  h3.head::after{content:"";flex:1;height:1px;background:var(--line)}
+  h3.head.amber{color:var(--amber)}
+  h3.head.amber::after{background:var(--amber-dim);opacity:.5}
+
+  p{margin:0 0 16px}
+  .prose p{color:var(--paper-dim);font-weight:300;max-width:72ch}
+  .prose p strong{color:var(--paper);font-weight:500}
+  .prose em{color:var(--paper)}
+
+  code{font-family:var(--mono);font-size:12.5px;background:var(--void);border:1px solid var(--line);padding:1px 5px;color:var(--cyan)}
+
+  .math{background:var(--void);border:1px solid var(--line);border-left:2px solid var(--cyan);
+    padding:18px 20px;margin:0 0 24px;overflow-x:auto}
+  .math .katex{color:var(--paper);font-size:1.02em}
+  .math .katex-display{margin:0}
+  pre.ascii{font-family:var(--mono);font-size:12.5px;line-height:1.75;color:var(--paper-dim);
+    background:var(--void);border:1px solid var(--line);border-left:2px solid var(--violet);
+    padding:16px 18px;margin:0 0 24px;overflow-x:auto}
+
+  ul.kit{list-style:none;padding:0;margin:0 0 8px;max-width:72ch}
+  ul.kit li{font-family:var(--mono);font-size:12.5px;color:var(--paper-dim);padding:9px 0 9px 22px;position:relative;border-bottom:1px dotted var(--line)}
+  ul.kit li::before{content:"▸";position:absolute;left:0;color:var(--cyan)}
+
+  /* ===== scheme sections ===== */
+  .scheme{border:1px solid var(--line);background:var(--ink);margin-bottom:26px}
+  .scheme-head{display:flex;align-items:center;gap:14px;padding:16px 22px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .scheme-head .pname{font-family:var(--display);font-size:25px;line-height:1}
+  .scheme-head .venue{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .scheme-head .spine{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .scheme[data-p="deepprove"] .scheme-head{background:linear-gradient(90deg,rgba(217,154,63,.10),transparent 70%)}
+  .scheme[data-p="deepprove"] .scheme-head .pname{color:var(--amber)}
+  .scheme[data-p="jolt"] .scheme-head{background:linear-gradient(90deg,rgba(95,176,183,.10),transparent 70%)}
+  .scheme[data-p="jolt"] .scheme-head .pname{color:var(--cyan)}
+  .scheme-body{padding:22px 22px 8px}
+  .scheme-body .tldr{font-size:17.5px;color:var(--paper);margin:0 0 18px;max-width:70ch}
+  .scheme-body ul{margin:0;padding:0 0 0 20px;max-width:72ch}
+  .scheme-body li{font-size:15px;color:var(--paper-dim);font-weight:300;margin-bottom:11px}
+  .scheme-body li strong{color:var(--paper);font-weight:500}
+  .cost{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+    border-top:1px dotted var(--line);padding:12px 0 14px;margin-top:12px}
+  .cost b{color:var(--amber);font-weight:500}
+  .scheme[data-p="jolt"] .cost b{color:var(--cyan)}
+
+  /* blockquotes from the source papers */
+  blockquote.q{
+    margin:20px 0;padding:16px 20px 14px;background:var(--void);
+    border-left:2px solid var(--amber-dim);position:relative;
+  }
+  .scheme[data-p="jolt"] blockquote.q{border-left-color:#2e5457}
+  blockquote.q p{
+    margin:0;font-size:16px;line-height:1.6;color:var(--paper);font-style:italic;font-weight:300;
+    max-width:66ch;
+  }
+  blockquote.q p::before{content:"“";color:var(--amber);font-family:var(--display);font-size:26px;line-height:0;
+    vertical-align:-2px;margin-right:2px}
+  blockquote.q p::after{content:"”";color:var(--amber);font-family:var(--display);font-size:26px;line-height:0;
+    vertical-align:-6px;margin-left:1px}
+  .scheme[data-p="jolt"] blockquote.q p::before,.scheme[data-p="jolt"] blockquote.q p::after{color:var(--cyan)}
+  blockquote.q cite{
+    display:block;margin-top:11px;font-style:normal;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  }
+  blockquote.q cite b{color:var(--paper-dim);font-weight:500}
+  .debate blockquote.q{border-left-color:var(--violet)}
+  .debate blockquote.q p::before,.debate blockquote.q p::after{color:var(--violet)}
+
+  .gap{border:1px dashed var(--line-bright);background:rgba(201,106,94,.03);padding:20px 22px;margin-bottom:26px;display:flex;gap:16px;align-items:flex-start}
+  .gap .gm{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);white-space:nowrap;padding-top:3px}
+  .gap p{margin:0;font-size:15px;color:var(--paper-dim);font-weight:300}
+  .gap p b{color:var(--paper);font-weight:500}
+
+  .debate{border:1px solid var(--violet);border-left-width:2px;background:rgba(155,139,196,.05);padding:22px;margin:28px 0}
+  .debate h4{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);margin:0 0 12px}
+  .debate p{margin:0 0 12px;font-size:15.5px;color:var(--paper-dim);font-weight:300}
+  .debate p:last-child{margin:0}
+  .debate b{color:var(--paper);font-weight:500}
+
+  /* ===== tables ===== */
+  .scrollx{overflow-x:auto;border:1px solid var(--line)}
+  table.matrix{border-collapse:collapse;width:100%;min-width:720px;background:var(--ink)}
+  table.matrix th,table.matrix td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:13px 15px;text-align:left;vertical-align:top}
+  table.matrix thead th{background:var(--surface-2);font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--paper);font-weight:500}
+  table.matrix tbody th{font-family:var(--serif);font-weight:400;font-size:15px;background:var(--surface);white-space:nowrap}
+  table.matrix tbody th a{color:var(--paper)}
+  table.matrix td{font-family:var(--mono);font-size:11.5px;color:var(--paper-dim);line-height:1.6}
+  table.matrix tbody tr:hover td,table.matrix tbody tr:hover th{background:var(--surface-2)}
+  .na{color:var(--rose);opacity:.5}
+
+  /* ===== cards / bars ===== */
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+  .chal{background:var(--ink);padding:28px 26px}
+  .chal .cn{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase}
+  .chal h4{font-family:var(--display);font-size:25px;font-weight:400;margin:5px 0 0;line-height:1.2}
+  .chal>p{color:var(--paper-dim);font-weight:300;font-size:15.5px;margin:13px 0 0}
+  .ans{margin-top:16px;padding-top:13px;border-top:1px dotted var(--line);font-size:13.5px;color:var(--paper-dim);font-weight:300;line-height:1.6}
+  .ans .who{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-bottom:5px}
+  .ans.dp .who{color:var(--amber)} .ans.jl .who{color:var(--cyan)}
+
+  .facts{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-left:1px solid var(--line);margin:44px 0 0}
+  .fact{flex:1 1 170px;padding:16px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .fact b{display:block;font-family:var(--display);font-size:29px;font-weight:400;color:var(--amber);line-height:1.1}
+  .fact span{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+  .bar-row{display:grid;grid-template-columns:170px 1fr 66px;gap:13px;align-items:center;margin-bottom:9px}
+  .bar-row .bl{font-family:var(--mono);font-size:11px;color:var(--paper-dim)}
+  .bar-track{display:block;height:11px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+  .bar-fill{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber-dim),var(--amber));transition:width .9s cubic-bezier(.2,.8,.2,1)}
+  .bar-fill.c2{background:linear-gradient(90deg,#2e5457,var(--cyan))}
+  .bar-row .bv{font-family:var(--mono);font-size:11px;color:var(--amber);text-align:right}
+  .bars.c2 .bv{color:var(--cyan)}
+
+  .roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  .pcard{border:1px solid var(--line);background:var(--ink);padding:24px}
+  .pcard.live{border-color:var(--amber-dim)}
+  .pcard.live.jl{border-color:#2e5457}
+  .pcard h4{font-family:var(--display);font-size:27px;font-weight:400;margin:0}
+  .pcard .meta{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:6px 0 14px}
+  .pcard p{font-size:14.5px;color:var(--paper-dim);font-weight:300;margin:0}
+  .pcard .sys{margin-top:13px;font-family:var(--mono);font-size:11px;color:var(--cyan);line-height:1.7}
+  .pcard .status{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin-top:15px;padding-top:12px;border-top:1px dotted var(--line)}
+  .pcard .status.ok{color:var(--lime)} .pcard .status.todo{color:var(--muted)}
+
+  /* ===== chart =====
+     Categorical palette snapped into the dark band (OKLCH L 0.48–0.67, C ≥ 0.10)
+     and validated: worst adjacent CVD ΔE 49.3, all slots ≥ 3:1 on surface #0f1316. */
+  .viz{
+    --surface-1:#0f1316;
+    --series-gkr:#01a9b4;   /* slot 1 — GKR + sum-check + lookups */
+    --series-halo2:#c58203; /* slot 2 — Halo2 / arithmetic circuit */
+    --series-vole:#9866f1;  /* slot 3 — VOLE */
+    --series-accum:#e9483c; /* slot 4 — proof accumulation / folding */
+    --grid:#28323a;
+    background:var(--surface-1);border:1px solid var(--line);padding:26px 22px 18px;margin:0 0 8px;position:relative;
+  }
+  .viz svg{display:block;width:100%;height:auto;overflow:visible}
+  .viz .grid line{stroke:var(--grid);stroke-width:1}
+  .viz .axis text{font-family:var(--mono);font-size:9.5px;fill:var(--muted);letter-spacing:.08em}
+  .viz .frontier{fill:none;stroke:#7d8a93;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  /* fill/stroke are set inline per-mark: a stylesheet rule would beat the SVG
+     presentation attribute and silently erase the category colour. */
+  .viz .dot{stroke-width:2;cursor:pointer}
+  .viz .dot.hollow{stroke-width:2.5}
+  .viz .rangebar{stroke-width:2;opacity:.55}
+  .viz .conflict{stroke-width:1;opacity:.5;stroke-dasharray:none}
+  .viz .dlabel{font-family:var(--mono);font-size:10px;fill:var(--paper-dim);letter-spacing:.04em}
+  .viz .dlabel.em{fill:var(--paper)}
+  .viz .band{fill:#7d8a93;opacity:.055}
+  .viz .bandlabel{font-family:var(--mono);font-size:9px;fill:var(--muted);letter-spacing:.1em}
+  .viz .hit{fill:transparent;cursor:pointer}
+  .viz g.pt:hover .dot{stroke:var(--paper)}
+
+  .legend{display:flex;gap:22px;flex-wrap:wrap;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+  .legend span{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--paper-dim);letter-spacing:.06em}
+  .legend i{width:11px;height:11px;border-radius:50%;flex:0 0 11px}
+  .legend i.ring{background:transparent;border:2px solid var(--muted)}
+
+  .tip{
+    position:absolute;pointer-events:none;opacity:0;transition:opacity .12s;
+    background:#05070880;backdrop-filter:blur(8px);border:1px solid var(--line-bright);
+    padding:11px 13px;max-width:290px;z-index:5;
+  }
+  .tip b{display:block;font-family:var(--serif);font-size:15px;color:var(--paper);font-weight:500;margin-bottom:3px}
+  .tip .v{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.06em}
+  .tip p{margin:7px 0 0;font-size:12.5px;line-height:1.5;color:var(--paper-dim);font-weight:300}
+  .tip .prov{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:7px}
+
+  .hero{display:flex;gap:0;flex-wrap:wrap;border:1px solid var(--line);margin:0 0 30px}
+  .hero div{flex:1 1 210px;padding:22px 24px;border-right:1px solid var(--line)}
+  .hero div:last-child{border-right:0}
+  .hero b{display:block;font-family:var(--display);font-size:44px;font-weight:400;line-height:1;color:var(--amber)}
+  .hero b.cy{color:var(--cyan)}
+  .hero span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:9px}
+  .hero em{display:block;font-style:normal;font-size:13px;color:var(--paper-dim);font-weight:300;margin-top:8px;line-height:1.5}
+
+  details.tbl{margin-top:26px;border:1px solid var(--line)}
+  details.tbl summary{cursor:pointer;padding:13px 18px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);list-style:none}
+  details.tbl summary::-webkit-details-marker{display:none}
+  details.tbl summary:hover{color:var(--paper)}
+  details.tbl[open] summary{border-bottom:1px solid var(--line);background:var(--surface)}
+
+  .pager{display:flex;justify-content:space-between;gap:16px;margin-top:70px;padding-top:24px;border-top:1px solid var(--line)}
+  .pager a{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);max-width:46%}
+  .pager a:hover{color:var(--amber)}
+  .pager a span{display:block;font-family:var(--serif);font-size:16px;color:var(--paper);margin-top:4px;letter-spacing:0}
+  .pager a.next{text-align:right;margin-left:auto}
+
+  .fade{animation:f .4s ease}
+  @keyframes f{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.fade{animation:none}}
+</style>
+</head>
+<body>
+
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="mark"><i></i><span>zkSecurity Research</span></div>
+      <h1>Operator <em>Atlas</em></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter algorithms…" autocomplete="off">
+    </div>
+    <nav id="nav"></nav>
+  </aside>
+
+  <main><div class="page" id="page"></div></main>
+</div>
+
+<script src="vendor/katex/katex.min.js"></script>
+<script src="vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+const R = String.raw;
+
+/* ==========================================================================
+   PAPERS  — add an entry, then add a matching key to each operator's `schemes`
+   ========================================================================== */
+const PAPERS = [
+  {
+    id:"deepprove", name:"DeepProve", venue:"Lagrange Labs, 2026", indexed:true,
+    spine:"Sumcheck + LogUp-GKR · Goldilocks · BaseFold / HyperKZG",
+    system:"Specialised GKR-style PIOPs per operator, composed backwards layer-by-layer. Ceno library, Rust. Intermediate activations are never committed — only model weights and lookup witnesses.",
+    blurb:"First end-to-end system: proves every generated token for GPT-2 (124M) and Gemma 3 (270M). 174 / 86 tokens-per-minute single-machine; 1855 TPM distributed across 17 nodes. Verification 1.2–3.7 s, proofs 7–54 MB."
+  },
+  {
+    id:"jolt", name:"Jolt Atlas", venue:"ICME Labs, Feb 2026", indexed:true,
+    spine:"Jolt zkVM → ONNX · Sumcheck DAG · HyperKZG · BlindFold ZK",
+    system:"Replaces RISC-V with ONNX tensor ops. Everything non-linear becomes a lookup. Proof is a 7-stage DAG of sumchecks. Zero-knowledge via BlindFold. Streaming prover for small-space proving.",
+    blurb:"Lookup-centric and on-device. Proves nanoGPT (~0.25M params) in 14 s and GPT-2 (125M) in ~38 s end-to-end on a 16 GB M3 MacBook — but reports no sequence length, proof size, verifier time, or accuracy for GPT-2."
+  },
+  {
+    id:"zkllm", name:"zkLLM", venue:"CCS '24", indexed:false,
+    blurb:"Introduced the specialised sumcheck treatment of attention and the shift-then-exponentiate softmax trick DeepProve builds on. Proves individual layers, single token, GPU-accelerated; does not bind the tensors passed between layers."
+  },
+  {
+    id:"zkgpt", name:"zkGPT", venue:"USENIX Security '25", indexed:false,
+    blurb:"Prior state of the art for prover speed (2.75 TPM). Proves a single output token, on a GPT-2 stripped of residual connections, attention masks, and the final projection — relaxations that sidestep the outlier problem."
+  },
+  {
+    id:"zktorch", name:"zkTorch", venue:"2025", indexed:false,
+    blurb:"General operator-decomposition compiler with proof accumulation. One output token at a time; power-of-two scaling factors only; reported on a 4 TB RAM machine at 0.09 TPM."
+  },
+  {
+    id:"ezkl", name:"EZKL", venue:"zkonduit", indexed:false,
+    blurb:"Halo2 + ONNX. Circuit-based arithmetic constraints, so non-linear ops are expensive; its lookup tables cannot be materialised for large ranges. Jolt Atlas benchmarks 17× faster proving on nanoGPT, before EZKL's >400 s of key generation."
+  }
+];
+const INDEXED = PAPERS.filter(p => p.indexed);
+
+/* ==========================================================================
+   CROSS-CUTTING PROBLEMS
+   ========================================================================== */
+const CHALLENGES = [
+  { n:"Problem 01", h:"Fields have no decimals",
+    p:R`SNARKs compute over \(\mathbb{F}_p\). LLMs compute over \(\mathbb{R}\), implemented as float32. Emulating floating point in-circuit is impractical, so every system quantizes to fixed-point integers. But ML practitioners quantize <em>weights</em> and keep <em>activations</em> in float precisely to avoid accuracy collapse — a prover cannot. Both must be integers, and so must every operation between them.`,
+    fixes:[
+      {p:"dp", t:R`Symmetric affine quantization, post-training static, calibration-derived scales, parameterised bit-width (8/10/12). Negatives map to the top of the field: \(-x \mapsto p-x\). Residual layers get a wider bit-length. 12-bit lands within 0.54% of the float baseline.`},
+      {p:"jl", t:R`Fixed-point, mentioned only in passing (16-bit activations, a 128-scale representation). No calibration procedure, no bit-width study, no accuracy evaluation. Range control comes instead from <em>neural teleportation</em>, which shrinks the activation domain so the lookup table stays small.`}
+    ]},
+  { n:"Problem 02", h:"Products overflow, so you must rescale",
+    p:R`Multiply \(n\) \(q\)-bit integers and you get an \(nq\)-bit integer; add \(n\) of them and you gain \(\log n\) bits. Left alone, intermediates blow past the field modulus within a couple of layers. So you rescale — divide, round, clamp. That rescale is itself lossy, and it is a division, which fields hate.`,
+    fixes:[
+      {p:"dp", t:R`A dedicated requantization PIOP. The divisor is a power of two, so division is a right shift, provable by lookups over decomposable tables. Extra tables detect out-of-range inputs and fold the clamp into the same argument. It is the single most expensive operator in the system.`},
+      {p:"jl", t:R`No requantization protocol is described. <code>Div</code> exists as an ONNX op, proven with a non-deterministic advice value in the trace. The systematic overflow-management story is simply absent from the paper.`}
+    ]},
+  { n:"Problem 03", h:"Outlier activations wreck the quantization grid",
+    p:R`LLM activations contain rare, enormous values — a channel at 1000.0 while its neighbours sit at 3.9. Quantize <code>[9.1, 3.9, 11.5, 1000.0]</code> to 8 bits and the first three collapse into one or two bins. LayerNorm and residual connections are the usual culprits.`,
+    fixes:[
+      {p:"dp", t:R`Rotate by an orthonormal \(M\): \(XW=(XM)(M^\top W)\). Both factors quantize easily, the float output is unchanged, and \(M\) is absorbed into the previous layer's weights so the hostile \(X\) never materialises. Plus clamping to the calibrated range. Fails on Gemma 3, whose extra RMSNorms block the trick.`},
+      {p:"jl", t:R`Not discussed. The closest relative is neural teleportation, but that shrinks the <em>input</em> range of saturating activations to bound table size, not the outlier spread of a quantization grid. Different problem, different mechanism.`}
+    ]},
+  { n:"Problem 04", h:"Autoregression is quadratic",
+    p:R`Generating \(t\) tokens naively means \(t\) forward passes, each attending over all previous tokens: \(O(t^2|C|)\) prover work. Real inference dodges this with a KV cache, but emulating read/write RAM inside a SNARK means committing to auxiliary data linear in the number of accesses.`,
+    fixes:[
+      {p:"dp", t:R`Do not prove generation — prove <em>certification</em>. Feed \([\text{prompt} \,\|\, \text{claimed output}]\) through the model once. The causal mask means position \(t\) cannot see token \(t{+}1\); if every position predicts its successor, the sequence is certified. One pass. Linear, not quadratic.`},
+      {p:"jl", t:R`Not addressed. The paper never discusses autoregression, KV caching, or multi-token generation, and its GPT-2 benchmark states no sequence length or token count — so it is unknown what its ~38 s actually covers.`}
+    ]},
+  { n:"Problem 05", h:"Non-linearities are everywhere",
+    p:R`Softmax, LayerNorm, RMSNorm, GeLU: none is expressible in field arithmetic. Unlike a small CNN, a transformer invokes them dozens of times per block, per layer, per head. Faithfully arithmetising them blows up constraint counts and degrees, and they become the dominant cost.`,
+    fixes:[
+      {p:"dp", t:R`Everything non-linear routes through LogUp-GKR lookups, each with a <em>batched</em> variant so \(h\) heads share one argument. Requantization is fused into the following non-linearity's table — one lookup instead of two, and the non-linearity sees the unclamped input.`},
+      {p:"jl", t:R`The founding design choice, inherited from Jolt: express operations as lookups rather than constraints, so non-linearity is never arithmetised at all. Prefix-suffix decomposition keeps the tables tractable, and neural teleportation shrinks their domain.`}
+    ]},
+  { n:"Problem 06", h:"Sampling is not deterministic",
+    p:R`A soundness statement about "the" output of an LLM presumes the LLM has one. Top-\(k\) sampling means it does not.`,
+    fixes:[
+      {p:"dp", t:R`De-randomise: take the seed as an additional public input, prove the decoding stage against it. Proving the seed was <em>honestly sampled</em> needs a randomness beacon or an interactive coin-flip. Explicitly not implemented — here or anywhere else.`},
+      {p:"jl", t:R`Not addressed. No argmax or sampling operator appears in the supported ONNX set.`}
+    ]},
+  { n:"Problem 07", h:"The proof itself leaks the model",
+    p:R`"zkML" usually means verifiable inference, not <em>zero-knowledge</em> inference. A raw sumcheck transcript — round polynomial coefficients, claimed evaluations, opened commitments — reveals information about the witness, which for an LLM is the weights and the user's prompt. Hiding is a separate, extra obligation.`,
+    fixes:[
+      {p:"dp", t:R`Not addressed in the described protocols. The paper builds PIOPs and applies the BCS transform for non-interactivity, with round-by-round knowledge soundness. Hiding the witness is never claimed or constructed.`},
+      {p:"jl", t:R`BlindFold (from Vega). Every sumcheck round polynomial is sent as a Pedersen commitment; the sumcheck <em>verifier</em> is encoded as an R1CS circuit; that instance is Nova-folded with a random satisfying instance. The circuit is \(O(N\cdot d_{\max})\) — logarithmic in the computation being proven.`}
+    ]},
+  { n:"Problem 08", h:"The prover does not fit in memory",
+    p:R`Many SNARKs materialise large portions of the witness and intermediate polynomials in memory to commit and open them. For LLM inference this becomes multi-gigabyte peak memory even for modest models, pushing past the RAM budget of any commodity or on-device prover.`,
+    fixes:[
+      {p:"dp", t:R`Scale <em>out</em>. Partition the operator DAG horizontally, commit to chunk boundaries, prove chunks independently in parallel, concatenate. 1855 TPM on 17 machines with one round of communication. Single-machine peak is still 96–147 GB.`},
+      {p:"jl", t:R`Scale <em>down</em>. Prefix-suffix decomposition of lookup tables lets the prover stream: peak memory drops from \(O(|T|)\) to \(O(|T|^{1/C})\) at a cost of \(O(C|T|)\) field operations. GPT-2 proves on a 16 GB MacBook.`}
+    ]}
+];
+
+/* ==========================================================================
+   OPERATORS
+   difficulty: friendly | mid | hostile
+   schemes.<paperId> = { tldr, bullets[], cost? }   — omit to declare a gap
+   ========================================================================== */
+const OPERATORS = [
+
+/* ---- Numeric substrate ---- */
+{
+  id:"quant", group:"Numeric substrate", name:"Quantization", sub:"float32 → q-bit signed integer",
+  difficulty:"mid", diffLabel:"Accuracy-critical",
+  tex:R`\begin{aligned}
+x &= s\cdot(\bar{x}-z) && \text{affine dequantization}\\[2pt]
+s &= \frac{a}{2^{b-1}-1},\quad a=\max(|x_{\max}|,|x_{\min}|) && \text{symmetric}\\[2pt]
+z &= 0 && \text{zero-point vanishes}\\[6pt]
+&\text{field embedding:}\quad i\ge 0 \mapsto i,\qquad i<0 \mapsto p-|i|
+\end{aligned}`,
+  what:R`Not a layer of the model — a change of number system applied to the whole model. Every weight and every activation becomes a \(q\)-bit signed integer plus a per-tensor scale factor. Everything downstream inherits the consequences.`,
+  why:R`Choose the scale too tight and you clip; too loose and you quantize everything into two bins. The scale must be fixed <em>before</em> proving, because lookup table ranges are baked into preprocessing. An activation outside the calibrated range is not merely inaccurate — it may be <strong>unprovable</strong>.`,
+  kit:["Post-training static quantization (PTQ) with a calibration set","Symmetric vs. affine (zero-point) schemes","Per-tensor vs. per-channel scales","Mixed precision: wider bits for range-mismatched layers"],
+  schemes:{
+    deepprove:{
+      tldr:"Standard ML quantization, unmodified — which is itself the contribution.",
+      quotes:[
+        { t:R`Deep learning practitioners already quantize model weights for reduced memory footprint and faster inference, but typically keep activations in floating-point format during the inference to mitigate lossiness due to quantization and accuracy degradation. However, to cryptographically prove the correctness of inference, both weights and activations must be in integers as well as all operations between them. Therefore, an accurate integer-only inference algorithm is necessary for efficient proof generation.`,
+          src:"DeepProve", sec:"§1.1", name:"Need for pure-integer inference" }
+      ],
+      bullets:[
+        R`Symmetric and zero-centred for both weights and activations, so the zero-point term drops out of the matmul identity entirely.`,
+        R`Scales come from a calibration dataset: run the float model, collect per-layer activation and weight statistics, set \(s = a/(2^{b-1}-1)\). At inference, clamp anything outside \([-a,a]\).`,
+        R`Bit-width is a free parameter. 12-bit gives GPT-2 perplexity 49.49 against a 49.22 float baseline (0.54% off) and cosine similarity 0.9966.`,
+        R`Going from 8 to 12 bits costs only <strong>0.8%</strong> extra prover time, because the lookup table count barely changes. Accuracy is nearly free here.`,
+        R`Explicitly contrasted with zkGPT and zkTorch, which restrict scale factors to powers of two — simpler to prove, worse precision.`
+      ],
+      cost:"Gemma 3 collapses below 12 bits: cosine 0.20 at 8-bit, perplexity &gt;1150. Its RMSNorm placement blocks outlier smoothing."
+    },
+    jolt:{
+      tldr:"Present but undocumented. Fixed-point is assumed; the paper's range-control mechanism is teleportation, not calibration.",
+      bullets:[
+        R`Fixed-point appears only incidentally: "16-bit fixed-point activations", and a "128-scale fixed-point representation" used to state the teleportation error bound.`,
+        R`No calibration procedure, no scale-factor derivation, no zero-point discussion, no bit-width sensitivity study, and <strong>no accuracy evaluation of any model</strong> beyond the teleportation bound.`,
+        R`This is the single largest documentation gap relative to DeepProve, and it matters: DeepProve's own conclusion is that quantization nuances (table sizing, clamping, requantization) are exactly what determine whether a reported accuracy number survives an end-to-end trace.`
+      ]
+    }
+  },
+  debate:{
+    title:"Unresolved",
+    quotes:[
+      { t:R`Many subtle nuances arise when trying to prove end-to-end LLM traces (such as requantization, lookup table size selection, clamping, etc.). Hence, it is not entirely clear whether prior works would achieve their reported accuracy results if they were proving a full LLM inference trace.`,
+        src:"DeepProve", sec:"§6", name:"Related Work" }
+    ],
+    body:R`<p>DeepProve argues that prior work reports accuracy from a <b>different codebase</b> than the one it proves with, so the numbers may not survive an end-to-end quantized trace. Jolt Atlas reports no model accuracy at all, so the question is open by construction.</p>
+    <p>If you are evaluating either system: ask for perplexity or task accuracy <b>measured on the integer inference engine the prover actually consumes</b>, not on the float model.</p>`
+  }
+},
+{
+  id:"requant", group:"Numeric substrate", name:"Requantization", sub:"rescale · round · shift · clamp",
+  difficulty:"hostile", diffLabel:"DeepProve's #1 cost",
+  tex:R`y[i] \;=\;
+\begin{cases}
+2^{q-1}, & x[i] \ge 2^{q'-1}\\[4pt]
+-2^{q-1}+1, & x[i] \le -2^{q'-1}+1\\[4pt]
+\left\lfloor \dfrac{2^{f}\!\cdot\!\epsilon\cdot x[i] + 2^{f+\delta-1}}{2^{f+\delta}} \right\rfloor - 2^{q-1}, & \text{otherwise}
+\end{cases}`,
+  what:R`After a matmul, values are \(q'\)-bit with \(q' \gg q\). Requantization brings them back to \(q\) bits so the next lookup table can address them and the field never overflows. It fires after essentially every multiplication.`,
+  why:R`It is a <em>division</em> and a <em>range-dependent branch</em> — the two things field arithmetic cannot express. And it is lossy, so doing it more often costs accuracy while doing it less often risks overflow. Prior work handles only the easy case where the input is guaranteed in-range.`,
+  kit:["Power-of-two divisor ⇒ right shift ⇒ chunk decomposition","Lookup arguments over decomposable tables (Lasso/Jolt-style)","Range-check tables + sign/overflow-detector tables","Operator fusion with the following non-linearity","Delayed requantization: skip it when the field still has headroom"],
+  schemes:{
+    deepprove:{
+      tldr:"Two cases. In-range is a right shift. Out-of-range is handled by extra tables that compute the clamp inside the same lookup argument.",
+      quotes:[
+        { t:R`More than 50% of the prover cost comes from activation functions, Softmax, and requantization, with the latter being the most expensive component overall, accounting for 27% of total prover time. Consequently, optimizing any of these components would yield substantial improvements in overall prover performance.`,
+          src:"DeepProve", sec:"§5", name:"Breakdown of Prover Cost" },
+        { t:R`Requantizing incurs accuracy loss and thus avoiding it increases the accuracy. This strategy is even more effective when using a large field 𝔽 during proving.`,
+          src:"DeepProve", sec:"Appendix C", name:"Avoid requantization when possible" }
+      ],
+      bullets:[
+        R`<strong>Case 1 — in range.</strong> The divisor is \(2^{f+\delta}\), so division is a right shift. The prover decomposes \(x' = \mathrm{Quant}(2^f\epsilon)\cdot x + 2^{f+\delta-1}\) into \(k\)-bit chunks, range-checks each, and keeps the \(q/k\) most significant. One lookup PIOP over decomposable tables.`,
+        R`<strong>Case 2 — out of range.</strong> The novel part. Decompose into \(s=q''/q\) chunks. The first \(q'/q\) tables range-check. The remaining tables return 1 iff their chunk is zero. A final table \(T_s\) reads the top chunk and returns \(-1/0/{+}1\) for the sign. An <code>InRange</code> product of those outputs selects between the shifted value and the clamped extreme.`,
+        R`The verifier never gets an oracle for \(x'\); the evaluation claim is mapped back to \(x\) by inverting the affine map, \(y_x \leftarrow (y_{x'} - 2^{f+\delta-1})/\mathrm{Quant}(2^f\epsilon)\).`,
+        R`<strong>Delayed requantization.</strong> An \(N\times M\) by \(M\times P\) integer matmul produces at most \(2q + \log_2 M + 1\) bits. If that still fits the field and the next lookup's domain, skip the requant. A bigger field buys accuracy, not just speed.`,
+        R`Chunk size is set equal to the quantization bit-width so a single range-check table is reused system-wide.`
+      ],
+      cost:"<b>27.3%</b> of PIOP time and <b>27.5%</b> of witness-commitment time — the largest single line item in the prover."
+    },
+    jolt:{
+      tldr:"No requantization protocol. Division is an ONNX op proven with a non-deterministic advice value.",
+      bullets:[
+        R`The execution trace records, for non-deterministic operations such as division, an <em>advice value</em> — the prover supplies the quotient and the relation is checked. That is the entire mechanism.`,
+        R`Nothing is said about when rescaling must fire, how overflow is prevented across a deep transformer, how table domains stay addressable, or what the accumulated rounding error does to accuracy.`,
+        R`Because Jolt Atlas is lookup-native over a large field, the pressure is different: the binding constraint is <em>lookup table domain size</em>, which is attacked by prefix-suffix decomposition and teleportation rather than by shrinking values back down.`
+      ]
+    }
+  },
+  debate:{
+    title:"Two philosophies",
+    quotes:[
+      { t:R`Modern prover-efficient SNARKs can benefit from being able to operate directly over small finite fields, closer to standard CPU word sizes (e.g., 64-bit Goldilocks field). While this allows for faster prover times, in our verifiable LLM inference application it introduces an additional challenge. During quantized integer inference we need to perform requantization after every few operations (mainly multiplications) to prevent overflow in the finite field. However, requantization itself is a lossy operation and can further degrade accuracy.`,
+        src:"DeepProve", sec:"§1.1", name:"Requantization strategy" }
+    ],
+    body:R`<p>DeepProve requantizes constantly and pays <b>27% of its prover</b> for it. Jolt Atlas barely mentions the operation. This is not an oversight so much as a different bet: DeepProve keeps values small so tables stay small; Jolt Atlas keeps tables small by <b>decomposing them</b> (prefix-suffix) and by <b>shrinking their input domain</b> (teleportation), which relieves the pressure to requantize in the first place.</p>
+    <p>The open question is whether the second approach survives a deep transformer without an overflow-management story. Nobody has published the experiment.</p>`
+  }
+},
+{
+  id:"clamp", group:"Numeric substrate", name:"Clamping", sub:"saturating out-of-range activations",
+  difficulty:"mid", diffLabel:"Table-size sensitive",
+  tex:R`\mathrm{Clamp}(x)=\min\big(\max(x,\,\mathrm{CMin}),\,\mathrm{CMax}\big)
+\\[8pt]
+\text{naive: one lookup table over the full } q'\text{-bit domain} \;\Rightarrow\; \text{far too large to commit}`,
+  what:R`Outliers exceed the calibrated range. Rather than let them corrupt the scale — or fall outside the lookup table's domain and become unprovable — saturate them at the boundary.`,
+  why:R`The obvious protocol, one table mapping every possible input to its clamped output, has a domain the size of the pre-shift value range. You must express the clamp algebraically instead.`,
+  kit:["Zero-indicator polynomials evaluated by sumcheck","Sign-indicator polynomials for signed ranges","Fusing the clamp into the requantization decomposition"],
+  schemes:{
+    deepprove:{
+      tldr:"Never build the clamp table. Decompose the value, then express the clamp as a product of zero-indicators inside a sumcheck.",
+      quotes:[
+        { t:R`The simplest solution would be to have another lookup table that takes as input Out(x̄) and outputs Clamp(x̄). In practice though this clamping lookup table is too large and so DeepProve uses two different approaches based on whether the value is expected to be signed or not.`,
+          src:"DeepProve", sec:"Appendix C", name:"Proving clamping" },
+        { t:R`Since re-quantization and non-linear functions are usually proven via lookup arguments, using a fixed scaling factor without clamping can lead to situations where the values generated during inference are too large to be looked up, thus forcing a larger lookup table to commit.`,
+          src:"DeepProve", sec:"§6", name:"Related Work — on zkGPT" }
+      ],
+      bullets:[
+        R`<strong>Unsigned.</strong> Decompose into <code>ZeroIn</code> chunks, each paired with a multilinear <code>ZeroOut</code> that is 1 iff its chunk is zero. Then sumcheck \(\mathrm{Out}(r)=\sum_b \mathrm{eq}(r,b)\big[(\prod_j \mathrm{ZeroOut}_j)\mathrm{Value}(b) + (1-\prod_j \mathrm{ZeroOut}_j)\mathrm{CMax}\big]\). The product is 1 exactly when no high chunk fired.`,
+        R`<strong>Signed.</strong> Add a <code>SgnIn</code>/<code>SgnOut</code> pair returning \(-1/0/{+}1\), so the clamp target interpolates: \(\frac{\mathrm{CMax}-\mathrm{CMin}}{2}\mathrm{SgnOut} + \frac{\mathrm{CMax}+\mathrm{CMin}}{2}\).`,
+        R`Because clamping is folded into the requantization lookup, the downstream non-linearity receives the <em>unclamped</em> linear output — strictly more accurate than clamping first.`,
+        R`This is exactly the gap DeepProve identifies in zkGPT: a fixed scaling factor without clamping means inference can produce values too large to look up, forcing a larger committed table.`
+      ]
+    }
+  }
+},
+
+/* ---- Linear algebra ---- */
+{
+  id:"matmul", group:"Linear algebra", name:"Matrix multiplication", sub:"QKV projections, FFN, logits",
+  difficulty:"friendly", diffLabel:"SNARK-friendly",
+  tex:R`D = a\,(A\cdot B) + b\,C, \qquad A\in\mathbb{F}^{m\times l},\; B\in\mathbb{F}^{l\times n}
+\\[10pt]
+\text{sumcheck instance:}\qquad
+y_D - b\,y_C \;=\; a \!\!\sum_{x\in\{0,1\}^{\log l}}\!\! \tilde{f}_A(r_1,x)\cdot \tilde{f}_B(x,r_2)
+\\[6pt]
+\text{prover } O(ml+ln+mn), \qquad \text{proof } O(\log l)`,
+  what:R`The workhorse: \(Q = XW_Q\), the FFN's two dense layers, the final unembedding. Quantized, \(x_4[i,k]=z_4+M\sum_j(x_1[i,j]-z_1)(x_2[j,k]-z_2)+B(x_3[k]-z_3)\) with \(M=s_1s_2/s_4\).`,
+  why:R`It doesn't resist, and that is the good news. Sumcheck proves it with a linear-time prover, logarithmic proof, and crucially <strong>no commitment to the product matrix</strong>. Only the inputs need oracles, and those are virtual claims passed down the chain. The danger is treating it as a generic circuit, which costs large constant factors.`,
+  kit:["Thaler's matmul sumcheck","Batched sumcheck across heads / layers","Virtual polynomials: never commit intermediates","Verifying tensor relations directly at the multilinear level (Schwartz–Zippel)"],
+  schemes:{
+    deepprove:{
+      tldr:"Generalised, batched matmul-with-bias sumcheck; the primitive everything else reduces to.",
+      bullets:[
+        R`A single <em>batched general matmul</em> PIOP handles \(h\) instances \(a_iA_iB_i + b_iC_i = D_i\) with one sumcheck. Used for all attention heads, and for the padding and permutation matrices elsewhere.`,
+        R`Round-by-round soundness error \(h(1+2\log \max(n_i)\max(m_i))/|\mathbb{F}|\), composed with the sumcheck's own — this is what licenses Fiat–Shamir via the BCS transform.`,
+        R`Padding and re-arrangement (needed when \(d/h\) isn't a power of two) are themselves proven as matmuls against sparse 0/1 matrices whose MLEs the verifier evaluates locally in \(\tilde{O}(d)\).`,
+        R`Measured at only <strong>14.9%</strong> of PIOP time. The classical ZKML intuition that matmul dominates is wrong at LLM scale.`
+      ],
+      cost:"Einsum / MatMul: 14.91% of PIOP time (GPT-2, seq 512)."
+    },
+    jolt:{
+      tldr:"ONNX Einsum, verified directly at the polynomial level — no decomposition into scalar operations, no R1CS.",
+      quotes:[
+        { t:R`Instead of naively decomposing tensor operations into scalar computations and verifying each element independently, we verify tensor relations directly at the multilinear polynomial level.`,
+          src:"Jolt Atlas", sec:"§1.2", name:"Our Contributions" },
+        { t:R`Nearly all verification checks are performed using virtual polynomials, and the approach neither uses nor requires R1CS.`,
+          src:"Jolt Atlas", sec:"§5.4", name:"CPU trace vs Tensor trace" }
+      ],
+      bullets:[
+        R`Supports <code>mk,kn-&gt;mn</code>, batched <code>bmk,bkn-&gt;bmn</code>, and attention contraction patterns as first-class Einsum operators.`,
+        R`Rather than decomposing a tensor op into per-element scalar checks, the multilinear extension encodes the tensor directly, and Schwartz–Zippel checks the relation at a random point. Commitment cost is reduced through <em>virtual polynomials</em> — witness elements defined as algebraic combinations of committed ones, never committed themselves.`,
+        R`The paper is explicit that the tensor-native path "neither uses nor requires R1CS", even though the currently-shipped pipeline still lowers the ONNX trace to a CPU trace first. <strong>This is a design in transition.</strong>`,
+        R`Their case against GKR, quoting Thaler: general-purpose techniques are "heavy hammers"; for matmul specifically, GKR "introduces at least a constant factor overhead for the prover".`
+      ]
+    }
+  },
+  debate:{
+    title:"Is GKR the wrong hammer for matmul?",
+    quotes:[
+      { t:R`As described in [Thaler], the GKR protocol is considered a general-purpose technique and "general-purpose techniques should sometimes be viewed as heavy hammers that are capable of pounding arbitrary nails, but are not necessarily the most efficient way of hammering any particular nail". In particular, for matrix multiplication, a primitive operation in ML models, "the GKR protocol introduces at least a constant factor overhead for the prover. In practice, this is the difference between a prover that runs many times slower than an (unverifiable) MATMULT algorithm, and a prover that runs a fraction of a percent slower".`,
+        src:"Jolt Atlas", sec:"§1.3", name:"Related Work — on DeepProve" }
+    ],
+    body:R`<p>Jolt Atlas's central architectural criticism of DeepProve is that a GKR-style protocol imposes a constant-factor prover overhead on matrix multiplication, the primitive operation of ML — the difference between "many times slower than MATMULT" and "a fraction of a percent slower".</p>
+    <p>DeepProve's own measurements complicate the charge: matmul is <b>14.9%</b> of its PIOP time, and its prover is dominated by softmax, requantization and activations. A constant factor on 14.9% is not where the system lives. But the criticism bites harder as models grow and the linear-algebra share rises.</p>
+    <p><b>Nobody has run both systems on the same model and hardware.</b> Until someone does, this stays an argument about asymptotic taste.</p>`
+  }
+},
+{
+  id:"embed", group:"Linear algebra", name:"Embedding lookup", sub:"token id → vector · ONNX Gather",
+  difficulty:"friendly", diffLabel:"Cheap if you're clever",
+  tex:R`\mathrm{Embed}(T,x) = \big(T[x_0],\,T[x_1],\,\dots,\,T[x_{s-1}]\big)
+\\[10pt]
+\text{rewrite as a matrix product:}\qquad \mathrm{Embed}(T,x) = H_x \cdot T
+\\[6pt]
+H_x\in\{0,1\}^{s\times t},\qquad H_x[i,\,x_i]=1,\; \text{else } 0 \qquad\Rightarrow\qquad s \text{ non-zeros}`,
+  what:R`Index the vocabulary-sized embedding table with each input token id. In ONNX this is the <code>Gather</code> operator.`,
+  why:R`The instinct is a lookup argument, which forces the prover to commit to a polynomial of size \(\Omega(sd)\) — the whole embedded sequence. Wasteful, because the verifier <em>already knows the token indices</em>: they are public input. But if you <em>do</em> treat it as a memory read, you now owe a read-consistency proof.`,
+  kit:["One-hot matrix reformulation ⇒ reuse the matmul sumcheck","Sparse MLE evaluated locally by the verifier","Or: treat as a memory read and prove read/write consistency"],
+  schemes:{
+    deepprove:{
+      tldr:"Rewrite the lookup as a sparse matrix product and reuse matmul. Zero additional commitments.",
+      quotes:[
+        { t:R`In order to prove the above, someone could directly use any state-of-the-art lookup argument. In practice, however, this would result in large prover overhead since it would have to additionally commit and open to a polynomial of size \(\Omega(sd)\). Instead, we observe that the verifier has direct access to the index vector x meaning that the verification cost can be proportional to \(|x| = s\). We thus propose a lightweight protocol that requires no additional commitments.`,
+          src:"DeepProve", sec:"§4.3.1", name:"Proving Embeddings" }
+      ],
+      bullets:[
+        R`\(Y = H_x\cdot T\) where \(H_x\) is the one-hot encoding of the token sequence. The prover never commits to \(H_x\)'s MLE.`,
+        R`The verifier evaluates \(\tilde{f}_{H_x}(r) = \sum_{H_x[i,j]=1}\beta((i,j),r)\) itself in \(O(s\log n)\) field operations, exploiting the \(s\) non-zeros — improvable to \(O(s)\) by precomputing \(\beta(i,r')\).`,
+        R`Prover \(O((t+s)d)\); proof and verification \(O(\log t)\). Soundness inherits directly from the matmul PIOP.`
+      ]
+    },
+    jolt:{
+      tldr:"Gather is a memory read, so it owes a read-consistency proof — and this is where Jolt Atlas attacks DeepProve directly.",
+      quotes:[
+        { t:R`Operations such as Gather require reading the tensor on which they operate, so we need to prove that those reads were correct. The most recent open-source implementation of DeepProve lacks these lookup arguments.`,
+          src:"Jolt Atlas", sec:"§1.3", name:"Related Work — on DeepProve" }
+      ],
+      bullets:[
+        R`In the ONNX model, <code>Gather</code> reads a tensor at data-dependent indices. Jolt Atlas argues those reads must themselves be proven correct, which is what its <code>MemoryDag</code> read-write consistency stage is for.`,
+        R`Their claim: "operations such as Gather require reading the tensor on which they operate, so we need to prove that those reads were correct. The most recent open-source implementation of DeepProve lacks these lookup arguments."`,
+        R`Note this is a claim about DeepProve's <em>implementation</em>, not its paper — the paper's Protocol 6 gives a sound embedding argument via the sparse one-hot matmul, which needs no memory checking at all.`
+      ]
+    }
+  },
+  debate:{
+    title:"An implementation charge, not a protocol charge",
+    quotes:[
+      { t:R`Note that since \(H_x\) has only \(s\) non-zero elements, the prover does not have to commit to its MLE since the verifier can evaluate it locally in \(O(s \log n)\) field operations.`,
+        src:"DeepProve", sec:"§4.3.1", name:"Proving Embeddings" }
+    ],
+    body:R`<p>Jolt Atlas asserts that DeepProve's open-source code lacks lookup arguments for <code>Gather</code> reads. DeepProve's <i>paper</i> does not need them: it reformulates embedding as a sparse matmul the verifier can check locally, sidestepping memory checking entirely.</p>
+    <p>Both can be true. <b>Worth verifying against the actual repository</b> before repeating either claim — this is a concrete, checkable disagreement and a good first thing to test.</p>`
+  }
+},
+{
+  id:"residual", group:"Linear algebra", name:"Residual addition", sub:"x + sublayer(x)",
+  difficulty:"friendly", diffLabel:"Trivial — except for scales",
+  tex:R`Y = X_1 + X_2
+\\[8pt]
+\text{but quantized, both addends must share a scale } s.
+\\[4pt]
+X_1 \text{ is a raw hidden state; } X_2 \text{ left a normalized block.}
+\\[2pt]
+\text{Their dynamic ranges differ by orders of magnitude.}`,
+  what:R`Add the block's output back to its input. Mathematically the simplest node in the graph.`,
+  why:R`In quantized-land it is a trap. Rescaling the narrow-range tensor onto the wide-range tensor's grid at low precision destroys it. Residual connections are also a primary <em>source</em> of the outlier activations that break quantization globally. zkGPT's evaluation simply deletes them from GPT-2.`,
+  kit:["Mixed precision: widen the bit-length locally","Scale-factor alignment before addition","Free in the PIOP: MLE addition checked at a random point"],
+  schemes:{
+    deepprove:{
+      tldr:"Prove it for free; pay for it in bits, not in cryptography.",
+      quotes:[
+        { t:R`The authors prove the correctness of a modified version of GPT-2 that doesn't contain residual connections, attention masks, and the final projection layer. These relaxations significantly circumvent the outlier issues that we discussed in Section 1.`,
+          src:"DeepProve", sec:"§6", name:"Related Work — on zkGPT" }
+      ],
+      bullets:[
+        R`The PIOP is a one-line check: sample \(r\), verify \(y_Y = y_{X_1} + y_{X_2}\) against the three oracles.`,
+        R`The engineering is entirely numeric: residual layers run at a <em>larger bit-length</em> than the rest of the model, chosen so the quantization grid is fine enough to represent both addends.`,
+        R`DeepProve keeps residuals, attention masks, and the final projection. zkGPT removes all three, which is how it avoids the outlier problem it never discusses.`
+      ],
+      cost:"Add: 1.03% of PIOP time."
+    },
+    jolt:{
+      tldr:"An elementwise Add over tensors, with NumPy broadcast semantics. Nothing to say, and nothing said.",
+      bullets:[
+        R`<code>Add</code>, <code>Sub</code>, <code>Mul</code>, <code>Div</code> are supported elementwise ops; broadcasting is automatic.`,
+        R`The scale-alignment problem that forces DeepProve into mixed precision is not discussed, because quantization is not discussed.`
+      ]
+    }
+  }
+},
+
+/* ---- Positional ---- */
+{
+  id:"ape", group:"Positional information", name:"Absolute positional encoding", sub:"GPT-2",
+  difficulty:"friendly", diffLabel:"Nearly free",
+  tex:R`Y = X + W[1:s], \qquad W\in\mathbb{F}^{s'\times d},\quad s\le s'
+\\[8pt]
+\text{problem: the verifier's random point } r\in\mathbb{F}^{\log(sd)} \text{ doesn't "fit" the MLE of the taller } W.`,
+  what:R`Add a learned position matrix, row-truncated to the actual sequence length.`,
+  why:R`Only a shape mismatch: the committed \(W\) has \(s'\) rows (max context) but you need its first \(s\). You cannot just evaluate \(\tilde f_W\) at \(r\).`,
+  kit:["Prefix-restriction of an MLE by zero-padding the challenge point"],
+  schemes:{
+    deepprove:{
+      tldr:"Evaluate the truncated W by prepending zeros to the challenge point.",
+      bullets:[
+        R`Observe \(\tilde f_{W,\le s}(x) = \tilde f_W(\mathbf{0}\,\|\,x)\) with \(\mathbf{0}\in\mathbb{F}^{\log(s'/s)}\). The prover sends \(y_W = \tilde f_W(\mathbf{0}\|r)\) and the verifier queries the existing oracle there.`,
+        R`Whole protocol: verifier samples \(r\), prover sends three evaluations, verifier checks \(y_Y = y_X + y_W\). \(O(1)\) proof and verification; soundness error \(3\log(sd)/|\mathbb{F}|\).`
+      ]
+    }
+  }
+},
+{
+  id:"rope", group:"Positional information", name:"Rotary positional embedding", sub:"Gemma 3, Llama, most modern LLMs",
+  difficulty:"mid", diffLabel:"Needs a structural trick",
+  tex:R`Y_i = X_i \circ W_{1,i} \;+\; X_i' \circ W_{2,i}
+\\[6pt]
+X_i' = \big[-X_i[2],\, X_i[1],\, -X_i[4],\, X_i[3],\, \dots\big] \quad\text{(pairwise swap and negate)}
+\\[10pt]
+\text{trick:}\quad
+\tilde f_X(x,z) = (1-x)\tilde f_X(0,z) + x\,\tilde f_X(1,z)
+\\[2pt]
+\tilde f_{X'}(x,z) = (1-x)\big(-\tilde f_X(1,z)\big) + x\,\tilde f_X(0,z)`,
+  what:R`Rotate each pair of query/key dimensions by an angle proportional to position. Two Hadamard products against learned cos/sin matrices, with a swap-and-negate shuffle between them.`,
+  why:R`The shuffled tensor \(X'\) is a <em>derived</em> witness. Naively the prover must commit to it and open it, doubling the cost of a cheap operator.`,
+  kit:["Hadamard-product sumcheck","MLE variable-splitting to derive f_{X'} from f_X for free"],
+  schemes:{
+    deepprove:{
+      tldr:"Never commit X′. Its MLE is recoverable from two evaluations of f_X, because swap-and-negate acts on exactly one boolean variable.",
+      bullets:[
+        R`Run a single sumcheck for \(y_Y = \sum_x \beta(x,r)\big[\tilde f_X(x)\tilde f_{W_1}(x) + \tilde f_{X'}(x)\tilde f_{W_2}(x)\big]\).`,
+        R`At the end the prover sends only \(\tilde f_X(0,\cdot)\) and \(\tilde f_X(1,\cdot)\). The verifier reconstructs the claim on \(\tilde f_{X'}\) algebraically: \(y_{X'} = r_1 y_{X,1} - (1-r_1) y_{X,2}\), and on \(\tilde f_X\) as \(r_1 y_{X,2} + (1-r_1) y_{X,1}\).`,
+        R`\(W_1, W_2\) are truncated with the same \(\mathbf{0}\|r\) padding trick as absolute encodings.`,
+        R`Prover \(O(sd)\), proof \(O(\log sd)\). Costs <strong>0.06%</strong> of PIOP time in GPT-2, 0.83% in Gemma 3.`
+      ]
+    }
+  }
+},
+
+/* ---- Attention ---- */
+{
+  id:"scores", group:"Attention", name:"Attention scores", sub:"Q·Kᵀ / √dₖ",
+  difficulty:"friendly", diffLabel:"A matmul in disguise",
+  tex:R`T_p = Q\cdot K^\top, \qquad\text{then scale by } 1/\sqrt{d_k}
+\\[8pt]
+\text{the scale is absorbed into the claim:}\qquad y_{T_p} \leftarrow y_{T_p}\cdot \mathrm{Quant}(1/\sqrt{d_k})^{-1}`,
+  what:R`The \(s\times s\) score matrix, before masking and softmax.`,
+  why:R`Nothing special — a matmul with a transposed operand and a scalar. The transpose is handled by permuting the challenge point rather than materialising \(K^\top\).`,
+  kit:["Batched matmul sumcheck","Challenge-point permutation for the transpose","Scalar folding into the evaluation claim"],
+  schemes:{
+    deepprove:{
+      tldr:"Batched matmul; the transpose costs nothing.",
+      bullets:[
+        R`Given \(r_{K^\top}=(r_1,r_2)\), set \(y_K = y_{K^\top}\) and \(r_K = (r_2,r_1)\). Free.`,
+        R`The \(1/\sqrt{d_k}\) scaling is undone on the verifier's evaluation claim before entering the matmul PIOP, rather than proven as its own layer.`
+      ]
+    },
+    jolt:{
+      tldr:"An Einsum with an attention contraction pattern. No dedicated protocol beyond the general tensor machinery.",
+      bullets:[
+        R`Einsum explicitly "supports patterns like <code>mk,kn-&gt;mn</code>, <code>bmk,bkn-&gt;bmn</code>, and attention patterns".`,
+        R`Neither the scaling factor nor the transpose is discussed.`
+      ]
+    }
+  }
+},
+{
+  id:"mask", group:"Attention", name:"Causal masking", sub:"the −∞ upper triangle",
+  difficulty:"friendly", diffLabel:"O(s), not O(s²)",
+  tex:R`\mathrm{Mask}(T) = T \circ D_1 + D_2
+\\[6pt]
+D_1 = \text{lower-triangular ones},\qquad D_2 = \text{upper-triangular } -\infty
+\\[10pt]
+\tilde f_{D_1}(r_1,r_2) = \sum_i \beta(i,r_1)\,\tilde f^{(i)}_{D_1}(r_2),
+\qquad
+\tilde f^{(i)}_{D_1}(r_2) = \tilde f^{(i-1)}_{D_1}(r_2) + \beta(i,r_2)`,
+  what:R`Zero out attention to future tokens. This is the operator that makes the certification trick sound: the prediction at position \(t\) provably cannot see token \(t{+}1\).`,
+  why:R`Naively the verifier evaluates two \(s\times s\) structured matrices' MLEs — \(O(s^2)\) work, which would destroy succinct verification.`,
+  kit:["Hadamard sumcheck with an additive correction","Prefix-sum recurrence for triangular MLEs ⇒ O(s) verifier"],
+  schemes:{
+    deepprove:{
+      tldr:"A Hadamard-product sumcheck where the verifier evaluates both triangular matrices in O(s) via a running prefix sum.",
+      bullets:[
+        R`The verifier negates \(D_2\)'s contribution first, \(y' \leftarrow y_{T'_s} - \tilde f_{D_2}(r)\), reducing to a plain Hadamard check against \(D_1\).`,
+        R`The recurrence \(\tilde f^{(i)}_{D_1}(r_2) = \tilde f^{(i-1)}_{D_1}(r_2) + \beta(i,r_2)\) means you precompute all \(\beta(i,r_2)\) once and sweep. Total \(O(s)\).`,
+        R`Slots into the single-head attention protocol between the score matmul and the softmax.`,
+        R`zkGPT's evaluated model has no attention mask at all.`
+      ],
+      cost:"Attention mask: 3.96% (GPT-2) / 0.97% (Gemma 3) of PIOP time."
+    }
+  }
+},
+{
+  id:"softmax", group:"Attention", name:"Softmax", sub:"the exponential problem",
+  difficulty:"hostile", diffLabel:"DeepProve's #2 cost",
+  tex:R`Y[i,j] \;=\; \frac{e^{-X[i,j]}}{\sum_k e^{-X[i,k]}}
+\\[10pt]
+\text{shift-invariance:}\qquad Y = \mathrm{Softmax}(X - Z) = e^{-X[i,j] + Z[i,j]}
+\\[10pt]
+\text{so prove: (1) an exponentiation, by lookup; (2) } \textstyle\sum_j Y[i,j] \approx \mathrm{Quant}(1.0)`,
+  what:R`Row-normalise the masked score matrix into an attention distribution.`,
+  why:R`\(e^x\) is not a polynomial. The denominator is a division. And the numerically-stable form subtracts the row max — a data-dependent quantity the verifier cannot recompute. The naive circuit is enormous and the quantized exponent loses precision fast.`,
+  kit:["Shift-invariance: softmax(X) = softmax(X − Z) for row-constant Z","Exponent lookup table + range checks on the remaining chunks","Row-sum ≈ Quant(1.0) as the well-formedness check on Z","Batched lookup + batched sumcheck across heads"],
+  schemes:{
+    deepprove:{
+      tldr:"zkLLM's protocol, extended to batch across all heads, with real-valued (not power-of-two) scale factors.",
+      quotes:[
+        { t:R`The main difference between our protocol and that of zkLLM is that their protocol only uses scaling factors of the form \(2^k\) with \(k \in \mathbb{Z}\) whereas we allow for \(k \in \mathbb{R}\) to allow for smaller step sizes between table entries for the same table size.`,
+          src:"DeepProve", sec:"Appendix B.7", name:"Softmax" }
+      ],
+      bullets:[
+        R`The shift matrix \(Z\) is a <strong>non-deterministic witness</strong>: the prover commits to it, then proves it honest by showing each row of \(Y\) sums to approximately \(\mathrm{Quant}(1.0)\). No division is ever proven.`,
+        R`Exponentiation is a lookup. Inputs decompose into 16-bit segments; following zkLLM, only the most significant segment's exponential is computed, the rest are merely range-checked.`,
+        R`<strong>Departure from zkLLM:</strong> zkLLM restricts scale factors to \(2^k\) for integer \(k\); DeepProve allows \(k\in\mathbb{R}\), giving finer table step sizes at the same table size — directly buying accuracy.`,
+        R`The batched relation proves \(h\) softmaxes at once: prover \(O(h s^2)\), proof \(O(h\log s + \log^2 s)\). This is what makes multi-head attention tractable.`,
+        R`Round-by-round soundness handles three doom cases: bad row sums, out-of-range row sums, and a bad exponent lookup.`
+      ],
+      cost:"<b>29.7%</b> of witness-commitment time (the single largest) and 19.4% of PIOP time, for GPT-2."
+    },
+    jolt:{
+      tldr:"Listed as a lookup-table activation. No dedicated protocol is given.",
+      quotes:[
+        { t:R`Non-linear operations like Softmax cannot be expressed as polynomial relations. Jolt Atlas uses lookup arguments to verify these operations: the prover demonstrates that each input-output pair appears in a precomputed lookup table.`,
+          src:"Jolt Atlas", sec:"§4", name:"Lookup Arguments in Small Space" }
+      ],
+      bullets:[
+        R`<code>Softmax</code> appears in the supported ONNX operator set alongside <code>Relu</code>, <code>Sigmoid</code>, <code>Tanh</code>, <code>Erf</code>, all "via lookup tables".`,
+        R`The paper's opening motivation names softmax as the canonical operation that "cannot be expressed as polynomial relations" — but no shift trick, no denominator handling, and no well-formedness argument for the normalisation is described.`,
+        R`Presumably <code>ReduceSum</code> plus <code>Div</code> (with advice) handles the denominator, and the exponential is a table. The composition, and its accuracy, is left unstated.`
+      ]
+    }
+  }
+},
+{
+  id:"mha", group:"Attention", name:"Multi-head attention", sub:"and GQA for Gemma 3",
+  difficulty:"hostile", diffLabel:"Composition + padding pain",
+  tex:R`Y_i = \mathrm{Softmax}\!\left(\frac{Q_i K_i^\top}{\sqrt{d/h}}\right) V_i,\quad i\in[h],
+\qquad Y = [Y_1 \,\|\, \cdots \,\|\, Y_h]
+\\[10pt]
+\text{if } d/h \text{ is not a power of two: pad to } \tilde d_k = \text{next\_pow2}(d/h)
+\\[4pt]
+\text{and prove the padding: } \hat Y = Y\cdot P_1,\qquad P_1\in\{0,1\}^{d\times \tilde d_k h}`,
+  what:R`Run \(h\) independent attention heads on column-slices of \(Q,K,V\), then concatenate. Gemma 3 uses grouped-query attention, sharing \(K/V\) across query groups.`,
+  why:R`Two problems. First, the verifier holds an oracle for the concatenated \(Y\), not each \(Y_i\), so per-head evaluation claims must be recombined — which only works cleanly when the head dimension is a power of two, and it usually isn't. Second, every sub-operator must be batched or you pay \(h\) times over.`,
+  kit:["Batched everything: matmul, softmax, lookups","Random linear combination of per-head claims via β(i, r_h)","Sparse 0/1 padding matrices, MLE-evaluable in Õ(d)"],
+  schemes:{
+    deepprove:{
+      tldr:"A 13-step composition that runs the whole block backwards, batching across heads, with an explicit power-of-two padding argument.",
+      bullets:[
+        R`<strong>Power-of-two case.</strong> Recombine per-head claims as \(y_Y = \sum_i \beta(i, r_h)\,y_{Y_i}\) for a fresh random \(r_h\in\mathbb{F}^{\log h}\). Same trick for \(Q, K^\top, V\).`,
+        R`<strong>General case.</strong> Pad each head to \(\tilde d_k\) with zero columns, then <em>prove the padding</em> as a matmul \(\hat Y = Y P_1\) against a sparse permutation matrix with exactly \(d\) non-zeros. The verifier evaluates \(\tilde f_{P_1}\) locally in \(\tilde{O}(d)\).`,
+        R`Order, output → input: recombine \(Y\) → batch matmul \((\hat Y_i = T_{s,i}\hat V_i)\) → batch softmax → masking PIOP → batch matmul \((T_p = \hat Q \hat K^\top)\) → recombine \(Q,K,V\) → batch matmul \((Q = XW_Q)\).`,
+        R`Every step hands the next an evaluation claim rather than a committed tensor. Intermediate activations are never committed.`,
+        R`Gemma 3's grouped-query attention drops out of the same machinery: it is MHA where \(K/V\) heads are shared, so the batched instance count changes but no protocol does.`
+      ]
+    },
+    jolt:{
+      tldr:"Composed from Einsum attention patterns and lookup activations. No head-recombination or padding argument appears.",
+      bullets:[
+        R`Attention is named as one of three target workloads (classification, embedding generation, transformer attention), and Einsum covers the batched contractions.`,
+        R`The power-of-two head-dimension problem, per-head claim recombination, and batching across heads are not discussed. In a trace-based zkVM model these may simply not arise the same way — but the paper does not say.`
+      ]
+    }
+  }
+},
+
+/* ---- Normalization & activation ---- */
+{
+  id:"rmsnorm", group:"Normalization & activation", name:"RMSNorm", sub:"Gemma 3, Llama",
+  difficulty:"hostile", diffLabel:"Square roots and inverses",
+  tex:R`Y[i,j] = \frac{X[i,j]}{\sqrt{\frac{1}{d}\sum_{j} X[i,j]^2}}
+\\[12pt]
+\text{DeepProve instead:}\quad
+\text{witness } d[i] = \mathrm{Quant}\!\left(1 \Big/ \sqrt{\tfrac{1}{d}\textstyle\sum_j X[i,j]^2}\right)
+\\[4pt]
+\text{prove } Y[i,j] = X[i,j]\cdot d[i] \quad\text{(Phase 1)}
+\qquad
+\text{prove } \textstyle\sum_j Y[i,j]^2 \approx \mathrm{Quant}(1.0) \quad\text{(Phase 2)}`,
+  what:R`Rescale each row to unit root-mean-square. No mean subtraction.`,
+  why:R`A circuit for RMSNorm contains a square root and a reciprocal. Both are SNARK-hostile, and both must be represented as quantized values — so you eat a rounding error at each, on every row, of every layer. The errors accumulate through the variance sum and crater accuracy.`,
+  kit:["Non-deterministic witness for the reciprocal norm","Well-formedness via a normalized-output invariant","Adapted requantization instead of an inverse-sqrt lookup","Or: a direct Rsqrt lookup table"],
+  schemes:{
+    deepprove:{
+      tldr:"Never prove a square root. Guess the inverse norm, multiply by it, and prove the result is normalized.",
+      quotes:[
+        { t:R`The "standard" approach of proving the above, which was also adopted by all prior works, is to first construct a circuit that directly computes the RMSNorm layer and subsequently invoke a PIOP for proving the correct computation of that circuit. Unfortunately, this approach not only incurs significant prover overheads since it contains many "SNARK-unfriendly" operations such as square roots and inverses, but also leads to a significant accuracy loss.`,
+          src:"DeepProve", sec:"§4.3.3", name:"Proving RMSNorm" },
+        { t:R`Proving norms is challenging because small errors accumulate during the sum on the variance and expected value. This, in turn, drastically reduces the accuracy.`,
+          src:"DeepProve", sec:"Appendix C", name:"Norm layers relying on zkLLM technique" }
+      ],
+      bullets:[
+        R`<strong>Phase 1.</strong> The prover supplies \(d[i]\) as a non-deterministic witness and shows \(Y = \mathrm{ReQuant}(X\circ d)\). The verifier has no oracle for \(X' = X\circ d\), so a sumcheck reduces the claim on \(\tilde f_{X'}\) to claims on \(\tilde f_X\) and \(\tilde f_d\).`,
+        R`<strong>Phase 2.</strong> Well-formedness: prove \(\sum_j Y[i,j]^2 \approx \mathrm{Quant}(\delta_4/d)\) by a lookup range check on the row sums, then a sumcheck linking those sums back to the oracle of \(Y\). If \(d[i]\) were wrong, the rows wouldn't be normalized.`,
+        R`Concretely the prover computes rescaling factors \(s_1/(d_j s_2) = 2^{-l_j}\epsilon_j\), commits to a single max right-shift \(r = \max_j l_j + f\) and the vector \(\{\mathrm{Round}(\epsilon_j 2^r)\}\), then reuses the requantization protocol verbatim.`,
+        R`Appendix C proves the error bound \(\big|\frac{n}{s_2^2}\sum_i N_{q,j,i}^2 - n\big| \le \frac{n}{s_2} + \frac{n}{4}\): the quantized output really is normalized, up to a bound set by the output scale.`,
+        R`Payoff: no sqrt lookup, no inverse lookup, no separate requantization pass afterwards, and "negligible accuracy loss".`
+      ],
+      cost:"RMSNorm: 6.02% of PIOP / 10.6% of witness commit (GPT-2); 15.2% / 21.9% (Gemma 3)."
+    },
+    jolt:{
+      tldr:"Rsqrt is a first-class ONNX op, proven by lookup. The rounding-error accumulation DeepProve engineers around is not analysed.",
+      bullets:[
+        R`<code>Rsqrt</code> (reciprocal square root) appears directly in the supported "Math Functions" set, so the whole normalisation is <code>Mul</code> ∘ <code>Rsqrt</code> ∘ <code>Div</code> ∘ <code>ReduceSum</code> of squares.`,
+        R`This is precisely the "standard approach" DeepProve rejects — quantizing the inverse square root introduces rounding error at each row, of each layer, and the errors accumulate through the variance sum.`,
+        R`Whether that matters for Jolt Atlas depends on its fixed-point precision, which the paper does not report. With 16-bit activations it may well be fine; with 8-bit it would not be.`
+      ]
+    }
+  }
+},
+{
+  id:"layernorm", group:"Normalization & activation", name:"LayerNorm", sub:"GPT-2",
+  difficulty:"hostile", diffLabel:"RMSNorm plus a mean",
+  tex:R`Y[i,j] = \frac{X[i,j]-\mu_i}{\sqrt{\frac{1}{d}\sum_j (X[i,j]-\mu_i)^2}}
+\\[12pt]
+\text{key identity:}\qquad \mathrm{LayerNorm}(X[i,:]) = \mathrm{RMSNorm}\big(X[i,:] - \mu_i\big)`,
+  what:R`Centre each row, then rescale to unit variance.`,
+  why:R`The same square root and reciprocal as RMSNorm, plus a mean that is itself a division by \(d\). LayerNorm is also a documented source of the outlier activations that break quantization elsewhere in the model.`,
+  kit:["Reduction to RMSNorm on the centred input","Mean as a non-deterministic witness + lookup well-formedness","Or: ReduceMean decomposed into ReduceSum + Div"],
+  schemes:{
+    deepprove:{
+      tldr:"Reduce to the RMSNorm protocol on X − μ, and prove μ separately.",
+      bullets:[
+        R`The prover supplies \(m = (\mu_1,\dots,\mu_s)\) as non-deterministic input, then proves \(\mathrm{Quant}(1/d)\sum_j X[i,j] \approx \mu_i\) via a lookup argument.`,
+        R`Everything else is the RMSNorm PIOP applied to \(X'[i,j] = X[i,j] - d[i]\).`,
+        R`Lemma 4 closes the loop: if the row-sum bound \(|\sum_i N_{q,j,i}| \le n/2\) holds, then \(|\mu_j - a_j| \le 1/2\) — the committed mean really is the quantized mean.`,
+        R`Prover \(O(sd)\); proof and verification \(O(\log^2 sd)\).`
+      ]
+    },
+    jolt:{
+      tldr:"Assembled from ONNX primitives: ReduceMean is decomposed internally into ReduceSum + Div.",
+      quotes:[
+        { t:R`Reduction Operations: ReduceSum along arbitrary axes; ReduceMean (decomposed internally into ReduceSum + Div). Math Functions: Rsqrt (reciprocal square root).`,
+          src:"Jolt Atlas", sec:"§5.2", name:"Operator Support" }
+      ],
+      bullets:[
+        R`<code>ReduceMean</code> is explicitly "decomposed internally into <code>ReduceSum</code> + <code>Div</code>", and <code>ReduceSum</code> works along arbitrary axes.`,
+        R`The <code>Div</code> carries a non-deterministic advice value; the <code>Rsqrt</code> is a lookup. Composition gives LayerNorm with no bespoke protocol.`,
+        R`Elegant in the graph-compiler sense — you get LayerNorm for free once the primitives exist — but it inherits exactly the accuracy concern DeepProve raises about quantizing inverses and square roots.`
+      ]
+    }
+  }
+},
+{
+  id:"gelu", group:"Normalization & activation", name:"GeLU activation", sub:"and Erf, Tanh, SiLU by the same recipe",
+  difficulty:"hostile", diffLabel:"DeepProve's #3 cost",
+  tex:R`\mathrm{GeLU}(x) = x\cdot \mathbb{P}[X \le x], \qquad X\sim\mathcal{N}(0,1)
+\\[10pt]
+\text{table: } T_{\mathrm{GeLU}}[j] = \mathrm{Quant}\big(\mathrm{DeQuant}(j)\cdot \mathbb{P}[X \le \mathrm{DeQuant}(j)]\big),\quad j\in[2^q]`,
+  what:R`The FFN's non-linearity: a Gaussian CDF multiplied by its input. In ONNX it is typically expressed through <code>Erf</code>.`,
+  why:R`A CDF is not remotely algebraic. The only sane approach is a lookup table over the quantized domain — which means the input must already be small enough to address the table. Making that true costs you either a requantization or a range reduction.`,
+  kit:["Direct lookup table over the q-bit domain","Table replacement inside the requantization argument (operator fusion)","Prefix-suffix decomposition: 2^{Cb} entries → O(C·2^b)","Neural teleportation: shrink the input domain σ(x/τ)"],
+  schemes:{
+    deepprove:{
+      tldr:"Fuse GeLU into the preceding requantization: swap the range-check table for a GeLU table and adjust the recombination function's edge cases.",
+      quotes:[
+        { t:R`If a non-linear layer is followed after a linear one, then, instead of adding a separate and explicit requantization layer we can merge both the requantization and the non-linear layer operation as a unified layer. […] This not only reduces the proving time and proof size but also increases the accuracy since the nonlinear layer now takes the unclamped output of the linear layer as its input.`,
+          src:"DeepProve", sec:"Appendix B.2", name:"Merging requantization with Non-Linear Layers" }
+      ],
+      bullets:[
+        R`<strong>Case 1 — input already \(q\)-bit.</strong> A plain lookup PIOP against \(T_{\mathrm{GeLU}}\).`,
+        R`<strong>Case 2 — input is \(q'\)-bit or wider.</strong> Run the requantization lookup argument, but replace table \(T_{q'/q}\) with \(T_{\mathrm{GeLU}}\), and replace the clamped edge values of \(\mathrm{Comb}_y\) with \(\mathrm{Quant}(\mathrm{DeQuant}(\pm 2^{q-1})\cdot \mathbb{P}[X \le \mathrm{DeQuant}(\pm 2^{q-1})])\).`,
+        R`This is <em>operator fusion</em>: one lookup argument instead of two. Smaller proof, faster prover, and higher accuracy, because GeLU now sees the unclamped, un-rounded linear output.`,
+        R`The same construction covers any tabulatable elementwise non-linearity: SiLU, GeGLU, tanh soft-capping.`
+      ],
+      cost:"Activation: 22.96% of witness commit / 13.96% of PIOP time (GPT-2)."
+    },
+    jolt:{
+      tldr:"Two table-shrinking techniques stacked: prefix-suffix decomposition of the table, and neural teleportation of its input domain.",
+      quotes:[
+        { t:R`Jolt Atlas therefore uses a global, one-sided approximation: every pre-activation input to a selected activation is divided by a single factor τ > 1, with no compensating output multiplication and no weight rescaling. Concretely, the original computation y = σ(x) is replaced by y′ = σ(x/τ), which is a lossy approximation (i.e., y′ ≠ y in general) but it is not significant in practice.`,
+          src:"Jolt Atlas", sec:"§4.2", name:"Neural Teleportation for Lookup Table Compression" },
+        { t:R`With τ = 4, the effective input range shrinks by 4×, from [−R, R] to [−R/4, R/4], and the lookup table is bounded by \(2^{16}\) entries. Empirical evaluation shows that τ = 4 introduces output differences of less than 55 units on a 128-scale fixed-point representation, acceptable for most inference tasks.`,
+          src:"Jolt Atlas", sec:"§4.2", name:"Neural Teleportation for Lookup Table Compression" }
+      ],
+      bullets:[
+        R`<strong>Prefix-suffix decomposition.</strong> A table on two 64-bit inputs would need \(2^{128}\) entries. Partition the input bits into \(C\) segments of width \(b\); for decomposable tables the MLE factors as \(\tilde T(x) = \sum_i \prod_{j=1}^{C} s_{i,j}(x^{(j)})\), reducing table size from \(2^{Cb}\) to \(O(C\cdot 2^b)\).`,
+        R`Worked example for ReLU: \(\mathrm{ReLU}(x)=(1-b_0)\cdot x\) is determined entirely by the sign bit, so it splits into \(p_{\mathrm{ReLU}}(x_{hi})s_{\mathrm{One}}(x_{lo}) + p_{\mathrm{NotMSB}}(x_{hi})s_{\mathrm{ReLU}}(x_{lo})\).`,
+        R`<strong>Neural teleportation</strong> (adapted from TeleSparse). Replace \(y=\sigma(x)\) with \(y'=\sigma(x/\tau)\), a <em>global one-sided</em> transform with no compensating output multiplication and no weight rescaling — so no re-committing to modified weights.`,
+        R`Why it works: saturating activations like \(\mathrm{erf}\) and \(\tanh\) spend most of their range in flat regions where \(\sigma(x)\approx\pm 1\). For any input already saturated, \(\sigma(x/\tau)=\sigma(x)\) exactly. Error concentrates in the narrow linear region near the origin.`,
+        R`With \(\tau = 4\) the effective input range shrinks 4×, bounding the table at \(2^{16}\) entries, and introducing output differences of <strong>&lt;55 units on a 128-scale fixed-point representation</strong>. It is lossy — unlike TeleSparse's two-sided form, which is exact.`
+      ],
+      cost:"τ is tunable per model; the paper flags joint optimisation of τ with the prefix-suffix chunk count C as open work."
+    }
+  },
+  debate:{
+    title:"Fuse, or shrink?",
+    body:R`<p>Both systems face the same wall: an activation table must be addressable. DeepProve <b>fuses</b> the table into the requantization it already had to perform, getting accuracy back as a side-effect. Jolt Atlas <b>shrinks</b> the table twice over — algebraically (prefix-suffix) and by deliberately distorting the model (teleportation).</p>
+    <p>Note the asymmetry in honesty about cost. DeepProve reports activation as 23% of its witness commitment. Jolt Atlas reports that teleportation is lossy and bounds the error, but never reports what activations cost in its prover, nor what the τ=4 distortion does to <b>model-level</b> accuracy — only to raw output units.</p>`
+  }
+},
+
+/* ---- Output & decoding ---- */
+{
+  id:"logits", group:"Output & decoding", name:"Unembedding → logits", sub:"h · Wᵀ over the vocabulary",
+  difficulty:"mid", diffLabel:"Big, but just a matmul",
+  tex:R`\mathrm{logits} = h \cdot W_U^\top, \qquad W_U \in \mathbb{F}^{V\times d}
+\\[6pt]
+V \approx 50{,}000 \;(\text{GPT-2}) \qquad V \approx 256{,}000 \;(\text{Gemma 3})`,
+  what:R`Project the final hidden state onto the vocabulary.`,
+  why:R`Structurally trivial, practically heavy: the vocabulary dimension is enormous, so this single matmul and its committed output dwarf any individual attention layer — especially for Gemma 3, whose 256k vocabulary makes logits the second-largest witness in the trace.`,
+  kit:["Matmul sumcheck","Nothing else — the cost is the shape, not the difficulty"],
+  schemes:{
+    deepprove:{
+      tldr:"An ordinary matmul PIOP. It shows up in the cost table because of vocabulary size, not difficulty.",
+      bullets:[
+        R`For Gemma 3 the logits are <strong>18.1%</strong> of witness-commitment time and 16.1% of PIOP time — roughly double their share in GPT-2, tracking the vocabulary ratio.`,
+        R`zkGPT's evaluated model omits the final projection layer entirely.`
+      ],
+      cost:"Logits: 9.19% (GPT-2) / 18.11% (Gemma 3) of witness commit."
+    }
+  }
+},
+{
+  id:"argmax", group:"Output & decoding", name:"Argmax / greedy decode", sub:"and the sampling problem",
+  difficulty:"mid", diffLabel:"Two checks, one grand product",
+  tex:R`m[i] = \max\big(X[i,:]\big)
+\\[10pt]
+\text{decompose into:}\qquad
+\text{(i) } D[i,j] = m[i]-X[i,j] \ge 0 \;\;\forall j \quad(\text{upper bound})
+\\[4pt]
+\text{(ii) } \prod_{j} D[i,j] = 0 \quad(\text{attained})`,
+  what:R`Pick the highest-scoring token. This is what makes inference deterministic, and therefore what makes the certification algorithm sound.`,
+  why:R`\(\max\) is a comparison, not arithmetic. Proving "this is the largest" requires both a range argument (nothing exceeds it) and an existence argument (something equals it). And if the model samples instead, the whole soundness statement evaporates.`,
+  kit:["Lookup range check for non-negativity","Grand-product GKR circuit for the zero-existence check","Claim-linking: f_D(r₁,r₂) = f_m(r₂) − f_X(r₁,r₂)","De-randomization for top-k sampling"],
+  schemes:{
+    deepprove:{
+      tldr:"Split max into 'upper bound' plus 'attained', and prove the second with a grand product.",
+      quotes:[
+        { t:R`In practice, this is not a limitation since any randomized algorithm can be "de-randomized" by providing a single purely random seed as additional input. […] The main challenge comes from actually showing that the initial random seed has been sampled correctly. […] We note that we do not include this in our implementation, same as all prior works on verifiable LLM inference.`,
+          src:"DeepProve", sec:"§4.3.6", name:"Handling Non-Determinism" }
+      ],
+      bullets:[
+        R`The prover computes \(D[i,j] = m[i]-X[i,j]\) and runs a lookup range PIOP to show \(D \ge 0\) everywhere.`,
+        R`Then a specialised GKR grand-product circuit shows \(\prod_j D[i,j] = 0\) for each row — the max is actually achieved.`,
+        R`\(D\) is linked back to the committed \(m\) and \(X\) by \(\tilde f_D(r_1,r_2) = \tilde f_m(r_2) - \tilde f_X(r_1,r_2)\), checked at both random points the two subprotocols produce.`,
+        R`<strong>Sampling.</strong> If decoding is stochastic, de-randomize: take the seed as public input and prove the decode stage against it. Proving the seed was honestly sampled needs a randomness beacon or an interactive coin flip. <em>Not implemented — nor in any prior work.</em>`
+      ]
+    }
+  }
+},
+{
+  id:"certify", group:"Output & decoding", name:"Sequence certification", sub:"the trick that kills the quadratic",
+  difficulty:"friendly", diffLabel:"DeepProve's best idea",
+  tex:R`\begin{aligned}
+\text{prompt} &: \texttt{"The cat"}\\
+\text{claimed} &: \texttt{"sat on the mat"}\\[6pt]
+\text{concatenated} &: [\texttt{The},\, \texttt{cat},\, \texttt{sat},\, \texttt{on},\, \texttt{the},\, \texttt{mat}]\\
+\text{predicted} &: [\texttt{cat},\, \texttt{sat},\, \texttt{on},\, \texttt{the},\, \texttt{mat},\, \bot]\\[6pt]
+\text{certify} &\iff \text{predicted}[t] = \text{concatenated}[t{+}1]\quad \forall t
+\end{aligned}
+\\[8pt]
+\text{one forward pass} \;\Rightarrow\; \text{prover } O(t\,|C|),\;\text{not } O(t^2 |C|)`,
+  what:R`Rather than proving \(t\) sequential generation steps, prove one forward pass over the concatenated prompt-and-output, and check that every position predicts its successor.`,
+  why:R`This is the difference between a demo and a system. Every prior work proves a single token, because the honest alternative — emulating a KV cache as in-circuit RAM — requires committing to auxiliary data linear in the number of reads and writes.`,
+  kit:["Causal mask ⇒ position t cannot see token t+1","Argmax ⇒ the forward pass is deterministic","Many predictions in one pass ⇒ everything batches"],
+  schemes:{
+    deepprove:{
+      tldr:"Certify the output rather than replay the computation. Soundness rests entirely on the causal mask plus determinism.",
+      quotes:[
+        { t:R`Our certification algorithm for this is extremely simple: It just feeds the entire sequence of input and output tokens into the model at once, essentially performing a single inference step. In practice, this translates to proving only the last inference step leading to prover times that are only linear to the input and output tokens rather than quadratic.`,
+          src:"DeepProve", sec:"§3.1", name:"Certification of the LLM Inference" },
+        { t:R`Because of the Attention Mask, the model's calculation for the \(t\)-th token cannot use the values of the \((t+1)\)-th token. Moreover, argmax in the final layer of GPT-2 and Gemma 3 provides determinism to the execution.`,
+          src:"DeepProve", sec:"§3.1", name:"Certification of the LLM Inference" }
+      ],
+      bullets:[
+        R`The attention mask guarantees the model's computation at position \(t\) cannot depend on token \(t{+}1\). So if the prediction at \(t\) equals the claimed token at \(t{+}1\), that token was correctly computed. Argmax supplies the determinism.`,
+        R`Reduces prover cost from quadratic to <strong>linear</strong> in total sequence length, with no in-circuit RAM and no KV-cache emulation.`,
+        R`A single pass produces \(s\) predictions simultaneously, which is exactly what the <em>batched</em> softmax, lookup and sumcheck variants exist to exploit. The trick and the batching are co-designed.`,
+        R`This is why throughput <em>increases</em> with sequence length (127 → 175 TPM as sequence goes 64 → 512): matmul's sublinear prover cost amortizes across more tokens.`
+      ]
+    }
+  },
+  debate:{
+    title:"What exactly does Jolt Atlas's 38 seconds cover?",
+    body:R`<p>Jolt Atlas reports proving GPT-2 (125M) end-to-end in ~38 s on a 16 GB MacBook. DeepProve reports 174 tokens per minute — roughly 0.34 s per token — for GPT-2 at sequence length 512.</p>
+    <p>These cannot be compared. Jolt Atlas states <b>no sequence length, no token count, no proof size, no verifier time, and no accuracy</b> for its GPT-2 run, and never discusses autoregression. If the 38 s is a single forward pass over a short input, it is roughly in DeepProve's territory once you account for its far weaker hardware. If it is a full generation, it is a landmark result. <b>The paper does not say.</b></p>`
+  }
+},
+
+/* ---- Systems-level obligations ---- */
+{
+  id:"memory", group:"Systems-level obligations", name:"Memory & read consistency", sub:"what a tensor read owes you",
+  difficulty:"mid", diffLabel:"Or: avoid it entirely",
+  tex:R`\widetilde{\mathrm{Val}}(r_{\mathrm{addr}}, r_{\mathrm{cycle}}) \;=\; \sum_{j} \mathrm{Inc}(j)\cdot \mathrm{Wa}(j)\cdot \mathrm{Lt}(j, r_{\mathrm{cycle}})
+\\[8pt]
+\mathrm{Wa}(j) = \widetilde{\mathrm{eq}}(r_{\mathrm{addr}},\, \mathrm{td}(j)) \quad\text{(does cycle } j \text{ write this address?)}
+\\[4pt]
+\mathrm{Lt}(j, r_{\mathrm{cycle}}) \quad\text{(the "less-than" MLE: only writes before the queried cycle)}`,
+  what:R`If your computational model has tensor buffers that get written and later read — <code>Gather</code>, <code>Select</code>, any data-dependent index — you must prove every read returned the value most recently written to that address.`,
+  why:R`This is the classical offline memory-checking problem, and it is expensive: naive approaches commit to auxiliary bookkeeping linear in the number of accesses. Whether you owe it at all depends on whether your model of computation has mutable state.`,
+  kit:["Twist and Shout: one-hot addressing, structured increments","Read/write consistency as a sumcheck DAG","Booleanity + Hamming-weight checks on one-hot address polynomials","Or: choose a computational model with no mutable state"],
+  schemes:{
+    deepprove:{
+      tldr:"Sidesteps the obligation entirely. There is no RAM, so there is nothing to check.",
+      quotes:[
+        { t:R`To realize KV-caching, the prover has to emulate read/write RAM operations within the SNARK circuit. This complicates the prover's logic and leads to large concrete overheads even when using state-of-the-art protocols for emulating RAM (e.g., via lookup arguments) as they require the prover to commit to additional auxiliary data that scales linearly to the number of reads/writes.`,
+          src:"DeepProve", sec:"§1.1", name:"Quadratic blowup from vanilla inference" }
+      ],
+      bullets:[
+        R`Proving proceeds layer-by-layer, backwards, GKR-style. Each operator converts a claim about its output into a claim about its input. No addresses, no cycles, no mutable buffers.`,
+        R`This is exactly why the certification trick matters: emulating a KV cache would <em>introduce</em> RAM into a model that otherwise has none, "requiring the prover to commit to additional auxiliary data that scales linearly to the number of reads/writes."`,
+        R`Embedding — the one genuinely data-dependent read — is reformulated as a sparse one-hot matmul the verifier checks locally, so it needs no memory argument.`
+      ]
+    },
+    jolt:{
+      tldr:"Inherited from Jolt's Twist and Shout, adapted from CPU RAM to ONNX tensor buffers. It is Stages 4 and 5 of the proof.",
+      quotes:[
+        { t:R`Although ONNX computation removes general-purpose registers and arbitrary RAM access, we still need a notion of consistency of reads and writes over tensor buffers; the lesson from Twist and Shout is that domain-specific access patterns admit much cheaper consistency proofs than prior offline memory checking arguments.`,
+          src:"Jolt Atlas", sec:"§1.1", name:"Jolt's inheritance" }
+      ],
+      bullets:[
+        R`ONNX removes general-purpose registers and arbitrary RAM, but reads and writes over tensor buffers still need consistency. The lesson taken from Twist and Shout is that <em>domain-specific access patterns admit much cheaper consistency proofs</em> than generic offline memory checking.`,
+        R`<strong>Stage 4</strong> batches <code>RASumCheck</code> (virtualising \(D=8\) per-chunk one-hot address polynomials into groups) with <code>MemoryDag</code> (read-write consistency).`,
+        R`<strong>Stage 5</strong> evaluates the memory-value polynomial: \(\mathrm{Inc}\) is the committed increment, \(\mathrm{Wa}\) the write-allocation indicator, and \(\mathrm{Lt}\) the less-than MLE selecting only writes before the queried cycle.`,
+        R`Supporting checks: <code>BooleanitySumcheck</code> forces \(ra_i(k)^2 = ra_i(k)\), and <code>HammingWeightSumcheck</code> forces \(\sum_k ra_i(k) = 1\) — together, each address polynomial is genuinely one-hot.`
+      ]
+    }
+  },
+  debate:{
+    title:"The cost of generality",
+    body:R`<p>Jolt Atlas pays for memory checking because it inherited a zkVM's computational model, where a trace is a sequence of steps over mutable buffers. DeepProve pays nothing because it treats the model as a static DAG of tensor operators and never materialises state.</p>
+    <p>What Jolt Atlas buys with that payment is <b>generality</b>: any ONNX graph, any operator, no bespoke PIOP per layer. DeepProve buys <b>speed on one architecture</b> at the cost of writing a hand-crafted protocol for RMSNorm, for softmax, for RoPE, for argmax. Both are defensible. Neither is free.</p>`
+  }
+},
+{
+  id:"zk", group:"Systems-level obligations", name:"Zero-knowledge", sub:"hiding the weights and the prompt",
+  difficulty:"mid", diffLabel:"Usually not implemented",
+  tex:R`\text{relaxed R1CS: } (AZ)\circ(BZ) = u\cdot(CZ) + E
+\\[10pt]
+\text{fold two satisfying pairs with challenge } r:
+\\[4pt]
+\bar{E}' = \bar{E}_1 + r\bar{T} + r^2 \bar{E}_2, \quad
+u' = u_1 + r u_2, \quad
+\bar{W}' = \bar{W}_1 + r\bar{W}_2
+\\[8pt]
+\text{correctness from Pedersen homomorphism: } \mathrm{Com}(W', r_W') = \bar{W}_1 + r\bar{W}_2 = \bar{W}'`,
+  what:R`Make the proof reveal nothing beyond the statement's validity — hiding the model weights, the user's input, or both. The "zk" in zkML is frequently aspirational.`,
+  why:R`A sumcheck transcript is not zero-knowledge. Round polynomial coefficients, claimed evaluations and opened commitments all leak information about the witness. Retrofitting hiding onto a multi-stage sumcheck system without destroying its performance is a distinct research problem.`,
+  kit:["Pedersen-commit every prover message","Encode the sumcheck verifier as an R1CS circuit","Nova-style folding with a random satisfying instance","Zero-knowledge sumcheck (Chiesa–Forbes–Spooner)"],
+  schemes:{
+    jolt:{
+      tldr:"BlindFold, from Vega. Commit to every round polynomial, encode the sumcheck verifier in R1CS, and fold it with a random satisfying instance.",
+      quotes:[
+        { t:R`Jolt Atlas' prover executes multiple sumcheck stages, each producing a transcript of polynomial coefficients and verifier challenges. These transcripts are not zero-knowledge, since they reveal the witness. BlindFold retrofits zero-knowledge onto these proofs by encoding the sumcheck verifier as an R1CS circuit and applying Nova-style folding with a random satisfying pair.`,
+          src:"Jolt Atlas", sec:"§3", name:"Zero Knowledge via BlindFold" },
+        { t:R`Since the number of sumcheck rounds is logarithmic in the original computation size (each round halves the domain), the BlindFold circuit is logarithmic in the size of the computation being proven.`,
+          src:"Jolt Atlas", sec:"§3.2", name:"R1CS Encoding of the Sumcheck Verifier" },
+        { t:R`The verifier never sees the polynomial coefficients, Horner intermediates, or evaluation values, only their commitments. BlindFold guarantees that these hidden values satisfy the sumcheck verification equations, completing the zero-knowledge property.`,
+          src:"Jolt Atlas", sec:"§3.3", name:"Integration with Jolt Atlas" }
+      ],
+      bullets:[
+        R`<strong>1. Hide the messages.</strong> All prover messages — round polynomial coefficients, claimed evaluations — are sent as Pedersen commitments rather than plaintext.`,
+        R`<strong>2. Encode the verifier.</strong> Each sumcheck round contributes one sumcheck-identity constraint \(2c_0 + c_1 + \cdots + c_{d_s} = \sigma_j\) and \(d_s\) Horner-evaluation constraints implementing \(\sigma_{j+1} = g_j(r_j)\) through auxiliary variables \(t_0,\dots,t_{d_s-2}\).`,
+        R`<strong>3. Fold.</strong> Relaxed R1CS \((AZ)\circ(BZ) = u(CZ) + E\) folds cleanly under Nova; the real instance \((u=1, E=0)\) is folded with a randomly sampled satisfying instance, so \(W_{\text{folded}} = W + r\cdot W_{\text{rand}}\) reveals nothing.`,
+        R`<strong>Circuit size.</strong> \(O\!\left(\sum_s n_s d_s\right) = O(N\cdot d_{\max})\). Since sumcheck rounds are logarithmic in the computation size, <em>the BlindFold circuit is logarithmic in the size of the computation being proven.</em>`,
+        R`One extra constraint binds the sumcheck reductions to the PCS: \(y_{\text{joint}} = \sum_i \beta_i y_{\omega_i}\), with the evaluation commitment \(\bar V = y_{\text{joint}}G + bH\) in the instance. Without it, a prover could satisfy every sumcheck constraint using evaluation values inconsistent with the committed polynomials.`
+      ],
+      cost:"The verifier never sees coefficients, Horner intermediates, or evaluation values — only their commitments."
+    }
+  },
+  debate:{
+    title:"DeepProve is not zero-knowledge",
+    body:R`<p>Despite framing the work in terms of zero-knowledge proofs, the DeepProve paper constructs PIOPs, proves round-by-round <b>knowledge soundness</b>, and applies the BCS transform for non-interactivity. It never constructs a hiding argument, and never claims the proof hides the weights or the prompt.</p>
+    <p>That is a perfectly reasonable scope — verifiable inference is the stated goal, and integrity is the property enterprises actually want. But if your threat model needs the <b>model weights</b> or the <b>user's prompt</b> hidden from the verifier, DeepProve as published does not give it to you and Jolt Atlas does.</p>`
+  }
+},
+{
+  id:"scale", group:"Systems-level obligations", name:"The memory wall", sub:"scale out, or scale down",
+  difficulty:"hostile", diffLabel:"The real binding constraint",
+  tex:R`\textbf{DeepProve — scale out.}\quad \text{partition the operator DAG into chunks of consecutive layers}
+\\[3pt]
+\text{verifier checks } \mathrm{chunk}_i.\mathrm{out\_commit} = \mathrm{chunk}_{i+1}.\mathrm{in\_commit}
+\\[10pt]
+\textbf{Jolt Atlas — scale down.}\quad \tilde T(x) = \sum_i \prod_{j=1}^{C} s_{i,j}\big(x^{(j)}\big)
+\\[3pt]
+\text{peak memory } O(|T|) \rightarrow O\big(|T|^{1/C}\big), \qquad \text{time } O(C|T|)`,
+  what:R`Not an optimisation — a necessity. DeepProve needs 147 GB of RAM for Gemma 3 at sequence length 512, and estimates that a 3B-parameter model would need over a terabyte.`,
+  why:R`Many SNARKs materialise large portions of the witness and intermediate polynomials in memory to commit and open them. Memory utilisation, not prover time, is what actually stops you.`,
+  kit:["Horizontal DAG partitioning; commit to chunk boundaries","Single-round aggregation for WAN tolerance","Prefix-suffix table decomposition ⇒ streaming prover","Space-efficient or disk-based SNARKs (open)"],
+  schemes:{
+    deepprove:{
+      tldr:"Scale out. Partition the DAG horizontally, prove chunks in parallel, concatenate. One round of communication.",
+      quotes:[
+        { t:R`This makes memory utilization the main bottleneck of our prover (e.g., proving models with more than 3 billion parameters, such as GPT-J, would likely require over a terabyte of RAM). We leave as an interesting future direction efficiently reducing total memory utilization using space-efficient or disk-based SNARKs.`,
+          src:"DeepProve", sec:"§5", name:"Memory Utilization" }
+      ],
+      bullets:[
+        R`All three proving steps — witness commitment, PIOP, PCS opening — work on a subgraph with little added cost and no dependence on the underlying cryptography.`,
+        R`Committing to each chunk's inputs and outputs makes chunks independent, so they prove simultaneously. The coordinator streams each subtrace to its worker as soon as it is ready, overlapping proving with inference.`,
+        R`The verifier must check that the partition is consistent with the real model DAG (no dropped nodes) and that each chunk's input commitment matches the previous chunk's output commitment.`,
+        R`<strong>1855 TPM</strong> with 17 machines (10.6× speedup); 1079 TPM with 9. Total communication equals the proof size (43–54 MB). At 100 Mb/s WAN, only a 2% slowdown.`,
+        R`The authors name space-efficient and disk-based SNARKs as the open direction for attacking memory directly — which is precisely what Jolt Atlas does.`
+      ],
+      cost:"96 GB (BaseFold) / 147 GB (HyperKZG) single-machine RAM at Gemma 3, seq 512."
+    },
+    jolt:{
+      tldr:"Scale down. Decompose the lookup tables so the prover streams, and the whole thing fits on a laptop.",
+      quotes:[
+        { t:R`This enables streaming provers that trade time (typically \(O(C)\) streaming passes) for space, reducing peak memory from \(O(|T|)\) to roughly \(O(|T|^{1/C})\) while incurring total prover time on the order of \(O(C|T|)\) field operations. This directly motivates Jolt Atlas's focus on "streaming" proving for large models on constrained devices.`,
+          src:"Jolt Atlas", sec:"§1.1", name:"Prefix-suffix decomposition and streaming" },
+        { t:R`Unlike Jolt, our computational model doesn't require us to commit to the full witness at once, but rather to the inner values of tensors. Dory, the polynomial commitment scheme used in Jolt, is only justified for witnesses over \(2^{26}\) elements. We therefore replace it with HyperKZG.`,
+          src:"Jolt Atlas", sec:"§1.2", name:"Our Contributions — Faster commitments" },
+        { t:R`On-Chain Verification: Deploying proofs on Ethereum is challenging due to HyperKZG's \(\mathbb{G}_T\) operations. Replacing HyperKZG with a lattice-based PCS may also mitigate this limitation.`,
+          src:"Jolt Atlas", sec:"§7", name:"Future Work" }
+      ],
+      bullets:[
+        R`Prefix-suffix decomposition lets a large table's MLE factor into components over smaller domains, enabling a streaming prover: peak memory falls from \(O(|T|)\) to roughly \(O(|T|^{1/C})\) at a cost of \(O(C|T|)\) field operations, for tunable \(C\).`,
+        R`They also replace Jolt's Dory PCS with <strong>HyperKZG</strong>, arguing Dory "is only justified for witnesses over \(2^{26}\) elements", and that the tensor model doesn't require committing to the full witness at once — only to the inner values of tensors. Trading a transparent setup for pairing-based succinct openings suited to on-chain verification.`,
+        R`Result: GPT-2 (125M) proves end-to-end in <strong>~38 s on a MacBook Pro M3 with 16 GB RAM</strong>. nanoGPT (~0.25M) in 14 s, versus EZKL's 237 s — a ~17× speedup before counting EZKL's >400 s of key generation.`,
+        R`Cost of the pairing choice: they flag that on-chain Ethereum verification is <em>challenging</em> because of HyperKZG's \(\mathbb{G}_T\) operations, and float lattice-based PCS (Hachi, ABBA) as future work for post-quantum security and on-chain viability.`
+      ],
+      cost:"GPT-2 (125M) breakdown: sumcheck ~16 s, witness gen ~7.5 s, reduction opening ~7 s, commitment ~3.5 s, HyperKZG ~3 s."
+    }
+  },
+  debate:{
+    title:"Opposite answers to the same question",
+    body:R`<p>This is the cleanest philosophical split between the two systems, and the one most likely to determine which you should use.</p>
+    <p>DeepProve accepts a large memory footprint and buys throughput with a cluster: 1855 tokens per minute, if you have 17 machines. Jolt Atlas accepts a slower asymptotic prover — \(O(C|T|)\) field operations instead of \(O(|T|)\) — to fit inside 16 GB and run on the user's own device.</p>
+    <p><b>These serve different deployments.</b> A cloud inference provider proving to an enterprise customer wants DeepProve's throughput. A user proving on their own laptop that a local model produced a given answer — Jolt Atlas's stated target, agentic guardrails and trustless AI memory — wants streaming.</p>`
+  }
+},
+{
+  id:"halluc", group:"Systems-level obligations", name:"Proof of non-hallucination", sub:"an unexpected freebie",
+  difficulty:"friendly", diffLabel:"Nearly free",
+  tex:R`\mathrm{Ker}(Q,K) = \mathrm{softmax}\!\left(\frac{Q K^\top}{\sqrt{d}}\right) \qquad \text{— already computed as } T_s
+\\[10pt]
+\text{attention score} = \log\det \mathrm{Ker}(Q,K) = \sum_{i=0}^{s-1} \log \mathrm{Ker}_{i,i}
+\\[6pt]
+\text{(lower-triangular after masking} \Rightarrow \det = \text{product of the diagonal)}`,
+  what:R`Prove that the generated response passed a white-box hallucination detector (LLM-Check), alongside the proof of inference itself.`,
+  why:R`Not hard — and that is the point. The detector's core quantity is the log-determinant of the attention kernel, which the inference proof <em>already contains</em> as the softmax output \(T_s\). Masking makes the kernel triangular, so the determinant is the diagonal product, so the log-det is a sum of logs.`,
+  kit:["Lookup table to approximate log₂","Sumcheck to aggregate the diagonal","Reuse of the existing softmax witness"],
+  schemes:{
+    deepprove:{
+      tldr:"First cryptographic proof of LLM non-hallucination. A lookup for log, a sumcheck for the sum, riding on witnesses that already exist.",
+      bullets:[
+        R`Detection algorithm: LLM-Check's Attention Score, aggregated across heads by averaging (a summation, since shapes are fixed).`,
+        R`Chosen because it is white-box (the prover has all internal states anyway), needs no external database, and needs no second LLM for post-processing — the three properties that make a detector provable.`,
+        R`Measured: <strong>68.69% AUROC / 67.96% accuracy</strong> on GPT-2 (Fava annotation dataset, 460 samples), 65.84% / 64.16% on Gemma 3. Quantization slightly <em>improved</em> GPT-2's detection and slightly degraded Gemma 3's.`,
+        R`Prover overhead for the gadget: <strong>98 ms</strong> (GPT-2), 21 ms (Gemma 3) at sequence length 512 — a rounding error against a multi-minute proof.`
+      ],
+      cost:"98.1 ms (GPT-2) / 21.1 ms (Gemma 3), seq 512."
+    }
+  }
+}
+];
+
+/* ==========================================================================
+   STATIC PAGES
+   ========================================================================== */
+const GROUPS = [...new Set(OPERATORS.map(o => o.group))];
+const opIndex = id => OPERATORS.findIndex(o => o.id === id);
+
+function pOverview(){
+  const covered = OPERATORS.filter(o => INDEXED.every(p => o.schemes[p.id])).length;
+  return R`
+  <div class="crumb">Orientation / <b>Start here</b></div>
+  <h2 class="ptitle">The Operator <em>Atlas</em> of Provable LLM Inference</h2>
+  <p class="lede">A transformer forward pass is roughly a dozen distinct algorithms wearing a trench coat. To prove one in zero knowledge you must prove <strong>every</strong> one of them — matmuls, softmax, normalization, activations, positional rotations, argmax — plus the unglamorous glue (quantization, requantization, clamping, memory consistency) that turns out to dominate the bill.</p>
+  <div class="prose">
+  <p style="margin-top:28px">Each page in the left menu explains <strong>one algorithm</strong>: what it computes, why it resists a proof system, and the cryptographic toolbox that applies. Then, per page, a section for <strong>each proving scheme</strong> showing how that scheme actually handles it — and, where the schemes disagree, an explicit note about what is unresolved.</p>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b>${OPERATORS.length}</b><span>Algorithms catalogued</span></div>
+    <div class="fact"><b>${INDEXED.length} / ${PAPERS.length}</b><span>Schemes indexed</span></div>
+    <div class="fact"><b>${covered}</b><span>Covered by all schemes</span></div>
+    <div class="fact"><b>27%</b><span>DeepProve prover = requant</span></div>
+  </div>
+
+  <h3 class="head">The trace, in order</h3>
+  <pre class="ascii">tokens ─▶ EMBED (table lookup / Gather)
+       ─▶ + POSITIONAL  (APE ⊕ RoPE)
+       ─▶ ┌─ transformer block × L ─────────┐
+          │  NORM   (LayerNorm | RMSNorm)   │
+          │  QKV    (3 × MatMul)            │
+          │  RoPE   (on Q,K — Gemma)        │
+          │  SCORES (Q·Kᵀ / √dₖ)            │
+          │  MASK   (causal −∞)             │
+          │  SOFTMAX                        │
+          │  ATTEND (·V) ─▶ concat ─▶ proj  │
+          │  RESIDUAL ADD                   │
+          │  NORM                           │
+          │  FFN    (MatMul ▸ GeLU ▸ MatMul)│
+          │  RESIDUAL ADD                   │
+          └─────────────────────────────────┘
+       ─▶ FINAL NORM
+       ─▶ UNEMBED (logits = h · Wᵀ)
+       ─▶ ARGMAX / sample ─▶ next token
+
+  and interleaved — invisible in the ML paper,
+  everywhere in the ZK paper:
+
+       REQUANT · CLAMP · REQUANT · CLAMP …
+       MEMORY CONSISTENCY · WITNESS HIDING</pre>
+
+  <h3 class="head">The finding that should reorder your intuitions</h3>
+  <div class="prose">
+  <p>A decade of ZKML folklore says <em>matmul is the bottleneck</em>. At LLM scale, on DeepProve's own measurements, it is not. Sumcheck makes matrix multiplication nearly free: a linear-time prover, a logarithmic proof, and no commitment to the product. Matmul is <strong>14.9%</strong> of PIOP time.</p>
+  <p>What costs money is every place you must leave the field's native arithmetic and consult a <strong>lookup table</strong>: exponentials, Gaussian CDFs, right shifts, range checks, clamps. Softmax, activations and requantization together are more than half the prover. Requantization — an operator that does not exist in the GPT-2 paper at all, purely an artifact of living inside a finite field — is the single largest line item at 27%.</p>
+  <p>Read <a href="#/economics">Prover economics</a> for the full breakdown, or jump to <a href="#/op/requant">Requantization</a>. For how fast this has been moving — roughly four orders of magnitude in two years at fixed model size, and a frontier that now reaches a 13B model — plus the confounds that make those numbers softer than they look, see <a href="#/timeline">Throughput &amp; scale</a>.</p>
+  </div>`;
+}
+
+function pChallenges(){
+  return R`
+  <div class="crumb">Orientation / <b>Cross-cutting problems</b></div>
+  <h2 class="ptitle">Eight problems that exist before you prove a single operator</h2>
+  <p class="lede">These are structural. They are not about any one layer; they are about the mismatch between what a transformer is — floating-point, autoregressive, memory-hungry — and what a SNARK is: finite-field, one-shot, circuit-shaped.</p>
+  <h3 class="head">&nbsp;</h3>
+  <div class="grid2">
+    ${CHALLENGES.map(c => R`
+      <div class="chal">
+        <div class="cn">${c.n}</div>
+        <h4>${c.h}</h4>
+        <p>${c.p}</p>
+        ${c.fixes.map(f => R`<div class="ans ${f.p}"><span class="who">${f.p === 'dp' ? 'DeepProve' : 'Jolt Atlas'}</span>${f.t}</div>`).join('')}
+      </div>`).join('')}
+  </div>`;
+}
+
+function pMatrix(){
+  return R`
+  <div class="crumb">Orientation / <b>Coverage matrix</b></div>
+  <h2 class="ptitle">What each scheme actually built</h2>
+  <p class="lede">The fast way to see what a paper implemented versus what it waved at. The empty cells are the interesting ones: each is either a research gap or a claim the paper quietly did not make.</p>
+  <h3 class="head">&nbsp;</h3>
+  <div class="scrollx">
+    <table class="matrix">
+      <thead><tr>
+        <th style="min-width:210px">Algorithm</th>
+        ${INDEXED.map(p => R`<th style="min-width:300px">${p.name}<br><span style="color:var(--muted);letter-spacing:.08em">${p.venue}</span></th>`).join('')}
+      </tr></thead>
+      <tbody>
+        ${OPERATORS.map(o => R`<tr>
+          <th><a href="#/op/${o.id}">${o.name}</a></th>
+          ${INDEXED.map(p => {
+            const s = o.schemes[p.id];
+            return R`<td>${s ? s.tldr : '<span class="na">— not addressed —</span>'}</td>`;
+          }).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="prose"><p style="margin-top:24px;font-size:15px">"Not addressed" means the paper does not describe a protocol for it. That is not always a criticism — Jolt Atlas targets general ONNX graphs and never claims RoPE or argmax support, and DeepProve never claims zero-knowledge. It is, however, exactly what you need to know before choosing one.</p></div>`;
+}
+
+function bars(rows, cls, unit){
+  const max = Math.max(...rows.map(r => r[1]));
+  return R`<div class="bars ${cls || ''}">` + rows.map(([l, v]) => R`
+    <div class="bar-row">
+      <span class="bl">${l}</span>
+      <span class="bar-track"><span class="bar-fill ${cls === 'c2' ? 'c2' : ''}" style="width:${(v / max) * 100}%"></span></span>
+      <span class="bv">${v}${unit || '%'}</span>
+    </div>`).join('') + R`</div>`;
+}
+
+function pEconomics(){
+  return R`
+  <div class="crumb">Orientation / <b>Prover economics</b></div>
+  <h2 class="ptitle">Where the prover's money goes</h2>
+  <p class="lede">DeepProve publishes a full cost breakdown. Jolt Atlas publishes wall-clock stages. They measure different things on different hardware for different workloads — which is itself the most important fact on this page.</p>
+
+  <h3 class="head amber">DeepProve · GPT-2, seq 512, BaseFold, 48 threads</h3>
+  <div class="prose"><p>Phase split of total prover time.</p></div>
+  ${bars([["Witness commitment",56.85],["PIOP (all operators)",35.25],["Witness generation",5.97],["PCS opening",1.04],["Other",0.89]])}
+  <div class="prose"><p style="margin-top:22px">The polynomial commitment scheme dominates — but does not swamp the rest, because the GKR-style PIOPs deliberately avoid committing to intermediate activations. Only model weights and lookup witnesses get committed.</p></div>
+
+  <h3 class="head">Per-operator, inside witness commitment</h3>
+  ${bars([["Softmax",29.68],["Requantization",27.49],["Activation (GeLU)",22.96],["RMS/LayerNorm",10.59],["Logits",9.19]])}
+  <h3 class="head">Per-operator, inside PIOP</h3>
+  ${bars([["Requantization",27.30],["Softmax",19.39],["Einsum / MatMul",14.91],["Activation (GeLU)",13.96],["Logits",7.83],["RMS/LayerNorm",6.02]])}
+
+  <h3 class="head" style="color:var(--cyan)">Jolt Atlas · GPT-2 125M, MacBook Pro M3, 16 GB</h3>
+  <div class="prose"><p>Wall-clock stages, in seconds. End-to-end total ≈ 38 s.</p></div>
+  ${bars([["Sum-check proving",16],["Witness generation",7.5],["Reduction opening",7],["Commitment",3.5],["HyperKZG prove",3],["Key generation",0.872]],'c2',' s')}
+
+  <div class="gap">
+    <span class="gm">Not reported</span>
+    <p>Jolt Atlas's GPT-2 run states <b>no sequence length, no token count, no proof size, no verifier time, and no accuracy</b>. DeepProve's 174 tokens/minute is for full-sequence certification at length 512 on a 24-core EPYC. <b>These two numbers cannot be compared</b>, and no one has yet run both systems on the same model and hardware.</p>
+  </div>
+
+  <h3 class="head">The lesson</h3>
+  <div class="prose">
+    <p>More than half of DeepProve's prover cost is softmax, activations and requantization — three things that are not matrix multiplication. Optimizing any one of them moves the whole system; optimizing matmul moves 14.9% of it.</p>
+    <p>Jolt Atlas's breakdown tells a compatible story from the other side: sum-check proving is 42% of its wall clock, and sum-check is where its lookups live. Both systems are, in the end, paying for non-linearity.</p>
+  </div>`;
+}
+
+function pPapers(){
+  return R`
+  <div class="crumb">Orientation / <b>The schemes</b></div>
+  <h2 class="ptitle">The papers</h2>
+  <p class="lede">Indexed schemes have per-algorithm treatments on every page. Referenced schemes are described by their peers — add one and its column appears everywhere automatically.</p>
+  <h3 class="head">&nbsp;</h3>
+  <div class="roster">
+    ${PAPERS.map(p => R`
+      <div class="pcard ${p.indexed ? 'live' : ''} ${p.id === 'jolt' ? 'jl' : ''}">
+        <h4>${p.name}</h4>
+        <div class="meta">${p.venue}</div>
+        <p>${p.blurb}</p>
+        ${p.system ? R`<div class="sys">${p.system}</div>` : ''}
+        <div class="status ${p.indexed ? 'ok' : 'todo'}">${p.indexed ? '● indexed — treatments live' : '○ referenced only'}</div>
+      </div>`).join('')}
+  </div>
+
+  <h3 class="head">Adding the next scheme</h3>
+  <div class="prose"><p>Everything on this site renders from two arrays at the bottom of <code>docs/index.html</code>. To index a paper: add it to <code>PAPERS</code> with <code>indexed:true</code>, then add a key to the <code>schemes</code> object of every algorithm it covers. Algorithms it does not cover render as <span class="na">— not addressed —</span> in the coverage matrix and as an explicit gap notice on the page, which is the honest representation and the thing you most want to see.</p></div>
+  <pre class="ascii">// 1. add to PAPERS
+{ id:"zkllm", name:"zkLLM", venue:"CCS '24", indexed:true,
+  spine:"…", system:"…", blurb:"…" }
+
+// 2. add a "zkllm" key to each operator it covers
+OPERATORS[i].schemes.zkllm = {
+  tldr:    "one-line summary",
+  bullets: ["…", "…"],
+  cost:    "29% of prover time"      // optional
+}
+
+// 3. optionally add a "debate" block where schemes disagree
+OPERATORS[i].debate = { title:"…", body:"…" }</pre>`;
+}
+
+/* ==========================================================================
+   TIMELINE — proving cost per output token, GPT-2 (124M class), over time.
+
+   Normalisation: every pre-DeepProve system proves ONE forward pass, so its
+   seconds-per-proof IS its seconds-per-token. DeepProve certifies a whole
+   sequence, so we use 60 / (tokens per minute). This is the only axis on which
+   these numbers are commensurable — and Jolt Atlas cannot join it, because the
+   paper never says how many tokens its 38 s covers.
+   Source: papers.yml (inference).
+   ========================================================================== */
+const CATS = {
+  gkr:   { label:"Sum-check + GKR + lookups",  v:"--series-gkr"   },
+  halo2: { label:"Halo2 / arithmetic circuit", v:"--series-halo2" },
+  vole:  { label:"VOLE (designated verifier)", v:"--series-vole"  },
+  accum: { label:"Proof accumulation / folding", v:"--series-accum" }
+};
+
+/* ==========================================================================
+   SCALING SCATTER — proving throughput vs model size, LLM inference.
+   x = parameters (log), y = tokens per minute (log). Up-and-right is better.
+
+   Health warning baked into the data: `kind` records what the y-value actually
+   measures, because these are NOT the same quantity —
+     seq   = amortised over a full generated sequence (DeepProve; the gold standard)
+     pass  = one forward pass, 60/seconds (a single predicted token)
+     token = the paper's own per-token figure
+     full  = one proof of a whole inference, token count UNSTATED (a proxy, treat softly)
+   `compute` and `prov` (provenance) ride in the tooltip and the caveats.
+   Source: papers.yml (inference).
+   ========================================================================== */
+const SCALE = [
+  { id:"artemis", name:"Artemis", p:124e6, tpm:0.0045, cat:"halo2", kind:"pass", compute:"cpu", prov:"survey",
+    note:"GPT-2, 124M. 200–240 min per pass — it targets commitment overhead, not speed. 128 vCPU / 1 TB." },
+  { id:"zkml", name:"ZKML", p:124e6, tpm:0.016, cat:"halo2", kind:"pass", compute:"cpu", prov:"survey",
+    note:"GPT-2, 124M. 3652 s per forward pass, Halo2. 128 vCPU / 1 TB." },
+  { id:"ztg2", name:"ZKTorch", p:124e6, tpm:0.1, cat:"accum", kind:"pass", compute:"cpu", prov:"blog",
+    note:"GPT-2, 124M. \"10 min (down from 1+ hour)\" — ICME blog only, a Jolt Atlas author. Unconfirmed." },
+  { id:"lu", name:"Lu et al.", p:117e6, tpm:0.21, cat:"vole", kind:"pass", compute:"cpu", prov:"survey",
+    note:"GPT-2, 117M. VOLE, 287 s per pass, a 4.5 GB proof. 8-core CPU." },
+  { id:"zkgpt", name:"zkGPT", p:124e6, tpm:2.75, cat:"gkr", kind:"pass", compute:"cpu", prov:"primary",
+    note:"GPT-2, 124M. 21.8 s per forward pass at context 32, 16-bit. 16-core Xeon." },
+  { id:"deepprove", name:"DeepProve", p:124e6, tpm:174, cat:"gkr", kind:"seq", compute:"cpu", prov:"primary", emphasis:true,
+    note:"GPT-2, 124M. 174 TPM — genuine multi-token throughput, amortised over a 512-token certified sequence, 12-bit. 16-core Ryzen." },
+  { id:"dp-gemma", name:"· Gemma 3", p:270e6, tpm:86, cat:"gkr", kind:"seq", compute:"cpu", prov:"primary",
+    note:"Gemma 3, 270M. 86 TPM, same system and machine as DeepProve GPT-2." },
+  { id:"dp-dist", name:"DeepProve ×17", p:124e6, tpm:1855, cat:"gkr", kind:"seq", compute:"cluster", prov:"primary", cluster:true,
+    note:"GPT-2, 124M. 1855 TPM across 17 machines — a different resource class." },
+  { id:"ztgj", name:"ZKTorch", p:6e9, tpm:0.09, cat:"accum", kind:"token", compute:"cpu", prov:"survey",
+    note:"GPT-J, 6B. 0.09 TPM per DeepProve's comparison table; the ICME blog instead says 20 min. 4 TB RAM, 64 threads." },
+  { id:"zkpytorch", name:"zkPyTorch", p:8e9, tpm:0.4, cat:"gkr", kind:"token", compute:"gpu?", prov:"primary",
+    note:"Llama-3, 8B. 150 s per token → 0.4 TPM. GKR (Expander). One of only two 8B-plus results." },
+  { id:"zkllm", name:"zkLLM", p:13e9, tpm:0.067, cat:"gkr", kind:"full", compute:"gpu", prov:"primary", emphasis:true,
+    note:"LLaMA-2, 13B — the largest model proven. \"Under 15 minutes for the entire inference process\" on an A100 GPU. Token count is unstated, so 0.067 TPM is a per-full-inference proxy, not a decode rate." }
+];
+
+const TIMELINE = [
+  { id:"zkml", name:"ZKML", date:"2024-04-01", s:3652, cat:"halo2", src:"survey",
+    alt:{ s:4026, by:"zkGPT Table 3" },
+    note:"GPT-2 124M, one forward pass. Halo2 compiler from TensorFlow Lite graphs. 128 vCPU / 1 TB RAM." },
+  { id:"lu", name:"Lu et al.", date:"2024-05-01", s:287.1, cat:"vole", src:"survey", dy:19, dx:-4,
+    alt:{ s:112.3, by:"zkGPT Table 3" },
+    note:"GPT-2 117M. VOLE-based, designated-verifier, and a 4.5 GB proof — prover speed bought with proof size." },
+  { id:"artemis", name:"Artemis / Apollo", date:"2024-09-18", s:12000, sHi:14400, cat:"halo2", src:"survey",
+    note:"GPT-2 124M. Attacks commitment-consistency overhead, not raw prover speed — it sits above the frontier by design, not by failure." },
+  { id:"zkgpt", name:"zkGPT", date:"2025-08-13", s:21.8, cat:"gkr", src:"primary",
+    note:"GPT-2 124M, one forward pass at context 32, 16-bit. 16-core Xeon, 32 threads. The first system to state both its bit width and its accuracy cost." },
+  { id:"deepprove", name:"DeepProve", date:"2026-05-30", s:0.345, cat:"gkr", src:"primary", emphasis:true,
+    note:"GPT-2 124M, full-sequence certification at context 512, 12-bit. Derived as 60/174 TPM. 16-core Ryzen 9. Note it proves MORE per proof than anything to its left." },
+  { id:"dp-dist", name:"DeepProve · 17 nodes", date:"2026-05-30", s:0.032, cat:"gkr", src:"primary", cluster:true,
+    note:"Distributed prover, 1855 TPM. A different resource class — shown for scale, excluded from the single-machine frontier." }
+];
+
+const FRONTIER = ["zkml","lu","zkgpt","deepprove"];
+
+/* The scaling scatter: parameters (x, log) vs tokens/min (y, log). */
+function scatterSVG(){
+  const W = 900, H = 508, m = { t:34, r:44, b:66, l:60 };
+  const xLo = 8, xHi = Math.log10(2e10);              // 1e8 → 2e10 params
+  const yLo = Math.log10(0.003), yHi = Math.log10(3000);
+  const X = p => m.l + (Math.log10(p) - xLo) / (xHi - xLo) * (W - m.l - m.r);
+  const Y = t => m.t + (1 - (Math.log10(t) - yLo) / (yHi - yLo)) * (H - m.t - m.b);
+
+  const xticks = [[1e8,"100M"],[1e9,"1B"],[1e10,"10B"]];
+  const yticks = [[0.01,"0.01"],[0.1,"0.1"],[1,"1"],[10,"10"],[100,"100"],[1000,"1k"]];
+
+  const grid = yticks.map(([v]) => R`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/>`).join('')
+    + xticks.map(([v]) => R`<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${m.t}" y2="${H-m.b}"/>`).join('');
+  const yLab = yticks.map(([v,l]) => R`<text x="${m.l-11}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end">${l}</text>`).join('');
+  const xLab = xticks.map(([v,l]) => R`<text x="${X(v).toFixed(1)}" y="${H-m.b+22}" text-anchor="middle">${l}</text>`).join('');
+
+  // Band over the ~124M column — everything in it is the same model size.
+  const bx0 = X(1.05e8), bx1 = X(1.4e8);
+  const band = R`<rect class="band" x="${bx0.toFixed(1)}" y="${m.t}" width="${(bx1-bx0).toFixed(1)}" height="${H-m.t-m.b}"/>
+    <text class="bandlabel" x="${((bx0+bx1)/2).toFixed(1)}" y="${(m.t-9).toFixed(1)}" text-anchor="middle" style="letter-spacing:.14em">GPT-2 · 124M</text>`;
+
+  // Per-point label nudges to avoid collisions in the two crowded regions.
+  const off = { deepprove:[13,-4], "dp-dist":[13,4], zkgpt:[13,4], lu:[13,5], zkml:[13,4],
+    ztg2:[-13,-9], artemis:[13,4], "dp-gemma":[13,4],
+    zkllm:[-14,17], zkpytorch:[11,-9], ztgj:[-13,15] };
+
+  const marks = SCALE.map(p => {
+    const c = `var(${CATS[p.cat].v})`, x = X(p.p), y = Y(p.tpm);
+    const hollow = p.prov === "survey" || p.prov === "blog";
+    const r = p.emphasis ? 6.5 : 5;
+    let extra = "";
+    if (p.cluster) extra += R`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9.5" fill="none" stroke="${c}" stroke-width="1.5" opacity=".45"/>`;
+    // kind:"full" = a per-whole-inference proxy, not a decode rate — flag it as soft.
+    if (p.kind === "full") extra += R`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="none" stroke="${c}" stroke-width="1.4" stroke-dasharray="2 3" opacity=".7"/>`;
+    const paint = hollow ? `fill:var(--surface-1);stroke:${c}` : `fill:${c};stroke:var(--surface-1)`;
+    const dot = R`<circle class="dot${hollow ? ' hollow' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" style="${paint}"/>`;
+    const [dx,dy] = off[p.id] || [13,4];
+    const anchor = dx < 0 ? "end" : "start";
+    const gpu = (p.compute === "gpu" || p.compute === "gpu?") ? " ⚡" : "";
+    const lbl = R`<text class="dlabel${p.emphasis ? ' em' : ''}" x="${(x+dx).toFixed(1)}" y="${(y+dy).toFixed(1)}" text-anchor="${anchor}">${p.name}${gpu}</text>`;
+    return R`<g class="pt" data-id="${p.id}">${extra}${dot}${lbl}<circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15"/></g>`;
+  }).join('');
+
+  const rows = [...SCALE].sort((a,b)=>a.p-b.p || b.tpm-a.tpm).map(p => {
+    const kindLbl = {seq:"amortised / sequence",pass:"single forward pass",token:"per token",full:"whole inference (tokens unstated)"}[p.kind];
+    return R`<tr><th>${p.name.replace(/^· /,'')}</th>
+      <td>${p.p>=1e9 ? (p.p/1e9)+"B" : Math.round(p.p/1e6)+"M"}</td>
+      <td>${p.tpm} TPM</td><td>${kindLbl}</td>
+      <td>${CATS[p.cat].label}</td>
+      <td>${p.compute==='gpu'?'GPU':p.compute==='gpu?'?'GPU?':p.compute==='cluster'?'17 nodes':'CPU'} · ${p.prov}</td></tr>`;
+  }).join('');
+
+  return { W, H, m, svg: R`
+    <div class="viz" id="viz-scale">
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Proving throughput in tokens per minute versus model parameters, log-log. GPT-2 systems span four orders of magnitude at 124M; the frontier reaches 13B with zkLLM.">
+        <g class="grid">${grid}</g>
+        ${band}
+        <g class="axis">${yLab}${xLab}
+          <text transform="translate(${m.l-44},${(m.t+(H-m.t-m.b)/2).toFixed(1)}) rotate(-90)" text-anchor="middle">TOKENS / MIN · LOG</text>
+          <text x="${((m.l+W-m.r)/2).toFixed(1)}" y="${H-m.b+42}" text-anchor="middle">MODEL PARAMETERS · LOG</text>
+        </g>
+        ${marks}
+      </svg>
+      <div class="tip" id="tip-scale"></div>
+      <div class="legend">
+        ${Object.values(CATS).map(c => R`<span><i style="background:var(${c.v})"></i>${c.label}</span>`).join('')}
+        <span><i class="ring"></i>Secondhand number</span>
+        <span style="color:var(--muted)">⚡ GPU · dashed ring = whole-inference proxy · outer ring = cluster</span>
+      </div>
+    </div>`, rows };
+}
+
+function wireScatter(){
+  const viz = document.getElementById('viz-scale'), tip = document.getElementById('tip-scale');
+  if (!viz) return;
+  viz.querySelectorAll('g.pt').forEach(g => {
+    const p = SCALE.find(t => t.id === g.dataset.id);
+    const kindLbl = {seq:"amortised over a sequence",pass:"single forward pass",token:"per token",full:"whole inference · token count unstated"}[p.kind];
+    const comp = p.compute==='gpu'?'GPU':p.compute==='gpu?'?'GPU (unconfirmed)':p.compute==='cluster'?'17-node cluster':'CPU';
+    const show = e => {
+      const box = viz.getBoundingClientRect();
+      tip.innerHTML = R`<b>${p.name.replace(/^· /,'')}</b>
+        <span class="v">${p.tpm} tokens/min · ${p.p>=1e9?(p.p/1e9)+'B':Math.round(p.p/1e6)+'M'} params</span>
+        <p>${p.note}</p>
+        <div class="prov">measures: ${kindLbl} · ${comp} · ${CATS[p.cat].label} · ${p.prov}</div>`;
+      tip.style.opacity = 1;
+      const x = e.clientX - box.left, y = e.clientY - box.top;
+      tip.style.left = Math.min(x + 16, box.width - 300) + 'px';
+      tip.style.top = Math.max(y - 30, 4) + 'px';
+    };
+    g.addEventListener('mouseenter', show);
+    g.addEventListener('mousemove', show);
+    g.addEventListener('mouseleave', () => tip.style.opacity = 0);
+  });
+}
+
+function pTimeline(){
+  const W = 900, H = 470, m = { t:34, r:150, b:56, l:66 };
+  // Domain starts before the first point and ends after the last, so year ticks
+  // land on actual Jan 1 boundaries rather than on whichever paper came first.
+  const d0 = Date.parse("2023-11-01"), d1 = Date.parse("2026-10-01");
+  const yLo = Math.log10(0.02), yHi = Math.log10(40000);  // headroom above Artemis (14.4k)
+  const X = d => m.l + (Date.parse(d) - d0) / (d1 - d0) * (W - m.l - m.r);
+  const Y = v => m.t + (1 - (Math.log10(v) - yLo) / (yHi - yLo)) * (H - m.t - m.b);
+
+  const decades = [0.1, 1, 10, 100, 1000, 10000];
+  const fmtY = v => v < 1 ? v.toString() : v >= 1000 ? (v/1000) + "k" : v.toString();
+  const years = [["2024-01-01","2024"],["2025-01-01","2025"],["2026-01-01","2026"]];
+
+  const grid = decades.map(v => R`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/>`).join('')
+    + R`<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${H-m.b}"/>`;
+  const yLabels = decades.map(v => R`<text x="${m.l-12}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end">${fmtY(v)}</text>`).join('');
+  const xLabels = years.map(([d,l]) => R`<text x="${X(d).toFixed(1)}" y="${H-m.b+22}" text-anchor="middle">${l}</text>`).join('');
+
+  // Jolt Atlas cannot be placed on this axis — mark the date, don't fake a value.
+  const jx = X("2026-02-19");
+  const band = R`<rect class="band" x="${(jx-13).toFixed(1)}" y="${m.t}" width="26" height="${H-m.t-m.b}"/>
+    <text class="bandlabel" transform="translate(${(jx+4).toFixed(1)},${m.t+8}) rotate(90)">JOLT ATLAS · NOT PLOTTABLE</text>`;
+
+  const path = FRONTIER.map((id,i) => {
+    const p = TIMELINE.find(t => t.id === id);
+    return (i ? "L" : "M") + X(p.date).toFixed(1) + " " + Y(p.s).toFixed(1);
+  }).join(" ");
+
+  const marks = TIMELINE.map(p => {
+    const c = `var(${CATS[p.cat].v})`;
+    const x = X(p.date), y = Y(p.s);
+    let extra = "";
+    // A reported range gets a range bar only if it is taller than the dot. Artemis's
+    // 12000-14400 s spans ~5px across six decades, so the bar would hide under its own
+    // marker and imply a precision the range does not have. The span stays in the tooltip.
+    if (p.sHi && Math.abs(Y(p.s) - Y(p.sHi)) > 7)
+      extra += R`<line class="rangebar" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y(p.s).toFixed(1)}" y2="${Y(p.sHi).toFixed(1)}" stroke="${c}"/>`;
+    // Secondhand numbers with a conflicting re-measurement: connect the two — but only
+    // when the disagreement is visible at this scale. ZKML's 3652 vs 4026 is ~2px apart
+    // on a log axis; drawing it would be a smudge, not information. It stays in the
+    // tooltip and the table.
+    if (p.alt && Math.abs(Y(p.alt.s) - y) > 7)
+      extra += R`<line class="conflict" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${y.toFixed(1)}" y2="${Y(p.alt.s).toFixed(1)}" stroke="${c}"/>
+      <circle cx="${x.toFixed(1)}" cy="${Y(p.alt.s).toFixed(1)}" r="2.5" fill="${c}" opacity=".55"/>`;
+    // Cluster runs are a different resource class — give them an outer ring, not just a label.
+    if (p.cluster) extra += R`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9.5" fill="none" stroke="${c}" stroke-width="1.5" opacity=".45"/>`;
+    const hollow = p.src === "survey";
+    const r = p.emphasis ? 6.5 : 5;
+    // Inline style, not a presentation attribute — see the .dot rule above.
+    const paint = hollow
+      ? `fill:var(--surface-1);stroke:${c}`   // secondhand: colour lives in the ring
+      : `fill:${c};stroke:var(--surface-1)`;  // primary: 2px surface ring for legibility
+    const dot = R`<circle class="dot${hollow ? ' hollow' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" style="${paint}"/>`;
+    const lbl = R`<text class="dlabel${p.emphasis ? ' em' : ''}" x="${(x + 13 + (p.dx||0)).toFixed(1)}" y="${(y + 3.5 + (p.dy||0)).toFixed(1)}">${p.name}</text>`;
+    return R`<g class="pt" data-id="${p.id}">${extra}${dot}${lbl}
+      <circle class="hit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="16"/></g>`;
+  }).join('');
+
+  const rows = [...TIMELINE].sort((a,b)=>a.s-b.s).map(p => R`<tr>
+      <th>${p.name}</th>
+      <td>${p.date}</td>
+      <td>${p.sHi ? p.s + "–" + p.sHi : p.s} s</td>
+      <td>${CATS[p.cat].label}</td>
+      <td>${p.src}${p.alt ? " (conflict: " + p.alt.s + " s per " + p.alt.by + ")" : ""}</td>
+    </tr>`).join('');
+
+  const scatter = scatterSVG();
+
+  return R`
+  <div class="crumb">Orientation / <b>Throughput &amp; scale</b></div>
+  <h2 class="ptitle">Faster per token, and <em>bigger models</em></h2>
+  <p class="lede">The frontier moves in two directions at once, and a time-only chart hides one of them. Proving GPT-2 (124M) got roughly four orders of magnitude cheaper in two years — but the more striking move is sideways: the frontier now reaches a <strong>13-billion-parameter</strong> model, a hundred times larger than GPT-2. So the honest axis is throughput <em>against model size</em>.</p>
+
+  <h3 class="head">&nbsp;</h3>
+  <div class="hero">
+    <div><b>13B</b><span>Largest model proven</span><em>zkLLM proves LLaMA-2 13B "in under 15 minutes," on an A100 GPU.</em></div>
+    <div><b>~40,000&times;</b><span>Spread at one model size</span><em>At 124M, tokens/min runs from Artemis's 0.0045 to DeepProve's 174 — pure protocol progress.</em></div>
+    <div><b class="cy">~2,600&times;</b><span>Cost of size, same era</span><em>DeepProve's 174 TPM at 124M vs. zkLLM's 0.067 at 13B. Throughput falls fast with parameters.</em></div>
+  </div>
+
+  <h3 class="head amber">Throughput vs model size · all LLM inference systems</h3>
+  ${scatter.svg}
+
+  <div class="prose" style="margin-top:26px">
+    <p><strong>The vertical stripe is one model.</strong> Everything in the shaded band is GPT-2 at ~124M parameters, spanning four-plus orders of magnitude in throughput from 2024's Artemis and ZKML up to DeepProve — and up again to 1855 TPM once DeepProve is spread across 17 machines. That spread is the closest thing here to a like-for-like measure of protocol progress, because model size is held fixed.</p>
+    <p><strong>The right-hand points are the real news.</strong> zkLLM (13B), zkPyTorch (Llama-3 8B) and ZKTorch (GPT-J 6B) prove models ~50–100× larger than GPT-2, at throughputs around 0.1 tokens/min. Getting a 13B model proven at all is arguably a bigger result than shaving GPT-2's time — but note the confounds cluster here: zkLLM and zkPyTorch run on GPUs while the GPT-2 systems are CPU-only, so some of the rightward reach is hardware, not protocol.</p>
+    <p><strong>These y-values do not all measure the same thing.</strong> Only DeepProve reports true multi-token throughput (amortised over a certified 512-token sequence). The others are single-forward-pass times turned into a rate by dividing 60 — a fair proxy for one token, but not a sustained decode rate. zkLLM's is softer still: "the entire inference process" with an unstated token count, so its point carries a dashed ring and should be read as a whole-inference proxy, not a decode rate. zkGPT's own re-measurements of ZKML and Lu et al. differ from the survey's; hollow markers flag every secondhand number. Hover any point, or open the table, for exactly what it measures.</p>
+    <p style="font-size:15px;color:var(--muted)"><strong>Jolt Atlas is absent here too.</strong> It reports 38 s to prove GPT-2 on a laptop but no token count or sequence length, so it lands on neither axis. ZKTorch's GPT-2 point is from the ICME "Definitive Guide to ZKML" blog, written by a Jolt Atlas author — a partisan, non-peer-reviewed source, marked secondhand.</p>
+  </div>
+
+  <details class="tbl">
+    <summary>▸ Table view · throughput vs size</summary>
+    <div class="scrollx"><table class="matrix">
+      <thead><tr><th>System</th><th>Params</th><th>Throughput</th><th>Measures</th><th>Proof system</th><th>Compute · provenance</th></tr></thead>
+      <tbody>${scatter.rows}</tbody>
+    </table></div>
+  </details>
+
+  <h3 class="head">The same model, over time · GPT-2 only</h3>
+  <div class="prose"><p>Holding the model fixed at GPT-2 (124M) and plotting proving cost per output token against date isolates protocol progress from model size. This is the apples-to-apples control for the scatter above.</p></div>
+
+  <div class="viz" id="viz-time">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Proving seconds per output token for GPT-2, 2024 to 2026, log scale, falling from 3652 seconds to 0.345 seconds">
+      <g class="grid">${grid}</g>
+      ${band}
+      <g class="axis">${yLabels}${xLabels}
+        <text transform="translate(${m.l-46},${(m.t + (H-m.t-m.b)/2).toFixed(1)}) rotate(-90)" text-anchor="middle">SECONDS PER OUTPUT TOKEN · LOG</text>
+      </g>
+      <path class="frontier" d="${path}"/>
+      ${marks}
+    </svg>
+    <div class="tip" id="tip-time"></div>
+    <div class="legend">
+      ${Object.values(CATS).filter(c=>c.label!=='Proof accumulation / folding').map(c => R`<span><i style="background:var(${c.v})"></i>${c.label}</span>`).join('')}
+      <span><i class="ring"></i>Secondhand — connector shows the conflicting re-measurement</span>
+      <span style="color:var(--muted)">Grey line = best single machine · outer ring = cluster</span>
+    </div>
+  </div>
+
+  <div class="prose" style="margin-top:22px">
+    <p><strong>Even here, three confounds survive.</strong> DeepProve proves strictly more per proof (full-sequence certification at context 512 vs zkGPT's single pass at context 32); bit width drifts (16 → 12 → unstated); and no two rows share hardware. The 10,585× headline from ZKML to DeepProve is real but not bit-width- or workload-normalized.</p>
+    <p style="font-size:15px;color:var(--muted)">Data: <code>papers.yml</code>. Pre-DeepProve rows prove a single forward pass, so seconds-per-proof equals seconds-per-token; DeepProve's value is 60 ÷ its reported tokens-per-minute. The overhead trajectory a Jolt Atlas author gives for the field as a whole — <em>1,000,000× → 100,000× → 10,000×</em> over native execution — is the same story at lower resolution.</p>
+  </div>`;
+}
+
+function wireTimeline(){
+  const viz = document.getElementById('viz-time'), tip = document.getElementById('tip-time');
+  if (!viz) return;
+  viz.querySelectorAll('g.pt').forEach(g => {
+    const p = TIMELINE.find(t => t.id === g.dataset.id);
+    const show = e => {
+      const box = viz.getBoundingClientRect();
+      tip.innerHTML = R`<b>${p.name}</b>
+        <span class="v">${p.sHi ? p.s + '–' + p.sHi : p.s} s per output token</span>
+        <p>${p.note}</p>
+        <div class="prov">${p.date} · ${CATS[p.cat].label} · ${p.src}${p.alt ? ' · conflict: ' + p.alt.s + ' s per ' + p.alt.by : ''}</div>`;
+      tip.style.opacity = 1;
+      const x = e.clientX - box.left, y = e.clientY - box.top;
+      tip.style.left = Math.min(x + 16, box.width - 300) + 'px';
+      tip.style.top = Math.max(y - 30, 4) + 'px';
+    };
+    g.addEventListener('mouseenter', show);
+    g.addEventListener('mousemove', show);
+    g.addEventListener('mouseleave', () => tip.style.opacity = 0);
+  });
+}
+
+const STATIC = [
+  { id:"overview",   nav:"Start here",            group:"Orientation", render:pOverview },
+  { id:"challenges", nav:"Cross-cutting problems", group:"Orientation", render:pChallenges },
+  { id:"timeline",   nav:"Throughput &amp; scale",  group:"Orientation", render:pTimeline },
+  { id:"matrix",     nav:"Coverage matrix",       group:"Orientation", render:pMatrix },
+  { id:"economics",  nav:"Prover economics",      group:"Orientation", render:pEconomics },
+  { id:"papers",     nav:"The schemes",           group:"Orientation", render:pPapers }
+];
+
+/* ==========================================================================
+   OPERATOR PAGE
+   ========================================================================== */
+/* Verbatim blockquotes from the source papers.
+   q = { t: exact text, src: paper name, sec: section, name: section title } */
+function quotes(qs){
+  if (!qs || !qs.length) return '';
+  return qs.map(q => R`
+    <blockquote class="q">
+      <p>${q.t}</p>
+      <cite><b>${q.src}</b> · ${q.sec}${q.name ? ' — ' + q.name : ''}</cite>
+    </blockquote>`).join('');
+}
+
+function pOperator(op){
+  const i = opIndex(op.id);
+  const prev = OPERATORS[i - 1], next = OPERATORS[i + 1];
+
+  const schemeBlocks = INDEXED.map(p => {
+    const s = op.schemes[p.id];
+    if (!s) return R`
+      <div class="gap">
+        <span class="gm">${p.name} · gap</span>
+        <p><b>Not addressed.</b> ${p.name} describes no protocol for ${op.name.toLowerCase()}. See the <a href="#/matrix">coverage matrix</a> for the full picture.</p>
+      </div>`;
+    return R`
+      <div class="scheme" data-p="${p.id}">
+        <div class="scheme-head">
+          <span class="pname">${p.name}</span>
+          <span class="venue">${p.venue}</span>
+          <span class="spine">${p.spine || ''}</span>
+        </div>
+        <div class="scheme-body">
+          <p class="tldr">${s.tldr}</p>
+          ${quotes(s.quotes)}
+          <ul>${s.bullets.map(b => R`<li>${b}</li>`).join('')}</ul>
+          ${s.cost ? R`<div class="cost">Cost · ${s.cost}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  return R`
+  <div class="crumb">${op.group} / <b>${op.name}</b></div>
+  <h2 class="ptitle">${op.name}</h2>
+  <div style="display:flex;gap:14px;align-items:center;margin-top:16px;flex-wrap:wrap">
+    <span class="tag ${op.difficulty}">${op.diffLabel}</span>
+    <span class="psub" style="margin:0">${op.sub}</span>
+  </div>
+
+  <h3 class="head">The algorithm</h3>
+  <div class="math">$$${op.tex}$$</div>
+  <div class="prose"><p>${op.what}</p></div>
+
+  <h3 class="head" style="color:var(--rose)">Why it resists a proof</h3>
+  <div class="prose"><p>${op.why}</p></div>
+
+  <h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3>
+  <ul class="kit">${op.kit.map(k => R`<li>${k}</li>`).join('')}</ul>
+
+  <h3 class="head amber">How each scheme proves it</h3>
+  ${schemeBlocks}
+
+  ${op.debate ? R`<div class="debate"><h4>${op.debate.title}</h4>${quotes(op.debate.quotes)}${op.debate.body}</div>` : ''}
+
+  <div class="pager">
+    ${prev ? R`<a href="#/op/${prev.id}">← Previous<span>${prev.name}</span></a>` : '<span></span>'}
+    ${next ? R`<a class="next" href="#/op/${next.id}">Next →<span>${next.name}</span></a>` : ''}
+  </div>`;
+}
+
+/* ==========================================================================
+   NAV + ROUTER
+   ========================================================================== */
+function buildNav(){
+  let html = R`<div class="navgroup">Orientation</div>`;
+  html += STATIC.map(s => R`<a class="nav" href="#/${s.id}" data-id="${s.id}" data-search="${s.nav.toLowerCase()}"><span class="n">·</span><span>${s.nav}</span></a>`).join('');
+  GROUPS.forEach(g => {
+    html += R`<div class="navgroup">${g}</div>`;
+    html += OPERATORS.filter(o => o.group === g).map(o => {
+      const missing = INDEXED.filter(p => !o.schemes[p.id]).length;
+      const n = String(opIndex(o.id) + 1).padStart(2, '0');
+      const badge = missing ? R`<span class="miss" title="${missing} scheme(s) do not address this">${missing} gap${missing > 1 ? 's' : ''}</span>` : '';
+      return R`<a class="nav" href="#/op/${o.id}" data-id="op/${o.id}" data-search="${(o.name + ' ' + o.sub + ' ' + o.group).toLowerCase()}"><span class="n">${n}</span><span>${o.name}</span>${badge}</a>`;
+    }).join('');
+  });
+  document.getElementById('nav').innerHTML = html;
+}
+
+const pageEl = document.getElementById('page');
+
+function render(){
+  const raw = location.hash.replace(/^#\/?/, '') || 'overview';
+  let html, id = raw;
+
+  if (raw.startsWith('op/')) {
+    const op = OPERATORS.find(o => o.id === raw.slice(3));
+    if (op) html = pOperator(op);
+  } else {
+    const s = STATIC.find(s => s.id === raw);
+    if (s) html = s.render();
+  }
+  if (!html) { id = 'overview'; html = pOverview(); }
+
+  pageEl.innerHTML = html;
+  pageEl.classList.remove('fade'); void pageEl.offsetWidth; pageEl.classList.add('fade');
+
+  renderMathInElement(pageEl, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '\\(', right: '\\)', display: false }
+    ],
+    throwOnError: false,
+    trust: true,
+    macros: { "\\eq": "\\mathrm{eq}" }
+  });
+
+  if (id === 'timeline') { wireScatter(); wireTimeline(); }
+
+  document.querySelectorAll('a.nav').forEach(a => a.classList.toggle('on', a.dataset.id === id));
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo(0, 0);
+
+  const active = document.querySelector('a.nav.on');
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+document.getElementById('filter').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('a.nav').forEach(a => {
+    a.style.display = !q || a.dataset.search.includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('.navgroup').forEach(g => {
+    let n = g.nextElementSibling, any = false;
+    while (n && n.classList.contains('nav')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; }
+    g.style.display = any ? '' : 'none';
+  });
+});
+
+document.getElementById('burger').addEventListener('click', () =>
+  document.getElementById('sidebar').classList.toggle('open'));
+
+window.addEventListener('hashchange', render);
+buildNav();
+render();
+</script>
+</body>
+</html>
