@@ -37,6 +37,7 @@ SITE = ROOT / "site"
 CONTENT = ROOT / "content"
 DOCS = ROOT / "docs"
 TPL = SITE / "templates"
+VENDOR_SRC = SITE / "vendor"  # KaTeX. Source, not output -- copied into docs/ on each build.
 
 # ---------------------------------------------------------------------------
 # data loading
@@ -1774,6 +1775,17 @@ def main():
     clean()
     shutil.copy(TPL / "style.css", DOCS / "style.css")
     (DOCS / ".nojekyll").write_text("")
+
+    # Vendored KaTeX is SOURCE (site/vendor/), not output. docs/ is generated and gitignored,
+    # so anything the site needs at runtime has to be copied in on every build -- otherwise CI
+    # would publish a site with no math.
+    if VENDOR_SRC.exists():
+        shutil.copytree(VENDOR_SRC, DOCS / "vendor", dirs_exist_ok=True)
+    else:
+        WARNINGS.append(
+            f"{VENDOR_SRC.relative_to(ROOT)} is missing -- KaTeX will not load and every "
+            "formula on the site will render as raw TeX."
+        )
 
     render_home()
     for s in SECTIONS:

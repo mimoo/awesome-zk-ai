@@ -55,8 +55,8 @@ tables below are a human-readable view of the same data.
 
 ## The site
 
-The full SoK is a generated static site in [`docs/`](./docs/) — many more pages than this
-README, one per approach and one per paper.
+The full SoK is a generated static site — many more pages than this README, one per approach
+and one per paper. It is **built and published by CI**; `docs/` is not in the repository.
 
 ```
 papers.yml                    structured data. SOURCE OF TRUTH for every number.
@@ -65,12 +65,17 @@ references/citation-graph.yml edge A → B = "A's text cites B".
 content/**/*.md               the prose. This is what you write.
 site/build.py                 joins them → docs/
 site/validate.py              fails the build when they drift apart.
-docs/                         GENERATED. Never hand-edit.
+site/vendor/                  KaTeX. Source, copied into docs/ on each build.
+docs/                         GENERATED and GITIGNORED. Never hand-edit it.
 
-make site     # build
+make site     # build docs/ locally
 make check    # integrity checks
 make serve    # build + http://localhost:8000
 ```
+
+`.github/workflows/site.yml` runs `make site && make check` on every push and PR, and deploys
+to Pages from `main`. **The checks gate the deploy** — a SoK whose prose contradicts its data
+does not get published. A PR is built and checked but never published.
 
 Read [`site/CONTENT.md`](./site/CONTENT.md) before adding anything. The two rules that
 matter:

@@ -1,0 +1,75 @@
+name: site
+
+# Builds the SoK from its sources (papers.yml + operators.yml + content/ + site/) and
+# publishes it to GitHub Pages. docs/ is generated output and is NOT in the repository --
+# it exists only as a build artifact.
+#
+# NOTE: this requires Pages to be set to "Source: GitHub Actions" in the repo settings
+# (Settings -> Pages). It will not work while Pages is still set to "Deploy from a branch".
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "markdown>=3.5" pyyaml
+          # graphviz renders the citation graph. Without `dot`, build.py silently falls back
+          # to the committed SVG in references/, which would go stale without anyone noticing.
+          sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Build
+        run: make site
+
+      - name: Fail if the citation graph fell back to the stale committed SVG
+        run: |
+          if ! command -v dot >/dev/null; then
+            echo "::error::graphviz is missing; the graph page would be built from a stale SVG"
+            exit 1
+          fi
+
+      - name: Integrity checks
+        # Drift between papers.yml and the prose, untagged provenance, dead links, and the
+        # headline tripwire (do any citation edges now cross between the two literatures?).
+        # A broken SoK does not get published.
+        run: make check
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    # Only from main. A pull request gets built and checked, but never published.
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -2369,6 +2369,52 @@ alternatives_to_zk:
     trust_assumption: "Nash equilibrium -- rational validators. Neither cryptographic nor hardware."
     notes: "Replication-based verification. Cheapest of all, weakest guarantee."
 
+  - id: proof-of-quality
+    name: Proof of Quality
+    title: "Proof of Quality: A Costless Paradigm for Trustless Generative AI Model Inference on Blockchains"
+    url: https://arxiv.org/abs/2405.17934
+    pdf: https://arxiv.org/pdf/2405.17934
+    date: 2024-05-28
+    year: 2024
+    authors: [Zhenjie Zhang, Yuyang Rao, Hao Xiao, Xiaokui Xiao, Yin Yang]
+    authors_verified: true
+    numbers_source: primary
+    approach: >-
+      Outcome-based verification. Does NOT verify the computation at all. An inference node runs
+      the generative model off-chain; k independent "quality assessors" each score the
+      (query, response) pair with a lightweight BERT cross-encoder (nli-deberta-v3, 0.5-1.7 GB),
+      commit-then-reveal their scores, and consensus aggregates them and pays out. The protocol is
+      called PQML.
+    trust_assumption: >-
+      RATIONAL ADVERSARY + A JUDGE MODEL. Two game-theoretic theorems: Thm 1 tunes a reward
+      parameter so no rational inference node profits by substituting a cheaper model; Thm 2 tunes
+      another so a lazy assessor who guesses rather than computing earns less than epsilon. Neither
+      is a cryptographic soundness statement. Explicitly does NOT handle assessor collusion,
+      non-rational adversaries, or attacks on the cross-encoder itself.
+    notes: >-
+      A DIFFERENT CLAIM, not a cheaper proof of the same claim -- and the paper's framing invites
+      the confusion. zkML proves "THIS committed model produced THIS output on THIS input". PoQ
+      establishes "SOME model produced an output that a BERT cross-encoder scored highly". Model
+      substitution -- precisely the attack zkML exists to prevent -- is not prevented here, only
+      made unprofitable for a RATIONAL node by parameter tuning. The authors concede that a cheaper
+      model whose output is good enough is rewarded equally.
+      THE NUMBER THAT MATTERS, and it is theirs: the cross-encoder's correlation with GPT-4
+      ground-truth quality scores is only 0.12-0.35, and they admit "subtle differences on
+      accuracy" escape detection. The judge barely tracks the thing it is judging -- and a
+      verification scheme is only as sound as its verifier.
+      Note the name: despite "Proof of", nothing is proven. No proof object, no soundness error,
+      no extractor -- it is mechanism design plus a statistical judge. Filed under alternatives
+      rather than inference for exactly that reason.
+      Cost is the genuine contribution, and it is near-zero: cross-encoder assessment takes
+      0.12-0.61 s on an A100 (3.7-20.5 s on CPU) and consensus settles in ~50 ms for k = 1..30
+      assessors. Evaluated on 100 SQuAD questions against GPT-3.5/4-turbo, Mistral-7B,
+      Mixtral-8x7B and Llama3-70B. Admitted limits: a single inference node only, NLP only (no
+      image generation), and the cross-encoders are off-the-shelf document-search models not
+      trained for this task.
+      Useful to this SoK as the far endpoint of the trust spectrum: the point where you stop
+      verifying the computation entirely and start verifying the OUTPUT. Everything else on the
+      alternatives page still checks, samples, or re-executes the actual inference.
+
 # ============================================================================
 # SAMPLING-BASED / STATISTICAL VERIFICATION
 #

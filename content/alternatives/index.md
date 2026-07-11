@@ -7,7 +7,7 @@ lede: >-
   non-interactive, cryptographic guarantee. The alternatives buy a weaker but crisply
   stateable one, for a small fraction of the cost — and for most deployments that is
   the better trade.
-papers: [opml, opp-ai, zk-opml, optimistic-tee-rollups, tee-confidential-llm, proof-of-sampling, lightweight-sampling-inference]
+papers: [opml, opp-ai, zk-opml, optimistic-tee-rollups, tee-confidential-llm, proof-of-sampling, proof-of-quality, lightweight-sampling-inference]
 status: draft
 ---
 
@@ -56,6 +56,39 @@ prover being economically rational. This is the only family with a **tunable, qu
 guarantee — you can dial the soundness error — which makes it the most intellectually
 honest of the alternatives and the one we spend the most time on, on
 [the sampling page](/alternatives/sampling/).
+
+**Proof of Quality assumes a judge.** [[proof-of-quality]] is the last row on the page and the
+strangest, because it does not verify the computation *at all*. An inference node answers the query
+off-chain; a panel of assessors then scores the (query, response) pair with a lightweight BERT
+cross-encoder and the network pays out on the aggregate. Nothing checks that the model ran. Nothing
+checks *which* model ran.
+
+That makes it the far endpoint of this entire spectrum, and it deserves to be stated precisely,
+because the name works against comprehension:
+
+| | The claim established |
+|---|---|
+| **zkML** | *This* committed model produced *this* output on *this* input. |
+| **Optimistic / sampling** | The same claim, re-executed by someone else, wholly or in part. |
+| **Proof of Quality** | *Some* model produced an output that a BERT cross-encoder scored highly. |
+
+Those are not the same claim at three price points. The third is a different claim. **Model
+substitution — the precise attack zkML exists to prevent — is not prevented.** It is made
+*unprofitable for a rational node* by tuning a reward parameter, and the authors concede that a
+cheaper model whose output is good enough gets paid the same.
+
+And the judge is weak. By the paper's own measurement, the cross-encoder's correlation with
+GPT-4 ground-truth quality is **0.12–0.35**, and they acknowledge that "subtle differences on
+accuracy" escape it entirely. **A verification scheme is only as sound as its verifier**, and this
+one is barely correlated with the thing it is verifying — which is exactly the regime where a
+subtly wrong answer, the failure mode you most want to catch, passes.
+
+None of that makes it useless. Assessment costs well under a second and consensus settles in
+milliseconds, so for a decentralized *marketplace* — where the real risk is a node collecting fees
+for garbage rather than an adversary steering one classification — it is a sensible mechanism. It
+is a good answer to "did I get my money's worth." It is not an answer to "was this computed
+correctly," and the word *proof* in its title should not be read as claiming otherwise: there is no
+proof object, no soundness error, and no extractor. It is mechanism design with a statistical judge.
 
 **The hybrids assume you can partition the problem.** [[opp-ai]] runs the
 privacy-sensitive submodel in ZK and the rest optimistically. [[zk-opml]] decomposes

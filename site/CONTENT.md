@@ -11,9 +11,11 @@ references/<cell>/*.pdf     the PDFs we have actually read.
 references/citation-graph.yml   edge A -> B means "A's text cites/mentions B".
 content/<section>/*.md      prose. THIS is what you write.
 content/papers/<id>.md      optional deep-dive appended to an auto-generated paper page.
+site/vendor/                KaTeX. Source, not output -- copied into docs/ on each build.
 site/build.py               joins them all -> docs/
 site/validate.py            fails the build when they drift apart.
-docs/                       GENERATED. Never hand-edit. Your edit will be overwritten.
+docs/                       GENERATED, and GITIGNORED. Never hand-edit; it is not even in
+                            the repo. CI builds it and publishes it to GitHub Pages.
 ```
 
 The hard rule: **a number lives in `papers.yml`, never in prose.** If you want to say
