@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotary positional embedding — Operator atlas</title>
+<meta name="description" content="Gemma 3, Llama, most modern LLMs">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Rotary positional embedding</b></div><h2 class="ptitle">Rotary positional embedding</h2><p class="psub">Gemma 3, Llama, most modern LLMs</p><div class="math">$$Y_i = X_i \circ W_{1,i} \;+\; X_i' \circ W_{2,i}
+\\[6pt]
+X_i' = \big[-X_i[2],\, X_i[1],\, -X_i[4],\, X_i[3],\, \dots\big] \quad\text{(pairwise swap and negate)}
+\\[10pt]
+\text{trick:}\quad
+\tilde f_X(x,z) = (1-x)\tilde f_X(0,z) + x\,\tilde f_X(1,z)
+\\[2pt]
+\tilde f_{X'}(x,z) = (1-x)\big(-\tilde f_X(1,z)\big) + x\,\tilde f_X(0,z)$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>Rotate each pair of query/key dimensions by an angle proportional to position. Two Hadamard products against learned cos/sin matrices, with a swap-and-negate shuffle between them.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>The shuffled tensor $X'$ is a <em>derived</em> witness. Naively the prover must commit to it and open it, doubling the cost of a cheap operator — so the trick is to avoid ever materialising $X'$.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>Hadamard-product sumcheck</li><li>permuted_eq_poly: fold the swap-and-negate into the eq weights</li><li>Two layouts: Adjacent (pairwise) and RotateHalf (half-rows)</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">Never commit X′ — but the mechanism is not the paper's 'two evaluations of f_X'. The code reuses a single input MLE and folds the swap-and-negate into the eq weights (permuted_eq_poly), emitting one input claim, not two.</p><ul><li>Correction: our old page said the verifier reconstructs $X'$ from two evaluations of $f_X$. The code instead builds <strong>one</strong> <code>input_mle</code> and uses it in <em>both</em> sumcheck terms; the permutation lives in the eq weights via <code>permuted_eq_poly</code>. The sumcheck emits exactly three evals (input, cos, sin) and a single input claim.</li><li>The single virtual polynomial is $\text{input}\cdot\text{lt}\cdot(\text{eq}\cdot\cos + \text{permuted\_eq}\cdot\sin)$ — the swap-and-negate never touches the input tensor, only the equality polynomial.</li><li>There are <strong>two layouts</strong>, not one: <code>RopeLayout::Adjacent</code> (swap-and-negate adjacent pairs, as our old page assumed) and <code>RopeLayout::RotateHalf</code> (negate/rotate half-rows), which permutes differently and drops the top row-bit instead of the lowest.</li><li>Prover $O(sd)$, proof $O(\log sd)$. Costs <strong>0.06%</strong> of PIOP time in GPT-2, 0.83% in Gemma 3.</li></ul><figure class="code"><figcaption>zkml/src/layers/transformer/positional/rope.rs · 238-249</figcaption><pre class="src">    fn permuted_eq_poly&lt;F: PrimeField&gt;(&amp;self, eq_evals: &amp;[F], row_size: usize) -&gt; Vec&lt;F&gt; {
+        match self {
+            RopeLayout::Adjacent =&gt; eq_evals
+                .chunks(2)
+                .flat_map(|chunk| vec![chunk[1], F::ZERO - chunk[0]])
+                .collect_vec(),
+            RopeLayout::RotateHalf =&gt; {
+                let half_len = row_size / 2;
+                eq_evals
+                    .chunks(row_size)
+                    .flat_map(|chunk| {
+                        let (first_half, second_half) = chunk.split_at(half_len);
+                        second_half.iter().copied()
+                            .chain(first_half.iter().map(|e| F::ZERO - *e))
+                    })
+                    .collect_vec()
+            }
+        }
+    }</pre><figcaption class="cap">permuted_eq_poly folds swap-and-negate into the eq weights instead of building X′ — the actual mechanism, not &#x27;two evaluations of f_X&#x27;.</figcaption></figure></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">The trig is proven by neural teleportation: range-reduce the angle modulo τ=4π, look the reduced value up in a tiny 2¹² table, range-check the remainder. No RoPE LLM ships in the repo, so this is proven-out by unit tests only.</p><ul><li>A three-stage protocol: a degree-2 <em>division</em> sumcheck enforcing $\mathrm{input} = \tau\!\cdot\!q + r$ with $\tau = \texttt{FOUR\_PI\_APPROX}$ ($4\pi$ scaled by 256 ≈ 3217), a one-hot lookup of the reduced value into a dense $2^{12}$ table, and a remainder range check $r \in [0,\tau)$.</li><li>The only algebraic tie between quotient, remainder and input is a single constraint <code>eq · (τ·q + r − input)</code> — everything else about $q, r$ is prover advice.</li><li><strong>Scope:</strong> the repo ships only GPT-2 / nanoGPT (absolute positional), so <code>sin</code>/<code>cos</code> exist as operator support but no rotary-embedding model exercises them end-to-end.</li></ul><div class="audit"><span class="audit-h">Audit surface</span><p>Because $q, r$ are constrained <em>only jointly</em> by <code>τ·q + r − input = 0</code>, <strong>uniqueness rests entirely on the remainder range check <code>r &lt; τ</code></strong>. The remainder-range assertion at <code>cos.rs:329</code> is a plain <code>assert!</code> that always runs in the prover — confirm the in-circuit Shout range check (not the assert) is what the verifier actually relies on.</p></div></div></div><div class="pager"><a href="../../zk-inference/operators/ape.html">← previous<span>Absolute positional encoding</span></a><a class="next" href="../../zk-inference/operators/scores.html">next →<span>Attention scores</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

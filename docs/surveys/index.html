@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The prior surveys, and where we disagree with them — zkAI</title>
+<meta name="description" content="Four prior attempts to map this field. We take most of our older numbers from one of them, and we disagree with all of them about three things: what quantization is, what counts as an objective, and h">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec on" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../surveys/index.html">Surveys &amp; reports</a> · <b>The prior surveys, and where we disagree with them</b></div><h2 class="ptitle">The prior surveys, and where we disagree with them</h2><p class="lede">Four prior attempts to map this field. We take most of our older numbers from one of them, and we disagree with all of them about three things: what quantization is, what counts as an objective, and how much a comparison table is worth.</p><div class="rail"><a href="../papers/zkml-survey.html">ZKP-VML Survey</a><a href="../papers/zkp-decentralized-ml-survey.html">Decentralized ZKML Survey</a><a href="../papers/icme-definitive-guide.html">The Definitive Guide to ZKML (2025)</a><a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a><a href="../papers/safetynets.html">SafetyNets</a><a href="../papers/jolt-atlas.html">Jolt Atlas</a><a href="../papers/zktorch.html">ZKTorch</a><a href="../papers/fairproof.html">FairProof</a><a href="../papers/fairzk.html">FairZK</a><a href="../papers/oath.html">OATH</a><a href="../papers/zkaudit.html">zkAudit</a><a href="../papers/zkprov.html">ZKPROV</a></div><div class="prose"><p>An SoK that does not say where it departs from its predecessors is a literature review.
+This page says.</p>
+<div class="scrollx"><table class="matrix"><thead><tr><th>System</th><th>Model</th></tr></thead><tbody><tr><th><a href="../papers/zkml-survey.html">ZKP-VML Survey</a> </th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/zkp-decentralized-ml-survey.html">Decentralized ZKML Survey</a> </th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/icme-definitive-guide.html">The Definitive Guide to ZKML (2025)</a> </th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a> </th><td><span class="na">—</span></td></tr></tbody></table></div><div class="prov-key"><span><i class="prov primary"></i> primary — read in the paper</span><span><i class="prov survey"></i> survey — secondhand</span><span><i class="prov blog"></i> vendor claim, or provenance unrecorded</span></div>
+<h2 id="what-each-one-is">What each one is</h2>
+<p><strong><a href="../papers/zkml-survey.html">ZKP-VML Survey</a></strong> — the ZKP-VML survey (Peng et al.) is the backbone of the historical
+half of this site, and we are in its debt. Its Table VII is a timeline of representative
+systems from <a href="../papers/safetynets.html">SafetyNets</a> onward, and its Tables IV, V and VI give proving time,
+verification time and proof size — <em>with hardware attached</em> — for training, testing and
+inference systems respectively. Most of the pre-2024 entries here are sourced from it, and
+every one of them is tagged <code>numbers_source: survey</code> and renders with a hollow provenance
+dot.</p>
+<p>It is a survey, not a system: it reports no original benchmarks, so it is excluded from
+every plot on this site. That is not a criticism. It is the correct way to use it.</p>
+<p><strong><a href="../papers/zkp-decentralized-ml-survey.html">Decentralized ZKML Survey</a></strong> — complementary, and older. Its centre of gravity is
+decentralized and federated settings rather than the single-prover MLaaS model, which makes
+it the better entry point for <a href="../federated/index.html">the federated cell</a> and a weaker one for
+inference.</p>
+<p><strong><a href="../papers/icme-definitive-guide.html">The Definitive Guide to ZKML (2025)</a></strong> — a landscape blog, not a peer-reviewed source, and written
+by a <a href="../papers/jolt-atlas.html">Jolt Atlas</a> co-author. We flag it <code>partisan: true</code> in <code>papers.yml</code> and we mean it:
+its head-to-head claims favour Jolt Atlas and are recorded here as <em>attributed claims</em>, not
+as facts. It is genuinely useful for two things — its framing of the overhead progression
+across proof-system generations, and as one of two secondhand sources for <a href="../papers/zktorch.html">ZKTorch</a>'s LLM
+numbers (the two sources disagree; both values are recorded in <code>papers.yml</code>).</p>
+<p><strong><a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a></strong> — the odd one out, and the one that has aged best. It
+is not a survey of ML-proving <em>frameworks</em>; it is a benchmark of proof <em>backends</em> (Groth16,
+Gemini, Winterfell, Halo2, Plonky2, zkCNN) run against MLPs. No transformers, no tokens, so
+it is deliberately excluded from the LLM throughput graph. What makes it worth reading in
+2026 is that it called the shot:</p>
+<blockquote class="q"><p>With respect to both proving time and memory, the GKR-based zkCNN prover appears best suited to tackle large models – even without an optimized implementation.</p><cite><b>The Cost of Intelligence</b> · Abstract</cite></blockquote>
+
+<p>That was written in January 2023. Every system on <a href="../zk-inference/index.html">the LLM inference page</a>
+that reaches GPT-2 scale or beyond is a sum-check/GKR system. The Plonkish and Groth16
+approaches did not get there. Modulus benchmarked the backends and read the trend correctly
+three years before the papers proved it, and that is a better track record than any of the
+taxonomies have.</p>
+<hr>
+<h2 id="where-we-disagree">Where we disagree</h2>
+<h3 id="1-quantization-is-a-confounder-not-a-footnote">1. Quantization is a confounder, not a footnote</h3>
+<p>The surveys tabulate proving time, verification time and proof size. They do not tabulate
+<strong>bit width</strong> — and bit width is a free parameter that trades model accuracy for proving
+speed. A system reporting excellent throughput on an aggressively quantized model is not
+doing the same job as one reporting worse throughput on a faithful one, and nothing in a
+three-column comparison table makes that visible.</p>
+<p>This is not a nitpick, and it is not hypothetical. The largest headline throughput gap in
+the LLM inference literature is between two systems at <em>different bit widths</em>, on
+<em>different context lengths</em>, proving <em>different claims</em> (a full sequence versus a single
+forward pass). Three confounds, all pushing the same direction. The protocol contribution
+to that gap is smaller than the headline, and <strong>nobody has isolated it.</strong> See
+<a href="../zk-inference/quantization.html">Quantization</a> — it is the largest single methodological
+difference between this SoK and its predecessors.</p>
+<p>Our rule follows from it: <code>quantization.bits: null</code> is a <strong>finding</strong>, not a hole. Several
+of the fastest systems here do not state their bit width. We record the absence rather than
+guessing, and a throughput figure with no accuracy claim attached to it is flagged, because
+any system can go arbitrarily fast by quantizing to garbage.</p>
+<h3 id="2-there-is-a-fourth-objective">2. There is a fourth objective</h3>
+<p>The ZKP-VML survey divides verifiable ML into <strong>training, testing, inference</strong> — one bucket
+per pipeline stage, each proving that a <em>computation</em> ran as declared. The taxonomy is
+sound and it exhausts its axis.</p>
+<p>It has no slot for a claim about the <em>model itself</em>: that it is fair, that it was trained on
+licensed data, that it is not censoring outputs, that it complies with a regulation.
+<a href="../papers/fairproof.html">FairProof</a>, <a href="../papers/fairzk.html">FairZK</a>, <a href="../papers/oath.html">OATH</a>, <a href="../papers/zkaudit.html">zkAudit</a> and the provenance systems are not proving
+that a computation was performed correctly, and you cannot reach what they prove by proving
+harder that one was. We call that a <strong>fourth objective</strong> and give it
+<a href="../properties/index.html">its own section</a> — along with the argument that it is the objective with the
+weakest security semantics, because a proof of fairness is only as good as the definition of
+fairness it encodes, and that definition is contestable in a way arithmetic is not.</p>
+<h3 id="3-provenance-is-first-class-not-adjacent">3. Provenance is first-class, not adjacent</h3>
+<p>Related to the above but worth separating. The surveys treat dataset provenance — if they
+treat it at all — as a curiosity next to the "real" work of proving computations. We think
+it is close to inverted.</p>
+<p>Provenance is the claim with an actual customer. Copyright litigation, licensing compliance
+and the EU AI Act's data-governance provisions turn on <em>which data went into this model</em>,
+not on whether the softmax was computed to twelve bits. It is also the <strong>cheaper</strong> claim —
+<a href="../papers/zkprov.html">ZKPROV</a> proves which dataset a model was trained on without proving the training
+computation at all — and, unlike fairness, it has a fact of the matter behind it. A field
+optimising for the hardest technical problem has spent a decade walking past the easiest
+valuable one.</p>
+<h3 id="4-we-do-not-trust-comparison-tables-including-our-own">4. We do not trust comparison tables, including our own</h3>
+<p>The methodological disagreement, and the one that produced the most work.</p>
+<p>Three of the four sources above contain a table comparing systems the authors did not run.
+We reproduced those tables, then opened the primary papers, and found four discrepancies —
+including one proof-size figure that differs by an order of magnitude between a paper and a
+survey, and one that is smaller than a single pair of group elements. Every one of them was
+invisible from the survey alone.</p>
+<p>They are all documented, with both values, in <code>papers.yml</code> — which is load-bearing for this
+site's credibility: it is the evidence that the numbers here were checked rather than copied,
+recording both figures and the disagreement wherever two sources conflict. It is also the reason every figure on this site
+renders with a provenance dot, and the reason a number never appears in prose — a number in
+a paragraph cannot carry its provenance, and six months later nobody remembers where it
+came from.</p>
+<div class="debate"><h4>Is a partisan blog a citable source?</h4><p>We cite <a href="../papers/icme-definitive-guide.html">The Definitive Guide to ZKML (2025)</a> and we flag it as partisan, which some readers will find
+either too generous or too harsh. Our position: a comparison written by a competitor's
+author is evidence, and excluding it would leave <a href="../papers/zktorch.html">ZKTorch</a>'s LLM performance with <em>no</em>
+source at all rather than two conflicting ones. The failure would be to launder it — to
+quote its numbers without the flag, at which point a marketing claim has become a survey
+figure has become a fact. That laundering pipeline is exactly what a provenance tag exists
+to break.</p></div>
+
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>We are a survey too</h5><p>Everything above is a criticism we are also exposed to. Many of this site's older rows are
+secondhand from <a href="../papers/zkml-survey.html">ZKP-VML Survey</a> and we have not opened those PDFs. Several entries carry
+<code>authors_verified: false</code>. The honest position is not that this SoK checked everything — it
+is that it <strong>marks what it did not check</strong>, which is a lower bar than it sounds and one the
+prior surveys did not clear.</p></div></div></div><div class="pager"><a href="../alternatives/sampling.html">← previous<span>Sampling — trading soundness for milliseconds, on purpose</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

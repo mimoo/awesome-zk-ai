@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garg et al. (FP) — zkAI</title>
+<meta name="description" content="Succinct Zero Knowledge for Floating Point Computations">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../numerics/index.html">Numerics</a> · <b>Garg et al. (FP)</b></div><h2 class="ptitle">Garg et al. (FP)</h2><p class="psub">Succinct Zero Knowledge for Floating Point Computations</p><p class="authors">Sanjam Garg, Abhishek Jain, Zhengzhong Jin, Yinuo Zhang</p><div class="pmeta"><div><dt>Venue</dt><dd>ACM CCS 2022</dd></div><div><dt>Date</dt><dd>2022-11-07</dd></div><div><dt>Proof system</dt><dd>Succinct ZK argument over a relative-error model of floating-point arithmetic</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://dl.acm.org/doi/10.1145/3548606.3560653">https://dl.acm.org/doi/10.1145/3548606.3560653</a></dd></div></div><h3 class="head">Approach</h3><div class="prose"><p>relaxed-semantics</p></div><h3 class="head">Notes</h3><div class="prose"><p>CAMP 1 of the two float-in-ZK camps: RELAX THE SEMANTICS. The insight is that you need not prove the IEEE rounding <em>procedure</em>, only that the result is <em>accurate</em>. So instead of arithmetising round-to-nearest, prove a per-gate relative-error bound |c - g(a,b)| &lt;= delta * |g(a,b)|, where g is the exact sum/product and delta can be set to machine epsilon -- "the relative error bound in the IEEE standard". Zeros, infinities and NaN are handled as separate corner cases. Inspired by the FHE-for-floats line, which made the same move. Explicitly a DEVIATION, and the paper says so (Sec 2, Our Model): "our model does not guarantee that the value in the output wire of a step of the computation is rounded to the nearest number (as is done in the IEEE standard). Instead, our model allows a larger (by a factor of 2 in some cases) absolute error." Prover speedup vs verifying exact IEEE: ~57x for FP32, ~236x for FP64. CRITICAL CONNECTION: this is the technique ZIP uses, one level up -- ZIP applies the same relative-error relation to whole ACTIVATIONS rather than to individual float gates. But Garg sets delta = machine epsilon (as tight as the model admits); ZIP sets delta = 9e-2 for GeLU. Same machinery, wildly different slack. See zip.soundness_caveat.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>Three contributions, and the field has absorbed only the first.</p>
+<p><strong>The relative-error model.</strong> The observation is that you do not need to prove the IEEE rounding
+<em>procedure</em> — you need to prove the result is <em>accurate</em>. So rather than arithmetising
+round-to-nearest, prove a per-gate bound</p>
+<p>$$|c - g(a,b)| \le \delta\,|g(a,b)|$$</p>
+<p>where $g$ is the <strong>exact</strong> sum or product over the reals and $\delta$ is a relative-error budget
+that can be set to machine epsilon, "the relative error bound in the IEEE standard." Zeros,
+infinities and NaN are peeled off as corner cases. The move is borrowed, explicitly, from the line
+of work that made FHE practical for floats by the same deviation — and it is inspired by numerical
+analysis, where bounding per-step relative error and then propagating it is the standard way to
+reason about an algorithm's accuracy.</p>
+<p><strong>A generic compiler.</strong> Any public-coin <em>commit-and-prove</em> ZK proof of knowledge becomes a succinct
+ZK proof system for floating-point computation. The headline asymptotic is the point: for $w$-bit
+precision the prover pays only $\log(w)$ overhead, against the $\mathrm{poly}(w)$ that binary-circuit
+emulation of IEEE-754 costs. Communication is nearly preserved (up to a factor of two), verification
+is sub-linear, and Fiat–Shamir makes it non-interactive.</p>
+<p><strong>A batch range proof without bit decomposition</strong> — and this is the contribution that should
+interest a zkML auditor most, because it is the one nobody has picked up. Each gate's error bound is
+rearranged into a positivity claim $z > 0$, and positivity is proven via <strong>Legendre's three-square
+theorem</strong>: $z > 0 \iff 4z-3$ is expressible as a sum of three squares. No bits, no decomposition, in
+standard prime-order groups. Range checks are the dominant soundness surface in every quantized zkML
+system we catalogue; a range proof whose cost
+does not scale in the bit width is directly relevant to them, and it is sitting unused in a paper
+about floats.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>Not bit-exact IEEE-754. Not faithful rounding either. An interval bound.</strong> This distinction is the
+entire security content of the paper and it is the one a reader skimming for "floating point in ZK"
+will get wrong.</p>
+<p>The relation certified is that each output wire lies in a <strong>relative ball around the exact
+real-arithmetic result</strong>. It is <em>not</em> certified that the output is the correctly-rounded IEEE value,
+and the paper says so without being asked:</p>
+<blockquote class="q"><p>our model does not guarantee that the value in the output wire of a step of the computation is
+rounded to the nearest number (as is done in the IEEE standard). Instead, our model allows a
+larger (by a factor of 2 in some cases) absolute error.</p><cite><b>Garg et al., CCS &#x27;22</b> · §2, Our Model</cite></blockquote>
+
+<p>So the relation is <strong>not uniquely satisfying.</strong> For a given $(a,b)$ there are many values of $c$ that
+pass. An honest prover puts the correctly-rounded double in the ball; a malicious prover may put
+anything in it. That is not a bug — it is the definition of the model, honestly stated, and the
+soundness theorem is proved with respect to it.</p>
+<p>What makes the model <em>defensible</em> rather than merely cheap is an argument the paper makes in §2 and
+which deserves to be read slowly, because it is subtle and it is the paper's real intellectual core:
+the gap between the relative-error model and exact IEEE <strong>shrinks to nothing in the adversarial
+setting</strong>. In a ZK proof the floating-point values are hidden from the verifier, so a malicious
+prover may choose inputs that provoke the worst-case rounding error that IEEE <em>itself</em> permits — and
+IEEE's own worst-case relative error is $\delta$. Against an adversary who picks the numbers,
+proving "you rounded correctly" and proving "you landed within $\delta$" certify the same set of
+outcomes.</p>
+<p>That argument is correct. It is also, I think, load-bearing in a way that does not survive the trip
+into zkML — see below.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The efficiency numbers are estimates, not measurements.</strong> Table 1 is an analytical R1CS-size
+comparison ("We estimate Prover Efficiency based on the total number of non-zero entries"), computed
+at $\log_2 p = 384$ — a notably large group. The famous "∼57× faster for 32-bit … 236× for 64-bit"
+figures are derived from that table, against a <em>naive binary-circuit</em> baseline. There is no
+implementation. <a href="../papers/zklp.html">ZKLP</a>, which did build one, says so directly:</p>
+<blockquote class="q"><p>However, their approach only supports addition and multiplication, whilst not providing a
+concrete implementation and only theoretical performance estimates. Also, the verifier time in [23] is linear.</p><cite><b>ZKLP (Ernstberger et al.)</b> · §6, Related Works</cite></blockquote>
+
+<p><strong>Addition and multiplication only.</strong> No division, no square root, no transcendentals. For a
+transformer that is disqualifying on its face: Softmax needs $\exp$ and a reciprocal, LayerNorm needs
+a reciprocal square root, GeLU needs $\tanh$ or $\mathrm{erf}$. These are precisely the operators
+where <a href="../numerics/index.html">the cost of zkML actually lives</a>. The paper's technique covers the
+part of the network that sum-check already proves almost for free, and omits the part that is
+expensive.</p>
+<p><strong>And the adversarial-equivalence argument does not obviously transfer to zkML.</strong> This is my
+observation, not the paper's, and it is an open question rather than a break — but it is the reason
+this paper is filed under soundness and not merely under numerics.</p>
+<p>Garg's defence of the relative-error model rests on the floating-point values being <strong>hidden and
+freely chosen by the prover</strong>, so that a worst-case-rounding IEEE execution is indistinguishable from
+a $\delta$-deviating one. In a zkML deployment that premise weakens sharply. The <strong>weights are
+committed</strong>, and in many threat models the input is public. Against a pinned model and a pinned
+input, the correctly-rounded IEEE forward pass is a <em>deterministic function</em> with a unique answer —
+and the relative-error relation still admits a ball of them. The freedom the model grants is no
+longer freedom the adversary already had by choosing inputs; it is <em>new</em> freedom, granted per gate,
+per layer, compounding with depth.</p>
+<p>Whether that is exploitable — whether an adversary can steer a classification or a next-token argmax
+by nudging each value within its ball, and whether the perturbations compound or cancel across a
+transformer's depth — <strong>is not analysed here, and is not analysed anywhere.</strong> <a href="../papers/zklp.html">ZKLP</a>'s authors
+clearly believe it is exploitable, and say so about machine learning specifically:</p>
+<blockquote class="q"><p>Further, the relative error model in [23] is not suitable for many applications. For instance, it is observed in [18] that for machine learning, even the minor rounding errors due to non-determinism in
+GPUs can result in very different predictions. Consequently, an adversary may leverage this fact to generate valid proofs for arithmetic circuits that do not produce the expected
+results as in IEEE 754 compliant computer hardware.</p><cite><b>ZKLP (Ernstberger et al.)</b> · §6, Related Works</cite></blockquote>
+
+<p>That is a <em>claim in a related-work section</em>, not a demonstrated attack, and it should be read as one.
+But it is a published, adversarially-minded objection to this exact model in this exact application,
+raised by people who built the competing construction.</p>
+<div class="audit"><span class="audit-h">Where this lands in the zkML stack</span><p>Garg's relative-error relation is not a curiosity — it is <strong>the machinery <a href="../papers/zip.html">ZIP</a> runs on</strong>, applied
+one level up. ZIP does not bind an activation to its true IEEE-754 value; it binds it to a
+$\delta$-relative ball around a certified piecewise-polynomial approximation, using exactly this
+relation. The two papers differ in one parameter, and the difference is enormous:</p>
+<ul>
+<li><strong>Garg sets $\delta$ = machine epsilon</strong> — as tight as the model admits. The slack is the slack
+  IEEE itself has.</li>
+<li><strong>ZIP sets $\delta$ = 9e-2 for GeLU</strong> (its own §5.2; 9e-4 for SeLU and ELU). That is a 9%
+  per-activation relative-error budget available to a malicious prover, on the flagship activation of
+  a paper headlined as double-precision. For scale, bfloat16's machine epsilon is roughly 7.8e-3 — an
+  order of magnitude <em>tighter</em> than the slack ZIP's GeLU proof permits.</li>
+</ul>
+<p><strong>What to grep for:</strong> in any system that proves a non-linearity by an error bound rather than by an
+exact table lookup, find $\delta$ and find where it is set. Then ask whether the security argument
+was inherited from a paper that set it to machine epsilon.</p></div>
+
+<p><strong>A note on what this paper is not.</strong> It is not a zkML paper, it does not claim to be, and it is
+cited by no zkML system in this collection. Treating it as a refutation of "floats are infeasible" is
+half right: it refutes the <em>cost</em> premise for add and multiply, on paper. The construction that
+actually refutes the premise end-to-end, with an implementation and full IEEE semantics, is
+<a href="../papers/zklp.html">ZKLP</a>.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a></li><li><a href="../papers/mystique.html">Mystique</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/range-arithmetic.html">Range-Arithmetic</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

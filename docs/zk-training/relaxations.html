@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every relaxation, and what an adversary can still do — zkAI</title>
+<meta name="description" content="Nobody proves a pretraining run. Everyone relaxes something. A relaxation is not a weakness -- it is a design choice, and it is the only reason any of these systems exist. But each one leaves a specif">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub on" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../zk-training/index.html">Proving training</a> · <b>Every relaxation, and what an adversary can still do</b></div><h2 class="ptitle">Every relaxation, and what an adversary can still do</h2><p class="lede">Nobody proves a pretraining run. Everyone relaxes something. A relaxation is not a weakness -- it is a design choice, and it is the only reason any of these systems exist. But each one leaves a specific adversary standing, and the papers name their relaxation far more often than they name the adversary it lets through.</p><div class="rail"><a href="../papers/verilora.html">VeriLoRA / zkLoRA</a><a href="../papers/veriml.html">VeriML</a><a href="../papers/zkmlaas.html">zkMLaaS</a><a href="../papers/optimum-vicinity.html">Optimum Vicinity</a><a href="../papers/kaizen.html">Kaizen</a><a href="../papers/zkdl.html">zkDL</a><a href="../papers/zkboost.html">ZKBoost</a><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a><a href="../papers/zkprov.html">ZKPROV</a><a href="../papers/zkaudit.html">zkAudit</a><a href="../papers/rofl.html">RoFL</a><a href="../papers/acorn.html">ACORN</a><a href="../papers/eiffel.html">EIFFeL</a><a href="../papers/opml.html">opML</a><a href="../papers/proof-of-sampling.html">Proof of Sampling</a><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a><a href="../papers/lightweight-sampling-inference.html">Lightweight Sampling Proofs of Inference</a><a href="../papers/fairzk.html">FairZK</a></div><div class="prose"><p>This page has one job: for each way of making proof-of-training tractable, state precisely what a
+malicious trainer can <em>still</em> do while producing a proof that verifies. None of this is an attack
+on a paper. All of it is what an auditor should write in the "residual risk" column.</p>
+<p>A note on how to read the residuals. The proof is always sound — that is the one thing you get
+for free. The question is never "can the prover forge the proof", it is <strong>"what is the set of
+models for which an honest proof exists?"</strong> A relaxation is a decision to make that set larger.</p>
+<h2 id="r1-prove-a-fine-tune-not-a-training-run">R1 — Prove a fine-tune, not a training run</h2>
+<p><em>Taken by:</em> <a href="../papers/verilora.html">VeriLoRA / zkLoRA</a>. <em>Cost saved:</em> everything. It is the only reason a model at that scale
+appears in the table at all.</p>
+<p>The statement becomes: <em>starting from base weights $W_0$, these LoRA adapters are the honest
+output of fine-tuning on this committed data.</em></p>
+<p><strong>What the adversary can still do.</strong> Ship a backdoored $W_0$. The entire base model — where the
+capability lives, and where a data-poisoning or weight-editing backdoor would live — is a free
+parameter of the statement. The proof binds the delta and says nothing about what it is a delta
+<em>from</em>. A trainer who wants a model that behaves badly on one trigger phrase does not need to
+cheat during fine-tuning; they need to have cheated before it. Worse, the adapters are the part
+being <em>proven</em>, and they are the part a customer might reasonably assume is the risky part,
+because they are the part that changed.</p>
+<p>The mitigation is not cryptographic and is easy to state: the statement is only worth something
+if $W_0$ is a <em>published, independently attested</em> checkpoint, so that "trust the base model"
+reduces to a claim someone else already made publicly. Whether <a href="../papers/verilora.html">VeriLoRA / zkLoRA</a> frames it that way,
+we cannot tell without the PDF.</p>
+<h2 id="r2-prove-a-random-sample-of-the-steps">R2 — Prove a random sample of the steps</h2>
+<p><em>Taken by:</em> <a href="../papers/veriml.html">VeriML</a>, <a href="../papers/zkmlaas.html">zkMLaaS</a>. <em>Cost saved:</em> proportional to the sampling rate.</p>
+<p>The statement becomes: <em>of the iterations you challenged, all were computed correctly.</em></p>
+<p><strong>What the adversary can still do.</strong> Cheat in the iterations you did not challenge. That is not a
+pedantic restatement — it is a real threat model, because <strong>gradient descent does not require many
+corrupt steps to land somewhere chosen.</strong> A single adversarially crafted weight update at the end
+of a run is enough to install a backdoor while every sampled step verifies. A cheat that is
+diffuse over many steps is easy to catch by sampling; a cheat concentrated in one step is exactly
+the one sampling is worst at, and it is also the easiest one to mount.</p>
+<p>Two preconditions carry the entire guarantee, and both are implementation properties rather than
+theorems: the commitment to iteration inputs and outputs must genuinely precede the challenge, and
+the challenge must be unpredictable to the prover. A Fiat–Shamir-derived challenge over
+prover-chosen commitments is the obvious place this goes wrong.</p>
+<p>The honest comparison axis here is the one the sampling-based inference work forces on us: cost
+against <em>detection probability times penalty</em>, not cost against cost. Compared against
+<a href="../papers/proof-of-sampling.html">Proof of Sampling</a> and <a href="../papers/lightweight-sampling-inference.html">Lightweight Sampling Proofs of Inference</a>, these systems are early members of
+the same family, and they should be evaluated by that family's standard rather than by
+cryptographic soundness they never claimed.</p>
+<h2 id="r3-prove-the-result-not-the-process">R3 — Prove the result, not the process</h2>
+<p><em>Taken by:</em> <a href="../papers/optimum-vicinity.html">Optimum Vicinity</a>. <em>Cost saved:</em> the entire length of the computation.</p>
+<p>The statement becomes: <em>the model is within a bounded distance of the optimum of this objective on
+this committed data.</em></p>
+<p><strong>What the adversary can still do.</strong> Choose any model in the ball. The vicinity bound is a
+parameter of the statement, and every model inside it admits an honest proof — including models
+the honest optimizer would never have produced. How much freedom that buys depends entirely on how
+tight the bound is, and "how much can a model's behaviour differ across the certified vicinity" is
+not a question the cryptography answers.</p>
+<p>The deeper limitation is the one the paper states itself: this needs training to <em>be</em> a convex
+optimization problem with an optimum to be near. There is no analogue of the statement for a deep
+network, because there is no optimum to bound the distance to. That is not an engineering gap that
+better circuits will close.</p>
+<h2 id="r4-prove-the-computation-trust-the-data">R4 — Prove the computation, trust the data</h2>
+<p><em>Taken by:</em> <strong>all</strong> of <a href="../papers/kaizen.html">Kaizen</a>, <a href="../papers/zkdl.html">zkDL</a>, <a href="../papers/zkboost.html">ZKBoost</a>, <a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a>, <a href="../papers/verilora.html">VeriLoRA / zkLoRA</a>. This is the
+relaxation nobody calls a relaxation, because it is baked into the definition.</p>
+<p>The statement is: <em>I ran the optimizer correctly on the dataset I committed to.</em> The dataset is a
+commitment. A commitment is a hash. <strong>A hash of poison is still a valid commitment.</strong></p>
+<p><strong>What the adversary can still do.</strong> Everything that data poisoning, backdoor injection, licence
+violation, PII inclusion and benchmark contamination let you do. Every one of those attacks is
+executed <em>before</em> the training run and is fully compatible with a perfect zkPoT. The proof
+attests that garbage went in and was faithfully processed into garbage.</p>
+<p>This is the single most important sentence on this page, so we will say it without hedging: <strong>a
+proof of training is not a proof of a good model, and no amount of prover engineering will make it
+one.</strong> What closes the gap is a <em>second</em> claim about the committed data or the resulting model —
+which is precisely what <a href="../papers/zkaudit.html">zkAudit</a> (arbitrary audits over the hidden data and weights) and
+<a href="../papers/fairzk.html">FairZK</a> (fairness derived from parameters and aggregate statistics) are for. The properties
+cell is not a nice-to-have next to the training cell; it is the half that makes the training cell
+mean anything.</p>
+<h2 id="r5-prove-the-data-trust-the-computation">R5 — Prove the data, trust the computation</h2>
+<p><em>Taken by:</em> <a href="../papers/zkprov.html">ZKPROV</a>. The mirror image of R4, and the cheap one.</p>
+<p>The statement becomes: <em>this model was trained on that dataset.</em></p>
+<p><strong>What the adversary can still do.</strong> Anything at all with the optimizer. Train on the declared
+dataset <em>and also</em> on an undeclared one. Train correctly and then edit the weights afterwards.
+Run a procedure that is nominally SGD on the licensed corpus but is engineered to memorize it.
+Nothing in a provenance proof rules any of these out, because the computation is not in the
+statement.</p>
+<p>Provenance proofs are worth having — for licensing and regulatory questions they may be exactly the
+claim a regulator wants — but they must not be read as a discount zkPoT.</p>
+<h2 id="r6-prove-properties-of-updates-not-the-training-that-produced-them">R6 — Prove properties of updates, not the training that produced them</h2>
+<p><em>Taken by:</em> the federated cell — <a href="../papers/rofl.html">RoFL</a>, <a href="../papers/acorn.html">ACORN</a>, <a href="../papers/eiffel.html">EIFFeL</a> and the rest.</p>
+<p>The statement becomes: <em>this update is well-formed and within a norm bound.</em></p>
+<p><strong>What the adversary can still do.</strong> Submit a poisoned update that satisfies the bound. Norm bounds
+constrain magnitude; they say nothing about direction. There is a whole page on this in the
+federated section — it is the defining gap of that cell, not a footnote to this one.</p>
+<h2 id="r7-prove-nothing-make-cheating-expensive-instead">R7 — Prove nothing; make cheating expensive instead</h2>
+<p><em>Taken by:</em> <a href="../papers/opml.html">opML</a>, <a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a>, <a href="../papers/proof-of-sampling.html">Proof of Sampling</a>. Not a zkPoT relaxation so
+much as an exit from the cell, and often the right one.</p>
+<p><strong>What the adversary can still do.</strong> Whatever the economic or hardware assumption permits: cheat
+when no honest challenger is watching (optimistic), cheat if you can break or side-channel the
+enclave (TEE), cheat when the expected penalty is below the expected gain (rational sampling). The
+guarantees are crisply stateable and much cheaper. They are also not the same guarantee, and
+plotting them against proving times would be a category error.</p>
+<h2 id="r8-prove-a-quantized-run-of-a-quantized-model">R8 — Prove a quantized run of a quantized model</h2>
+<p><em>Taken by:</em> everyone, silently, because finite fields have no floats.</p>
+<p><strong>What the adversary can still do.</strong> Nothing, directly — this is not an exploitable relaxation so
+much as a <em>scope</em> relaxation, and it is the one most likely to be forgotten at deployment. The
+proof covers a fixed-point training run producing fixed-point weights. If the artifact that then
+gets served is a float model, or a re-quantized model, or the "same" model reloaded through a
+different stack, the proof covers a different object than the one answering queries. The binding
+between "the weights in the proof" and "the weights in production" is not cryptographic in any
+system we have seen; it is operational.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Nobody states the residual</h5><p>Across the ten entries in the training table, we can find no paper summary that states, in the
+form above, what an adversary can still do under its relaxation. Papers state what they prove.
+Almost none state what they leave standing. If you are writing in this space, that section — call
+it "what an honest proof still permits" — is the cheapest possible contribution and the one an
+auditor will read first.</p></div></div>
+
+<h2 id="the-composition-nobody-has-built">The composition nobody has built</h2>
+<p>Read as a menu, the relaxations are complementary rather than competing. R4 (prove the compute)
+and R5 (prove the data) are duals; R1 (prove the fine-tune) needs an attested base model; R4 needs
+an audit of the committed data to mean anything. The end-to-end claim a buyer actually wants —
+<em>this served model came from this attested base, fine-tuned on this licensed, audited data, with
+this optimizer, and here is the artifact</em> — is a composition of at least three of these, and no
+system in this repo composes even two.</p></div><div class="pager"><a href="../zk-training/systems.html">← previous<span>The systems, grouped by what they gave up</span></a><a class="next" href="../federated/index.html">next →<span>The hybrid cell</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

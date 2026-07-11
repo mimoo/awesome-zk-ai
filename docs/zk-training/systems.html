@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The systems, grouped by what they gave up — zkAI</title>
+<meta name="description" content="Grouping these by proof system tells you nothing -- they are almost all sum-check or VOLE. Grouping them by which part of the training claim they refused to prove tells you everything, because that ch">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub on" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../zk-training/index.html">Proving training</a> · <b>The systems, grouped by what they gave up</b></div><h2 class="ptitle">The systems, grouped by what they gave up</h2><p class="lede">Grouping these by proof system tells you nothing -- they are almost all sum-check or VOLE. Grouping them by which part of the training claim they refused to prove tells you everything, because that choice is what sets their scale, and it is the only axis on which they actually differ.</p><div class="rail"><a href="../papers/kaizen.html">Kaizen</a><a href="../papers/zkdl.html">zkDL</a><a href="../papers/zkboost.html">ZKBoost</a><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a><a href="../papers/summer.html">SUMMER</a><a href="../papers/optimum-vicinity.html">Optimum Vicinity</a><a href="../papers/verilora.html">VeriLoRA / zkLoRA</a><a href="../papers/veriml.html">VeriML</a><a href="../papers/zkmlaas.html">zkMLaaS</a><a href="../papers/zkprov.html">ZKPROV</a><a href="../papers/zkaudit.html">zkAudit</a><a href="../papers/private-lora-he.html">Private LoRA Fine-tuning with HE</a></div><div class="prose"><p>Every system below would, in a world with an infinitely fast prover, prove the same sentence:
+<em>these weights are the honest output of this procedure on this committed data</em>. None of them do.
+The taxonomy that matters is which clause each one dropped.</p>
+<div class="cards"><div class="card meta"><div class="kicker">ACM CCS 2024</div><h4><a href="../papers/kaizen.html">Kaizen</a></h4><p>The reference zkPoT for DNNs. Prover trains via mini-batch gradient descent and emits a commitment plus succinct proof each iteration; iteration count need not be fixed in advance. Proof…</p><div class="foot">primary <span class="prov primary" title="read in the paper"></span></div></div><div class="card meta"><div class="kicker">IEEE TIFS 2024</div><h4><a href="../papers/zkdl.html">zkDL</a></h4><p>FAC4DNN aggregates proofs across layers and training steps without being constrained by their sequential order -- the key trick that makes per-batch proving sub-second. The 33-byte proof…</p><div class="foot">primary <span class="prov primary" title="read in the paper"></span></div></div><div class="card meta"><div class="kicker">IEEE TPDS</div><h4><a href="../papers/veriml.html">VeriML</a></h4><p>Earliest verifiable-training entry. Does not prove every iteration -- pre-commits to several and lets the verifier challenge a subset. Supports linear/logistic regression, NNs, SVM,…</p><div class="foot">survey <span class="prov survey" title="secondhand, from a survey"></span></div></div><div class="card meta"><div class="kicker">IEEE GLOBECOM 2022</div><h4><a href="../papers/zkmlaas.html">zkMLaaS</a></h4><p>Sampling-based: proves a random subset of epochs/iterations rather than all of them.</p><div class="foot">survey <span class="prov survey" title="secondhand, from a survey"></span></div></div><div class="card meta"><div class="kicker">ACM CCS 2023</div><h4><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a></h4><p>The paper that formalized the zkPoT security definition. Only instantiated for logistic regression -- the point is the definition and the feasibility experiment, not scale.</p><div class="foot">primary <span class="prov primary" title="read in the paper"></span></div></div><div class="card meta"><div class="kicker">ACM CCS 2025</div><h4><a href="../papers/optimum-vicinity.html">Optimum Vicinity</a></h4><p>A genuinely different paradigm, worth highlighting: instead of proving every training step was executed correctly, prove the *result* lies within a bounded vicinity of the mathematical…</p><div class="foot">primary <span class="prov primary" title="read in the paper"></span></div></div><div class="card meta"><div class="kicker">NDSS 2026</div><h4><a href="../papers/verilora.html">VeriLoRA / zkLoRA</a></h4><p>Claims the first end-to-end ZKP for LoRA fine-tuning: forward propagation, backward gradient propagation and LoRA weight updates. Numbers below are from survey Table IV, not read from…</p><div class="foot">survey <span class="prov survey" title="secondhand, from a survey"></span></div></div><div class="card meta"><div class="kicker">IACR ePrint 2026/202</div><h4><a href="../papers/zkboost.html">ZKBoost</a></h4><p>First zkPoT for XGBoost -- a reminder that verifiable training is not only about deep nets, and gradient-boosted trees are what most tabular/finance production models are. Fixes a…</p><div class="foot">primary <span class="prov primary" title="read in the paper"></span></div></div><div class="card meta"><div class="kicker">IACR ePrint 2025/1688</div><h4><a href="../papers/summer.html">SUMMER</a></h4><p>Not yet read. RNN training rather than transformer training.</p><div class="foot"> </div></div><div class="card meta"><div class="kicker">arXiv:2506.20915</div><h4><a href="../papers/zkprov.html">ZKPROV</a></h4><p>Adjacent to zkPoT: proves which dataset a model was trained on, without proving the training computation itself. Cheaper, weaker claim. See also &quot;Verifiable Fine-Tuning&quot;…</p><div class="foot"> </div></div></div>
+<h2 id="group-1-prove-every-step-and-pay-for-it">Group 1 — Prove every step (and pay for it)</h2>
+<p>These accept the full claim and attack the cost of composing a proof across a long, sequential
+computation. They are the reference points, and they are all demonstrated on small models.</p>
+<p><strong><a href="../papers/kaizen.html">Kaizen</a></strong> is the canonical DNN zkPoT. The prover runs mini-batch gradient descent and emits
+a commitment plus a succinct proof at each iteration, recursively composing GKR-style proofs with
+aggregatable polynomial commitments. Two properties are the actual contribution: the iteration
+count does not have to be fixed in advance, and proof size and verifier time are independent of
+both the iteration count and the dataset size. That is exactly the shape you want — the verifier
+should not pay for the length of a run it did not watch. The prover, of course, still does.</p>
+<p><strong><a href="../papers/zkdl.html">zkDL</a></strong> goes the other way: instead of recursion, it makes the circuit itself
+training-shaped. <code>FAC4DNN</code> aggregates proofs across layers <em>and across training steps</em> without
+being constrained by their sequential order, and <code>zkReLU</code> gives ReLU and its backward pass a
+bespoke argument rather than a generic one. It runs on GPU and is open source. It is also the one
+entry in the table whose reported proof size is implausible on its face — see the note in
+<code>papers.yml</code> and the conflicts page; do not cite that figure without checking the paper.</p>
+<p><strong><a href="../papers/zkboost.html">ZKBoost</a></strong> is the useful corrective to a deep-learning-shaped field: it is the first zkPoT
+for XGBoost, built from a generic zkPoT template with a VOLE-based instantiation. Gradient-boosted
+trees are what most tabular and financial production models actually are, so this is arguably the
+first zkPoT aimed at a model class someone is currently deploying. It also claims to fix a
+security gap in prior zero-knowledge training proofs — a claim we have not been able to attribute
+to a specific prior protocol, and which is tracked as an open item on the soundness page.</p>
+<p><strong><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a></strong> is the definitional paper (MPC-in-the-head composed with zkSNARKs, streaming-
+friendly), instantiated only for logistic regression. <strong><a href="../papers/summer.html">SUMMER</a></strong> targets recursive proofs for
+RNN training and we have not read it.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>We are reading this group from the outside</h5><p>There is no PDF in <code>references/</code> for any paper in this section. Every characterisation above
+comes from abstracts, author summaries and the survey's tables. Treat the <em>mechanisms</em> as
+reported and the <em>numbers</em> as secondhand.</p></div></div>
+
+<h2 id="group-2-prove-the-result-instead-of-the-process">Group 2 — Prove the result instead of the process</h2>
+<p><strong><a href="../papers/optimum-vicinity.html">Optimum Vicinity</a></strong> is the most interesting conceptual departure in the cell, and it is the
+only one that changes the logical form of the statement rather than its size. Instead of proving
+that every step of the optimizer executed correctly, it proves that the <em>result</em> lies within a
+bounded distance of the mathematical optimum of the committed objective. A statement about a very
+long computation becomes a statement about a very short one, and the circuits shrink accordingly.</p>
+<p>The price is the model class: this only makes sense where training <em>has</em> an optimum to be near —
+convex problems. Deep networks do not qualify, and the paper does not claim they do. Note also
+what the verifier learns: that the model is close to the optimum of some objective on some
+committed data. It learns nothing about how it got there, which is fine, and nothing about
+whether the data was any good, which is the subject of the next page.</p>
+<h2 id="group-3-prove-a-smaller-computation">Group 3 — Prove a smaller computation</h2>
+<p><strong><a href="../papers/verilora.html">VeriLoRA / zkLoRA</a></strong> is the only system here that touches a model of the scale people actually use,
+and it does so by proving a <em>fine-tune</em>, not a training run: forward propagation, backward
+gradients and LoRA weight updates over a frozen base model. This is a much cheaper claim, and it
+is a much weaker one — the base model, which is where all the capability and all the plausible
+backdoors live, is outside the proof. It is also the natural contrast pair with
+<a href="../papers/private-lora-he.html">Private LoRA Fine-tuning with HE</a> on the privacy side: the same workload, the opposite guarantee.</p>
+<p>We flag one thing about this entry loudly: its numbers in <code>papers.yml</code> come from the survey's
+table, not from the paper, and it is exactly the entry where we would most like a primary read.</p>
+<h2 id="group-4-prove-a-random-sample-of-the-steps">Group 4 — Prove a random sample of the steps</h2>
+<p><strong><a href="../papers/veriml.html">VeriML</a></strong> and <strong><a href="../papers/zkmlaas.html">zkMLaaS</a></strong> are the ancestors, and they made the trade everyone else
+refused. Neither proves every iteration. They commit to iteration inputs and outputs, and let the
+verifier challenge a randomly chosen subset. The proving cost collapses, and so does the
+guarantee: soundness becomes statistical, and it holds only if the commitments really precede the
+challenge and the challenge is genuinely unpredictable. This is the same bargain that the
+sampling-based inference line makes, and it should be compared on the same axis — cost against
+detection probability — not against cryptographic soundness.</p>
+<h2 id="group-5-prove-where-the-data-came-from-not-what-you-did-with-it">Group 5 — Prove where the data came from, not what you did with it</h2>
+<p><strong><a href="../papers/zkprov.html">ZKPROV</a></strong> proves <em>which dataset</em> a model was trained on without proving the training
+computation at all. This is a much cheaper claim, and for the compliance use case (licensing,
+data provenance) it may be the claim that matters. It is also, on its own, nearly vacuous as an
+integrity statement: a proof that a dataset was used is not a proof that anything correct was
+done with it, or that nothing else was used afterwards.</p>
+<p><strong><a href="../papers/zkaudit.html">zkAudit</a></strong> sits across the boundary and is worth pulling in here even though it is filed
+under properties: its first phase, <code>ZKAudit-T</code>, <em>is</em> a zkPoT — it proves the model was trained by
+SGD on a committed dataset — and its second phase audits arbitrary properties of the hidden data
+and hidden weights. Notably, it keeps the weights secret but makes the <strong>architecture public</strong>,
+which is precisely the mitigation the Fiat–Shamir question on the soundness page turns on.</p>
+<div class="debate"><h4>Is Group 5 in this cell at all?</h4><p><code>papers.yml</code> files <a href="../papers/zkprov.html">ZKPROV</a> under <code>training:</code>, so it appears in the table above with no
+benchmark row. We think that is the right call — it competes for the same budget and the same
+buyer as a zkPoT, and pretending it is a different subject is how a survey lets a weak claim
+stand in for a strong one. But it proves nothing about the optimizer, and a reader who skims the
+table could easily miss that.</p></div>
+
+<h2 id="what-the-grouping-shows">What the grouping shows</h2>
+<p>Cost and scale track the relaxation, not the proof system. The step-by-step group (1) tops out at
+small models. The result-only group (2) buys enormous circuit savings and pays for them in model
+class. The shrunken-computation group (3) reaches a large model by leaving most of it outside the
+statement. The sampling group (4) buys speed with probability. The provenance group (5) is cheap
+because it barely proves anything about the computation.</p>
+<p>There is no system in this cell that proves a full training run of a large model, and there is no
+plausible path to one from any of these designs. What there is, is a menu of things you can give
+up. The next page is that menu, read from the adversary's side.</p></div><div class="pager"><a href="../zk-training/index.html">← previous<span>The hardest claim in the table</span></a><a class="next" href="../zk-training/relaxations.html">next →<span>Every relaxation, and what an adversary can still do</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

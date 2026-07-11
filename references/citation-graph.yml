@@ -1,81 +1,180 @@
-# Citation/dependency graph, built by scanning the PDFs we have (references/) with pdftotext.
-# edge A -> B  means: paper A's text mentions/cites paper B.
-# Proxy: a mention anywhere in A (body or reference list). Not a hand-verified citation.
-# Sources scanned: the 12 PDFs in references/. External building-block nodes have no source text.
+# Citation/dependency graph, built by scanning the PDFs in references/ with pdftotext.
+# edge A -> B  means: paper A's text mentions/cites B.
+# Proxy: a mention anywhere in A (body or reference list). Not hand-verified.
+# Regenerate: python3 site/citegraph.py --write
 citations:
-  deepprove:  # DeepProve
-    - ezkl  # EZKL
-    - gkr  # GKR
-    - jolt  # Jolt (zkVM)
-    - lasso  # Lasso
-    - mystique  # Mystique
-    - zkcnn  # zkCNN
-    - zkgpt  # zkGPT
-    - zkllm  # zkLLM
-    - zkpytorch  # zkPyTorch
-  jolt-atlas:  # Jolt Atlas
-    - deepprove  # DeepProve
-    - ezkl  # EZKL
-    - gkr  # GKR
-    - jolt  # Jolt (zkVM)
-    - twist-shout  # Twist & Shout
-  zkpytorch:  # zkPyTorch
-    - expander  # Expander
-    - gkr  # GKR
-    - mystique  # Mystique
-    - zkcnn  # zkCNN
-    - zkllm  # zkLLM
-  zkgpt:  # zkGPT
-    - gkr  # GKR
-    - jolt  # Jolt (zkVM)
-    - lasso  # Lasso
-    - mystique  # Mystique
-    - zkcnn  # zkCNN
-    - zkllm  # zkLLM
-  zkllm:  # zkLLM
-    - gkr  # GKR
-    - mystique  # Mystique
-    - zkcnn  # zkCNN
-  iron:  # Iron
-    - cheetah  # Cheetah
-    - sirnn  # SIRNN
-    - the-x  # THE-X
-  ciphergpt:  # CipherGPT
-    - bolt  # BOLT
-    - bumblebee  # BumbleBee
-    - cheetah  # Cheetah
-    - iron  # Iron
-    - sirnn  # SIRNN
-  bolt:  # BOLT
-    - cheetah  # Cheetah
-    - iron  # Iron
-    - sirnn  # SIRNN
-    - the-x  # THE-X
-  nimbus:  # Nimbus
-    - bolt  # BOLT
-    - bumblebee  # BumbleBee
-    - cheetah  # Cheetah
-    - ciphergpt  # CipherGPT
-    - iron  # Iron
-    - sirnn  # SIRNN
-    - the-x  # THE-X
-  bootstrapping-fhe:  # Bootstrapping-FHE
-    - bolt  # BOLT
-    - bumblebee  # BumbleBee
-    - cheetah  # Cheetah
-    - ciphergpt  # CipherGPT
-    - iron  # Iron
-    - nimbus  # Nimbus
-    - the-x  # THE-X
-  zkml-survey:  # ZKP-VML Survey
-    - ezkl  # EZKL
-    - gkr  # GKR
-    - lasso  # Lasso
-    - mystique  # Mystique
-    - zkcnn  # zkCNN
-    - zkgpt  # zkGPT
-    - zkllm  # zkLLM
-  modulus-cost-of-intelligence:  # Modulus: Cost of Intelligence
-    - gkr  # GKR
-    - mystique  # Mystique
-    - zkcnn  # zkCNN
+  # Hand-verified against the bibliographies, 2026-07-11. All three edges stay inside the
+  # federated (verify-train) column -- ACORN and EIFFeL cite each other, RoFL and Prio, and
+  # nothing in the privacy column. No crossing edge introduced.
+  acorn:
+    - eiffel   # "[14] ... EIFFeL: Ensuring Integrity for Federated Learning"
+    - prio     # "[15] H. Corrigan-Gibbs and D. Boneh. 'Prio: Private, Robust, and Scalable...'"
+    - rofl     # "[33] ... 'RoFL: Attestable Robustness for Secure Federated Learning'"
+  eiffel:
+    - prio     # "[28] Henry Corrigan-Gibbs and Dan Boneh. Prio: Private, robust, and scalable..."
+    - rofl     # "[23] ... Table 3 compares EIFFeL with prior work ... RoFL"
+  # tee-confidential-llm cites NOTHING in this corpus. Verified: the strings "zero-knowledge",
+  # "zkML", "SNARK" and "proof of" appear zero times in it. (A grep hit on "Prio" was the word
+  # "Prior".) Deliberately absent from this graph rather than silently omitted.
+  bolt:
+    - cheetah
+    - iron
+    - secfloat
+    - sirnn
+    - the-x
+  bootstrapping-fhe:
+    - bolt
+    - bumblebee
+    - cheetah
+    - ciphergpt
+    - iron
+    - nimbus
+    - the-x
+  ciphergpt:
+    - bolt
+    - bumblebee
+    - cheetah
+    - iron
+    - sirnn
+  deepprove:
+    - ezkl
+    - gkr
+    - jolt
+    - lasso
+    - mystique
+    - vcnn
+    - zkcnn
+    - zkgpt
+    - zkllm
+    - zkpytorch
+    - zktorch
+  garg-fp:
+    - archer-ieee
+    - mystique
+  hao-et-al:
+    - cheetah
+    - lasso
+    - mystique
+    - safetynets
+    - sirnn
+    - vcnn
+    - zkcnn
+  iron:
+    - cheetah
+    - sirnn
+    - the-x
+  jolt-atlas:
+    - deepprove
+    - ezkl
+    - gkr
+    - jolt
+    - twist-shout
+  modulus-cost-of-intelligence:
+    - gkr
+    - mystique
+    - safetynets
+    - vcnn
+    - zkcnn
+  nimbus:
+    - bolt
+    - bumblebee
+    - cheetah
+    - ciphergpt
+    - iron
+    - sirnn
+    - the-x
+  prob-truncation:
+    - cheetah
+  range-arithmetic:
+    - artemis
+    - ezkl
+    - garg-fp
+    - hao-et-al
+    - jolt-atlas
+    - mystique
+    - pvcnn
+    - safetynets
+    - spagkr
+    - zip
+    - zkml-survey
+    - zkpot-garg
+  safetynets:
+    - gkr
+  secfloat:
+    - archer-ieee
+    - sirnn
+  twist-shout:
+    - gkr
+    - lasso
+  zen:
+    - safetynets
+    - vcnn
+    - zkdt
+  zip:
+    - mystique
+    - safetynets
+    - vcnn
+    - zkcnn
+    - zkllm
+  zkgpt:
+    - gkr
+    - jolt
+    - lasso
+    - mystique
+    - vcnn
+    - zkcnn
+    - zkllm
+  zkllm:
+    - gkr
+    - mystique
+    - safetynets
+    - vcnn
+    - zkcnn
+  zklp:
+    - mystique
+    - secfloat
+  zkml-kang:
+    - vcnn
+    - zkcnn
+  zkml-survey:
+    - artemis
+    - ezkl
+    - gkr
+    - lasso
+    - mystique
+    - safetynets
+    - spagkr
+    - vcnn
+    - zkcnn
+    - zkgpt
+    - zkllm
+  zkpot-garg:
+    - mystique
+    - secfloat
+    - sirnn
+    - vcnn
+    - zkcnn
+  zkpytorch:
+    - expander
+    - gkr
+    - mystique
+    - zkcnn
+    - zkllm
+  zktorch:
+    - ezkl
+    - mystique
+    - vcnn
+    - zkcnn
+    - zkllm
+
+# External building blocks: cited BY our corpus but not part of it.
+external:
+  gkr: GKR
+  jolt: Jolt (zkVM)
+  lasso: Lasso
+  twist-shout: Twist & Shout
+  expander: Expander
+  cheetah: Cheetah
+  sirnn: SIRNN
+  the-x: THE-X
+  bumblebee: BumbleBee

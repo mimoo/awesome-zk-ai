@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clamping — Operator atlas</title>
+<meta name="description" content="saturating out-of-range activations">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Clamping</b></div><h2 class="ptitle">Clamping</h2><p class="psub">saturating out-of-range activations</p><div class="math">$$\mathrm{Clamp}(x)=\min\big(\max(x,\,\mathrm{CMin}),\,\mathrm{CMax}\big)
+\\[8pt]
+\text{naive: one lookup table over the full } q'\text{-bit domain} \;\Rightarrow\; \text{far too large to commit}$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>Outliers exceed the calibrated range. Rather than let them corrupt the scale — or fall outside the lookup table's domain and become unprovable — saturate them at the boundary.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>The obvious protocol, one table mapping every possible input to its clamped output, has a domain the size of the pre-shift value range. You must express the clamp algebraically instead.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>Zero-indicator polynomials evaluated by sumcheck</li><li>Sign-indicator polynomials for signed ranges</li><li>Fusing the clamp into the requantization decomposition</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">Never build a clamp table — and the code confirms it literally: there is no <code>Clamp</code> table type. Clamping lives inside the Requantise/ReLU tables (their apply is input.clamp) plus a zero-chunk selector folded into the sumcheck.</p><blockquote class="q"><p>The simplest solution would be to have another lookup table that takes as input Out(x̄) and outputs Clamp(x̄). In practice though this clamping lookup table is too large and so DeepProve uses two different approaches based on whether the value is expected to be signed or not.</p><cite><b>DeepProve</b> · Appendix C</cite></blockquote><blockquote class="q"><p>Since re-quantization and non-linear functions are usually proven via lookup arguments, using a fixed scaling factor without clamping can lead to situations where the values generated during inference are too large to be looked up, thus forcing a larger lookup table to commit.</p><cite><b>DeepProve</b> · §6</cite></blockquote><ul><li><strong>Unsigned.</strong> Decompose into <code>ZeroIn</code> chunks, each paired with a multilinear <code>ZeroOut</code> that is 1 iff its chunk is zero. Then sumcheck $\mathrm{Out}(r)=\sum_b \mathrm{eq}(r,b)\big[(\prod_j \mathrm{ZeroOut}_j)\mathrm{Value}(b) + (1-\prod_j \mathrm{ZeroOut}_j)\mathrm{CMax}\big]$. The product is 1 exactly when no high chunk fired.</li><li><strong>Signed.</strong> Add a <code>SgnIn</code>/<code>SgnOut</code> pair returning $-1/0/{+}1$, so the clamp target interpolates: $\frac{\mathrm{CMax}-\mathrm{CMin}}{2}\mathrm{SgnOut} + \frac{\mathrm{CMax}+\mathrm{CMin}}{2}$.</li><li>Because clamping is folded into the requantization lookup, the downstream non-linearity receives the <em>unclamped</em> linear output — strictly more accurate than clamping first.</li><li>This is exactly the gap DeepProve identifies in zkGPT: a fixed scaling factor without clamping means inference can produce values too large to look up, forcing a larger committed table.</li><li>In code the eight <code>TableType</code>s are <code>Exp, GeLU, ReLU, SiLU, Requantise, ShiftCheck, SignedZeroCheck, ZeroCheck</code> — <strong>none of them is a clamp table</strong>. The Requantise and ReLU tables clamp inside their own <code>apply_op</code> (<code>input.clamp(min,max)</code>); the out-of-range selector is the product of <code>ZeroCheck</code> chunk outputs. See <a href="#/op/lookups">Lookup arguments &amp; range checks</a>.</li></ul></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">Two clamps, and only one is proven. The fused saturating clamp after a rebase is a real SatClamp&lt;64&gt; lookup; the standalone ONNX Clamp operator is an unproven passthrough.</p><ul><li><strong>The fused clamp is real.</strong> After a rebase, <code>output = SatClamp(rescaled)</code> is discharged by a 64-bit <code>SatClampTable</code> lookup via prefix-suffix Shout, with the pre-clamp value carried as <code>ClampAcc</code> advice and one-hot read-address checks. Shared by Einsum / Mul / Square / Cube / Add / Sub / Sum.</li><li>The table is never materialized at $2^{64}$: its MLE is a prefix-suffix combination of sign-extension-detection prefixes and saturating-value suffixes.</li><li><strong>But the standalone <code>Clamp</code> op is a TODO dummy</strong> that forwards its operand claim with no clamp check at all — a distinct code path from the fused <code>SatClamp</code>.</li></ul><figure class="code"><figcaption>jolt-atlas-core/src/onnx_proof/ops/clamp.rs · 20-30</figcaption><pre class="src">// TODO: Clamp
+// Currently this is just a dummy implementation that passes down an operand claim for the rest of the proof system
+let accessor = AccOpeningAccessor::new(&amp;mut prover.accumulator, node);
+let (opening_point, _claim) = accessor.get_reduced_opening();</pre><figcaption class="cap">The standalone ONNX Clamp operator is an unproven passthrough — any model using a bare Clamp node is effectively unproven for it.</figcaption></figure><div class="audit"><span class="audit-h">Audit surface</span><p><strong>A bare <code>Clamp</code> ONNX node is unproven</strong> (<code>ops/clamp.rs</code> passthrough). Only the <em>fused</em> saturating clamp is sound. Also: <code>SatClampTable</code>'s prefix-suffix combine hard-codes the i32 split and asserts <code>XLEN==64</code> only via <code>debug_assert</code> — a release build wouldn't catch a wrong-XLEN misuse.</p></div></div></div><div class="pager"><a href="../../zk-inference/operators/requant.html">← previous<span>Requantization</span></a><a class="next" href="../../zk-inference/operators/matmul.html">next →<span>Matrix multiplication</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

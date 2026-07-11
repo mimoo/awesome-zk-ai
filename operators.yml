@@ -1,0 +1,2750 @@
+# Operators in an LLM forward pass, and how each proving scheme handles each one.
+#
+# Extracted losslessly from the hand-built Operator Atlas (the OPERATORS / CHALLENGES /
+# PAPERS / AUDIT arrays of the old docs/index.html single-page site). This is
+# hand-written research: the quotes are VERBATIM from the source papers with section
+# references, and the code snippets are copied from the real proving repositories.
+#
+# CONVENTIONS
+#   - Prose fields are markdown. Inline math is $...$, display math $$...$$.
+#   - `tex` is a raw LaTeX display block, rendered inside $$...$$ by the generator.
+#   - `code[].src` is verbatim source, never reflowed. `lines` is the line range in
+#     that file at the commit named by the scheme's `grounded` field.
+#   - Cross-references to other operator pages are written `[text](#/op/<id>)`, and
+#     one links the throughput chart as `[text](#/timeline)`. The generator rewrites
+#     these to real URLs.
+#   - `schemes.<id>` keys are paper ids from papers.yml. The atlas used the short key
+#     `jolt`; it is mapped to the papers.yml id `jolt-atlas` here.
+#
+# STRUCTURE
+#   scheme_meta     per-scheme prose from the atlas's PAPERS array (spine / system /
+#                   blurb). papers.yml remains the source of truth for every NUMBER;
+#                   these are the atlas's hand-written characterisations.
+#   groups          display order of the operator groups.
+#   challenges      the eight cross-cutting problems that precede any single operator.
+#   operators       26 operators. `difficulty` is friendly | mid | hostile | core.
+#   audit_surface   findings from reading the Jolt Atlas source, severity high/med/low.
+
+scheme_meta:
+  deepprove:
+    name: DeepProve
+    venue: Lagrange Labs, 2026
+    indexed: true
+    spine: Sumcheck + LogUp-GKR · Goldilocks · BaseFold / HyperKZG
+    system: Specialised GKR-style PIOPs per operator, composed backwards layer-by-layer. Ceno library,
+      Rust. Intermediate activations are never committed — only model weights and lookup witnesses.
+    blurb: 'First end-to-end system: proves every generated token for GPT-2 (124M) and Gemma 3 (270M).
+      174 / 86 tokens-per-minute single-machine; 1855 TPM distributed across 17 nodes. Verification 1.2–3.7
+      s, proofs 7–54 MB.'
+  jolt-atlas:
+    name: Jolt Atlas
+    venue: ICME Labs, Feb 2026
+    indexed: true
+    spine: Jolt zkVM → ONNX · Sumcheck DAG · HyperKZG · BlindFold ZK
+    system: Replaces RISC-V with ONNX tensor ops. Everything non-linear becomes a lookup. Proof is a 7-stage
+      DAG of sumchecks. Zero-knowledge via BlindFold. Streaming prover for small-space proving.
+    blurb: Lookup-centric and on-device. Proves nanoGPT (~0.25M params) in 14 s and GPT-2 (125M) in ~38
+      s end-to-end on a 16 GB M3 MacBook — but reports no sequence length, proof size, verifier time,
+      or accuracy for GPT-2.
+  zkllm:
+    name: zkLLM
+    venue: CCS '24
+    indexed: true
+    spine: tlookup + zkAttn · sumcheck · Hyrax PCS · CUDA/GPU · zero-knowledge
+    system: The first ZKP built for LLMs. tlookup is a GPU-parallel LogUp lookup; zkAttn proves attention
+      by softmax shift-invariance plus base-b digit decomposition. Hyrax commitments make it genuinely
+      zero-knowledge — it hides the weights. Proves one forward pass; no norms, positional, or output
+      protocols.
+    blurb: The ancestor. Introduced the LogUp-style lookup (tlookup) and the softmax-shift attention proof
+      (zkAttn) that DeepProve extends. Genuinely zero-knowledge via Hyrax. On a GPU it proves LLaMa-2
+      13B in 803 s, 188 kB proof, 3.95 s verify, C4 perplexity within 0.01 — but only a single forward
+      pass, and only attention plus activations.
+  zkgpt:
+    name: zkGPT
+    venue: USENIX Security '25
+    indexed: false
+    blurb: Prior state of the art for prover speed (2.75 TPM). Proves a single output token, on a GPT-2
+      stripped of residual connections, attention masks, and the final projection — relaxations that sidestep
+      the outlier problem.
+  zktorch:
+    name: zkTorch
+    venue: '2025'
+    indexed: false
+    blurb: General operator-decomposition compiler with proof accumulation. One output token at a time;
+      power-of-two scaling factors only; reported on a 4 TB RAM machine at 0.09 TPM.
+  ezkl:
+    name: EZKL
+    venue: zkonduit
+    indexed: false
+    blurb: Halo2 + ONNX. Circuit-based arithmetic constraints, so non-linear ops are expensive; its lookup
+      tables cannot be materialised for large ranges. Jolt Atlas benchmarks 17× faster proving on nanoGPT,
+      before EZKL's >400 s of key generation.
+  mystique:
+    name: Mystique
+    venue: USENIX Security 2021
+    indexed: true
+    spine: sVOLE interactive ZK · IT-MACs · designated verifier · IEEE-754 float circuits
+    system: 'A set of conversions layered on an sVOLE-based interactive ZK backend: arithmetic/Boolean
+      (zk-edaBits), publicly-committed/privately-authenticated (C2A), and fixed-point/IEEE-754 floating
+      point. Linear layers run in the field; non-linear layers are evaluated as real single-precision
+      float circuits, so quantization never touches a nonlinearity.'
+    blurb: 'The road not taken. Genuinely zero-knowledge and genuinely accurate across 101 layers -- but
+      interactive and designated-verifier, so it produces a conversation, not a proof. Small prover memory,
+      enormous transcript: the exact opposite of the SNARK trade.'
+  hao-et-al:
+    name: Hao et al.
+    venue: USENIX Security 2024
+    indexed: true
+    spine: sVOLE interactive ZK · ZK-ROM table lookup · digit decomposition
+    system: Mystique's substrate with the arithmetic/Boolean conversion deleted. Non-linear functions
+      are evaluated by table lookup over arithmetic values, with wide inputs split into 5-12 bit digits
+      so the tables stay small. Lookups are instantiated from ZK proofs of read-only memory, not from
+      a polynomial lookup argument.
+    blurb: 'A component supplier, not a competitor: it proves operators (ReLU, sigmoid, GELU, softmax,
+      normalization), never a model. Reaches the sum-check lineage''s digit-decomposition insight from
+      the VOLE side -- and reports no accuracy number for any model, at any precision.'
+groups:
+- Numeric substrate
+- Linear algebra
+- Positional information
+- Attention
+- Normalization & activation
+- Output & decoding
+- Systems-level obligations
+- Cryptographic machinery
+challenges:
+  title: Eight problems that exist before you prove a single operator
+  lede: These are structural, not per-layer. They come from the mismatch between a transformer (floating-point,
+    autoregressive, memory-hungry) and a SNARK (finite-field, one-shot, circuit-shaped).
+  items:
+  - n: Problem 01
+    heading: Fields have no decimals
+    body: SNARKs compute over $\mathbb{F}_p$. LLMs compute over $\mathbb{R}$, implemented as float32.
+      Emulating floating point in-circuit is impractical, so every system quantizes to fixed-point integers.
+      But ML practitioners quantize *weights* and keep *activations* in float precisely to avoid accuracy
+      collapse — a prover cannot. Both must be integers, and so must every operation between them.
+    fixes:
+      deepprove: 'Symmetric affine quantization, post-training static, calibration-derived scales, parameterised
+        bit-width (8/10/12). Negatives map to the top of the field: $-x \mapsto p-x$. Residual layers
+        get a wider bit-length. 12-bit lands within 0.54% of the float baseline.'
+      jolt-atlas: Fixed-point, mentioned only in passing (16-bit activations, a 128-scale representation).
+        No calibration procedure, no bit-width study, no accuracy evaluation. Range control comes instead
+        from *neural teleportation*, which shrinks the activation domain so the lookup table stays small.
+  - n: Problem 02
+    heading: Products overflow, so you must rescale
+    body: Multiply $n$ $q$-bit integers and you get an $nq$-bit integer; add $n$ of them and you gain
+      $\log n$ bits. Left alone, intermediates blow past the field modulus within a couple of layers.
+      So you rescale — divide, round, clamp. That rescale is itself lossy, and it is a division, which
+      fields hate.
+    fixes:
+      deepprove: A dedicated requantization PIOP. The divisor is a power of two, so division is a right
+        shift, provable by lookups over decomposable tables. Extra tables detect out-of-range inputs and
+        fold the clamp into the same argument. It is the single most expensive operator in the system.
+      jolt-atlas: No requantization protocol is described. `Div` exists as an ONNX op, proven with a non-deterministic
+        advice value in the trace. The systematic overflow-management story is simply absent from the
+        paper.
+  - n: Problem 03
+    heading: Outlier activations wreck the quantization grid
+    body: LLM activations contain rare, enormous values — a channel at 1000.0 while its neighbours sit
+      at 3.9. Quantize `[9.1, 3.9, 11.5, 1000.0]` to 8 bits and the first three collapse into one or two
+      bins. LayerNorm and residual connections are the usual culprits.
+    fixes:
+      deepprove: 'Rotate by a Hadamard matrix $M$ (this is **DuQuant**, arXiv 2406.01721): $XW=(XM)(M^\top
+        W)$. Both factors quantize easily, the float output is unchanged, and $M$ is absorbed into the
+        previous layer''s weights so the hostile $X$ never materialises. Plus clamping to the calibrated
+        range. Fails on Gemma 3, whose extra RMSNorms block the absorption — its code chases the scale
+        into dedicated rotation EinSums instead.'
+      jolt-atlas: Not discussed. The closest relative is neural teleportation, but that shrinks the *input*
+        range of saturating activations to bound table size, not the outlier spread of a quantization
+        grid. Different problem, different mechanism.
+  - n: Problem 04
+    heading: Autoregression is quadratic
+    body: 'Generating $t$ tokens naively means $t$ forward passes, each attending over all previous tokens:
+      $O(t^2|C|)$ prover work. Real inference dodges this with a KV cache, but emulating read/write RAM
+      inside a SNARK means committing to auxiliary data linear in the number of accesses.'
+    fixes:
+      deepprove: Do not prove generation — prove *certification*. Feed $[\text{prompt} \,\|\, \text{claimed
+        output}]$ through the model once. The causal mask means position $t$ cannot see token $t{+}1$;
+        if every position predicts its successor, the sequence is certified. One pass. Linear, not quadratic.
+      jolt-atlas: Not addressed. The paper never discusses autoregression, KV caching, or multi-token
+        generation, and its GPT-2 benchmark states no sequence length or token count — so it is unknown
+        what its ~38 s actually covers.
+  - n: Problem 05
+    heading: Non-linearities are everywhere
+    body: 'Softmax, LayerNorm, RMSNorm, GeLU: none is expressible in field arithmetic. Unlike a small
+      CNN, a transformer invokes them dozens of times per block, per layer, per head. Faithfully arithmetising
+      them blows up constraint counts and degrees, and they become the dominant cost.'
+    fixes:
+      deepprove: Everything non-linear routes through LogUp-GKR lookups, each with a *batched* variant
+        so $h$ heads share one argument. Requantization is fused into the following non-linearity's table
+        — one lookup instead of two, and the non-linearity sees the unclamped input.
+      jolt-atlas: 'The founding design choice, inherited from Jolt: express operations as lookups rather
+        than constraints, so non-linearity is never arithmetised at all. Prefix-suffix decomposition keeps
+        the tables tractable, and neural teleportation shrinks their domain.'
+  - n: Problem 06
+    heading: Sampling is not deterministic
+    body: A soundness statement about "the" output of an LLM presumes the LLM has one. Top-$k$ sampling
+      means it does not.
+    fixes:
+      deepprove: 'De-randomise: take the seed as an additional public input, prove the decoding stage
+        against it. Proving the seed was *honestly sampled* needs a randomness beacon or an interactive
+        coin-flip. Explicitly not implemented — here or anywhere else.'
+      jolt-atlas: Not addressed. No argmax or sampling operator appears in the supported ONNX set.
+  - n: Problem 07
+    heading: The proof itself leaks the model
+    body: '"zkML" usually means verifiable inference, not *zero-knowledge* inference. A raw sumcheck transcript
+      — round coefficients, claimed evaluations, opened commitments — leaks the witness, which for an
+      LLM is the weights and the prompt. Hiding is a separate obligation.'
+    fixes:
+      deepprove: Not addressed in the described protocols. The paper builds PIOPs and applies the BCS
+        transform for non-interactivity, with round-by-round knowledge soundness. Hiding the witness is
+        never claimed or constructed.
+      jolt-atlas: BlindFold (from Vega). Every sumcheck round polynomial is sent as a Pedersen commitment;
+        the sumcheck *verifier* is encoded as an R1CS circuit; that instance is Nova-folded with a random
+        satisfying instance. The circuit is $O(N\cdot d_{\max})$ — logarithmic in the computation being
+        proven.
+  - n: Problem 08
+    heading: The prover does not fit in memory
+    body: Many SNARKs hold large parts of the witness and intermediate polynomials in memory to commit
+      and open them. For LLM inference this reaches multi-gigabyte peaks even for modest models, past
+      the RAM budget of a commodity or on-device prover.
+    fixes:
+      deepprove: Scale *out*. Partition the operator DAG horizontally, commit to chunk boundaries, prove
+        chunks independently in parallel, concatenate. 1855 TPM on 17 machines with one round of communication.
+        Single-machine peak is still 96–147 GB.
+      jolt-atlas: 'Scale *down*. Prefix-suffix decomposition of lookup tables lets the prover stream:
+        peak memory drops from $O(|T|)$ to $O(|T|^{1/C})$ at a cost of $O(C|T|)$ field operations. GPT-2
+        proves on a 16 GB MacBook.'
+operators:
+- id: quant
+  name: Quantization
+  sub: float32 → q-bit signed integer
+  group: Numeric substrate
+  difficulty: mid
+  difficulty_label: Accuracy-critical
+  tex: |-
+    \begin{aligned}
+    x &= s\cdot(\bar{x}-z) && \text{affine dequantization}\\[2pt]
+    s &= \frac{a}{2^{b-1}-1},\quad a=\max(|x_{\max}|,|x_{\min}|) && \text{symmetric}\\[2pt]
+    z &= 0 && \text{zero-point vanishes}\\[6pt]
+    &\text{field embedding:}\quad i\ge 0 \mapsto i,\qquad i<0 \mapsto p-|i|
+    \end{aligned}
+  what: Not a layer of the model — a change of number system applied to the whole model. Every weight
+    and every activation becomes a $q$-bit signed integer plus a per-tensor scale factor. Everything downstream
+    inherits the consequences.
+  why: Choose the scale too tight and you clip; too loose and you quantize everything into two bins. The
+    scale must be fixed *before* proving, because lookup table ranges are baked into preprocessing. An
+    activation outside the calibrated range is not merely inaccurate — it may be **unprovable**.
+  kit:
+  - Post-training static quantization (PTQ) with a calibration set
+  - Symmetric vs. affine (zero-point) schemes
+  - Per-tensor vs. per-channel scales
+  - 'Mixed precision: wider bits for range-mismatched layers'
+  schemes:
+    zkllm:
+      tldr: Fixed-point discretization into the field via scaling factors, rescaled around each product.
+        Documented but not the focus; C4 perplexity moves <0.01 at 13B.
+      quotes:
+      - text: the increase of perplexity is less than 0.1, and the impact diminishes to less than 0.01
+          as the sizes of the models scale to 13B.
+        src: zkLLM
+        sec: §8, Evaluation
+      bullets:
+      - Tensors are scaled and rounded into $\mathbb{F}$; products carry scaling factors that must be
+        rescaled. No calibration study or bit-width sweep — the accuracy claim is the measured perplexity
+        delta.
+      - Quantization error is bounded to about $10^{-2}$ L1 on the attention output, comparable to half-precision
+        float rounding.
+    deepprove:
+      tldr: 'Standard symmetric affine PTQ — with one correction from the code: the outlier smoothing
+        is DuQuant (Hadamard rotations), not generic orthonormal matrices, and the default width is 12-bit,
+        not 8.'
+      grounded: zkml/src/quantization/ @ Lagrange-Labs/deep-prove master
+      quotes:
+      - text: Deep learning practitioners already quantize model weights for reduced memory footprint
+          and faster inference, but typically keep activations in floating-point format during the inference
+          to mitigate lossiness due to quantization and accuracy degradation. However, to cryptographically
+          prove the correctness of inference, both weights and activations must be in integers as well
+          as all operations between them. Therefore, an accurate integer-only inference algorithm is necessary
+          for efficient proof generation.
+        src: DeepProve
+        sec: §1.1
+        name: Need for pure-integer inference
+      bullets:
+      - The `ScalingFactor` stores `{min, max, scale, quantized_domain}` and sets `scale = (max−min)/(domain
+        span)`. For a symmetric domain that is $2a/(2^b-1)$ — the integer domain is the *asymmetric* $[-2^{b-1},
+        2^{b-1}-1]$, so the denominator is $2^b-1$, not the $2^{b-1}-1$ our old page (following the paper)
+        printed.
+      - The requant multiplier is `m() = S₁·S₂/S₃` (three scale factors), and the right-shift is `shift()
+        = ⌈−log₂ m⌉`. Bit-width defaults to **12** (env `ZKML_BIT_LEN`), not 8; special LLM nodes override
+        it (embeddings 23-bit, residual Add up to 24-bit).
+      - The calibration statistic is selectable — `MinMax`, `Quantiles(p,q)`, or `NSigmas(n)` — and LLM
+        inputs specifically use **NSigmas(2)** (mean ± 2σ), not raw min/max.
+      - '**Outlier smoothing is DuQuant.** The rotation is not a generic orthonormal matrix — it is a
+        Hadamard matrix built by the Sylvester recursion (every source file cites arXiv 2406.01721). It
+        is model-specific: Gemma 3''s extra RMSNorms block free absorption, so `gemma3.rs` chases the
+        scale into dedicated scaling-EinSum rotation steps that `gpt2.rs` does not need.'
+      - 'Accuracy is nearly free: 12-bit gives GPT-2 perplexity 49.49 vs a 49.22 float baseline (0.54%
+        off); going 8→12 bits costs only **0.8%** extra prover time, because the lookup table count barely
+        changes.'
+      code:
+      - file: zkml/src/quantization/mod.rs
+        lines: 129-139
+        caption: 'The requant scalars: M = S₁·S₂/S₃ (three factors, not the paper''s s₁s₂/s₄), and the
+          right-shift ⌈−log₂ M⌉.'
+        src: |2-
+              /// M = S1 * S2 / S3
+              pub fn m(&self, s2: &Self, s3: &Self) -> f32 {
+                  self.scale() * s2.scale() / s3.scale()
+              }
+
+              /// M = S1 * S2 / S3 = 2^-n * eps ; n is the number of bits to shift right
+              pub fn shift(&self, s2: &Self, s3: &Self) -> usize {
+                  (-self.m(s2, s3).log2()).ceil() as usize
+              }
+      - file: zkml/src/quantization/llm_quant/rotation.rs
+        lines: 9-16
+        caption: 'Outlier smoothing is DuQuant: the rotation is a Hadamard matrix from the Sylvester recursion
+          — not a generic orthonormal matrix.'
+        src: |-
+          /// Generates a Hadamard matrix of size 2^k that has not been normalised.
+          pub fn get_hadamard_matrix_no_normalisation(k: usize) -> Result<Tensor<f32>> {
+              ensure!(k >= 1, "k must be at least 1, got {}", k);
+              if k == 1 {
+                  let data = vec![1.0f32, 1.0f32, 1.0f32, -1.0f32];
+                  Tensor::<f32>::new(vec![2, 2].into(), data)
+              } else {
+                  let prev_hadamard = get_hadamard_matrix_no_normalisation(k - 1)?.into_data();
+      cost: 'Gemma 3 collapses below 12 bits: cosine 0.20 at 8-bit, perplexity >1150. Its RMSNorm placement
+        blocks the Hadamard absorption.'
+    jolt-atlas:
+      tldr: 'The paper is vague, but the code is concrete and rigid: power-of-two symmetric fixed-point
+        over i32, no zero-point, no clamp on quantize — it panics on overflow rather than saturating.'
+      grounded: atlas-onnx-tracer/src/utils/quantize.rs @b20cdce
+      bullets:
+      - '`quantize_float(x, scale)` is pure fixed-point: `round(x · 2^scale)` stored as `i32`, dequantized
+        as `fixed / 2^scale`. **The scale is always a power of two** and the **zero-point vanishes** —
+        exactly the restriction DeepProve contrasts itself against (it allows real-valued scales for finer
+        table steps).'
+      - 'There is *no* clamp in quantization: `quantize_tensor` **panics** if an element exceeds $\pm\,\texttt{i32::MAX}/2^{scale}$.
+        Range control happens later, at the lookup boundary, via [fused rebase](#/op/requant) and [teleportation](#/op/gelu)
+        — not here.'
+      - The same file derives the causal-[mask](#/op/mask) sentinel (`⌈(scale+1)·ln2⌉+1`, giving `-45056`
+        at scale 12), tying quantization directly to how masking is represented.
+      - What is still absent — and this is the real gap — is any **calibration procedure or model-level
+        accuracy evaluation**. DeepProve's own conclusion is that quantization nuances determine whether
+        a reported accuracy number survives an end-to-end trace, and Jolt Atlas reports none.
+    mystique:
+      tldr: Fixed-point in the field for linear layers only. Every non-linear layer converts out to IEEE-754
+        single-precision float, so quantization error never reaches a nonlinearity -- and there is no
+        calibration story because there does not need to be one.
+      bullets:
+      - A signed fixed-point $x$ at precision $s$ is encoded as $\mathrm{Encode}(\lfloor 2^s\cdot x\rfloor)$
+        over the Mersenne prime $p = 2^{61}-1$, negatives mapping to the top of the field. Fixed-point
+        addition and multiplication are then *just* field addition and multiplication.
+      - The implementation fixes $s = 16$ and confines values to a 30-bit range, deliberately leaving
+        slack. Matrix multiplication has multiplication depth 1, so a product cannot overflow the field
+        before the next conversion pulls it back out.
+      - '**There is no calibration set, no bit-width sweep, and no outlier smoothing.** The values that
+        would wreck a quantization grid -- the ones DuQuant rotations and clamping exist to tame -- are
+        handled in float, not in the field.'
+      - This is the road DeepProve and Jolt Atlas did not take. Their requantization, clamping and lookup-domain
+        machinery all exists to keep activations inside an integer grid. Mystique pays a representation
+        conversion instead, and keeps the grid out of the nonlinearity entirely.
+    hao-et-al:
+      tldr: Fixed-point over the same 61-bit Mersenne prime as Mystique, at a default scale of 12 -- but
+        here the fixed-point *digits are the table addresses*, so the precision choice and the lookup
+        cost model are the same knob.
+      bullets:
+      - Values are fixed-point over $p = 2^{61}-1$ with scale $s$ (default 12), $\lambda = 128$, $\rho
+        \ge 40$ -- inherited wholesale from Mystique so the comparison is like-for-like.
+      - '**Digit decomposition is the substrate.** A wide input is split into a constant number of digits
+        of 5-12 bits, each of which addresses its own small table. A faithful table over the full field
+        would need about $2^{61}$ entries; a 12-bit digit needs $2^{12}$.'
+      - 'The scale is therefore not a free parameter: it *is* the truncation bitlength, and the paper
+        reports a step change in runtime once the scale crosses 12, because a second lookup table is then
+        required.'
+      - '**No calibration procedure and no accuracy evaluation.** Unlike Mystique -- which chose float
+        circuits precisely to protect accuracy through depth -- this design puts the nonlinearity back
+        into fixed point and never measures what that costs, on any model.'
+  debate:
+    title: Unresolved
+    quotes:
+    - text: Many subtle nuances arise when trying to prove end-to-end LLM traces (such as requantization,
+        lookup table size selection, clamping, etc.). Hence, it is not entirely clear whether prior works
+        would achieve their reported accuracy results if they were proving a full LLM inference trace.
+      src: DeepProve
+      sec: §6
+      name: Related Work
+    body: |-
+      DeepProve argues that prior work reports accuracy from a **different codebase** than the one it proves with, so the numbers may not survive an end-to-end quantized trace. Jolt Atlas reports no model accuracy at all, so the question is open by construction.
+
+      If you are evaluating either system: ask for perplexity or task accuracy **measured on the integer inference engine the prover actually consumes**, not on the float model.
+- id: requant
+  name: Requantization
+  sub: rescale · round · shift · clamp
+  group: Numeric substrate
+  difficulty: hostile
+  difficulty_label: 'DeepProve''s #1 cost'
+  tex: |-
+    y[i] \;=\;
+    \begin{cases}
+    2^{q-1}, & x[i] \ge 2^{q'-1}\\[4pt]
+    -2^{q-1}+1, & x[i] \le -2^{q'-1}+1\\[4pt]
+    \left\lfloor \dfrac{2^{f}\!\cdot\!\epsilon\cdot x[i] + 2^{f+\delta-1}}{2^{f+\delta}} \right\rfloor - 2^{q-1}, & \text{otherwise}
+    \end{cases}
+  what: After a matmul, values are $q'$-bit with $q' \gg q$. Requantization brings them back to $q$ bits
+    so the next lookup table can address them and the field never overflows. It fires after essentially
+    every multiplication.
+  why: It is a *division* and a *range-dependent branch* — the two things field arithmetic cannot express.
+    And it is lossy, so doing it more often costs accuracy while doing it less often risks overflow. Prior
+    work handles only the easy case where the input is guaranteed in-range.
+  kit:
+  - Power-of-two divisor ⇒ right shift ⇒ chunk decomposition
+  - Lookup arguments over decomposable tables (Lasso/Jolt-style)
+  - Range-check tables + sign/overflow-detector tables
+  - Operator fusion with the following non-linearity
+  - 'Delayed requantization: skip it when the field still has headroom'
+  schemes:
+    deepprove:
+      tldr: 'The paper describes an explicit two-case (in-range/out-of-range) construction with an InRange
+        product. The code has neither: clamping is folded into the Requantise table, and the in/out-of-range
+        distinction is carried by how many high-order zeroing chunks the decomposition needs.'
+      grounded: zkml/src/layers/requant/, zkml/src/lookup/operation/ @ Lagrange-Labs/deep-prove master
+      quotes:
+      - text: More than 50% of the prover cost comes from activation functions, Softmax, and requantization,
+          with the latter being the most expensive component overall, accounting for 27% of total prover
+          time. Consequently, optimizing any of these components would yield substantial improvements
+          in overall prover performance.
+        src: DeepProve
+        sec: §5
+        name: Breakdown of Prover Cost
+      - text: Requantizing incurs accuracy loss and thus avoiding it increases the accuracy. This strategy
+          is even more effective when using a large field 𝔽 during proving.
+        src: DeepProve
+        sec: Appendix C
+        name: Avoid requantization when possible
+      bullets:
+      - '**The core op is four steps:** multiply by the fixed-point multiplier, add the rounding constant,
+        right-shift, then a *Requantise table lookup that clamps internally*. There is no separate clamp
+        gadget and no InRange product — `input.clamp(min,max)` is baked into the table''s definition.'
+      - '**The paper''s "two cases" appear only as a table-set choice.** `RequantCtx::lookup_tables` picks
+        by the number of high-order zeroing chunks: 0 → `[ShiftCheck, Requantise]`; 1 → add `SignedZeroCheck`;
+        more → add `ZeroCheck` too. The out-of-range machinery is those extra 16-bit chunk tables, not
+        a branch in the protocol.'
+      - The wide accumulator is decomposed into a shifted part (the right-shift bits, range-checked),
+        the value chunk (hits the Requantise table), and zeroing chunks (high bits forced to zero). The
+        verifier never gets an oracle for the pre-shift value.
+      - '**Delayed requantization.** An $N\times M$ by $M\times P$ integer matmul produces at most $2q
+        + \log_2 M + 1$ bits. If that still fits the field and the next lookup''s domain, skip the requant.
+        A bigger field buys accuracy, not just speed.'
+      code:
+      - file: zkml/src/lookup/operation/mod.rs
+        lines: 51-57
+        caption: 'The core requant arithmetic: multiply by the fixed-point multiplier, add rounding, right-shift,
+          then a table lookup that clamps internally — no separate clamp, no InRange product.'
+        src: |2-
+                  // Apply the fixed point multiplication, rounding and right shift
+                  let rescaled_input = input
+                      .mul_scalar(self.fixed_point_multiplier())
+                      .add_scalar(self.rounding_constant())
+                      .bitwise_right_shift_scalar(self.right_shift() as Element);
+                  // Perform the lookup, the table will handle clamping internally
+                  table.lookup_tensor(rescaled_input)
+      - file: zkml/src/layers/requant/mod.rs
+        lines: 382-397
+        caption: The paper's in-range/out-of-range 'cases' are realized as a table-set choice keyed on
+          the number of zeroing chunks.
+        src: |2-
+                  match chunking_info.number_of_zeroing_chunks() {
+                      0 => vec![Table::new_shift_check(), Table::new_requantise()],
+                      1 => vec![
+                          Table::new_shift_check(),
+                          Table::new_requantise(),
+                          Table::new_signed_zero_check(),
+                      ],
+                      _ => vec![
+                          Table::new_shift_check(),
+                          Table::new_requantise(),
+                          Table::new_zero_check(),
+                          Table::new_signed_zero_check(),
+                      ],
+                  }
+      cost: '**27.3%** of PIOP time and **27.5%** of witness-commitment time — the largest single line
+        item in the prover.'
+    jolt-atlas:
+      tldr: No requantization protocol. Division is an ONNX op proven with a non-deterministic advice
+        value.
+      grounded: fused_rebase.rs + range_checking/ @b20cdce
+      bullets:
+      - The execution trace records, for non-deterministic operations such as division, an *advice value*
+        — the prover supplies the quotient and the relation is checked. That is the entire mechanism.
+      - Nothing is said about when rescaling must fire, how overflow is prevented across a deep transformer,
+        how table domains stay addressable, or what the accumulated rounding error does to accuracy.
+      - 'Because Jolt Atlas is lookup-native over a large field, the pressure is different: the binding
+        constraint is *lookup table domain size*, which is attacked by prefix-suffix decomposition and
+        teleportation rather than by shrinking values back down.'
+      - '**The "advice value" is more structured than the paper lets on.** The fused-rebase seam supplies
+        `rescaled = acc >> S` (`ClampAcc`) and remainder `R` (`RescaleRemainder`) as advice, forces `R
+        ∈ [0,2^S)` by an identity range check, and proves `acc = rescaled·2^S + R` inside the operator''s
+        own sumcheck — no separate Div node. It is the single most reused gadget in the codebase (Einsum
+        / Mul / Square / Cube / MeanOfSquares).'
+      audit: Uniqueness of the `(rescaled, R)` split is **load-bearing on the `R < 2^S` range check being
+        complete** — without it a prover shifts value between quotient and remainder. Confirm the range-check
+        `log_K` equals `bits` and that `rebase_bits` is correct per operator (Cube uses `2S`). Range checks
+        themselves are prefix-suffix Read-RAF Shout lookups into `UnsignedLessThanTable` with the read-value
+        fixed to 1 (asserting "remainder < bound" is TRUE) — some are soundness gates (requant uniqueness,
+        Div), others completeness gates; the code isn't uniformly commented on which.
+    hao-et-al:
+      tldr: 'Requantization exists here, and it is a first-class building block: `PosTrunc` / `Trunc`,
+        table-lookup truncation protocols that fire after every fixed-point multiplication.'
+      bullets:
+      - After each fixed-point multiply the scale doubles and must be shifted back down. Hao et al. give
+        this its own protocol pair -- `PosTrunc` (positive inputs) and `Trunc` (signed) -- built from
+        the same digit-decomposition-plus-lookup machinery as everything else.
+      - 'It is used *inside* the higher functions rather than as a separate layer: the exponential protocol,
+        for instance, multiplies the per-digit lookups together and calls `PosTrunc` after each product
+        to hold the scale.'
+      - '**Cost tracks the truncation bitlength, and nothing else.** The paper isolates this cleanly:
+        varying the scale changes the runtime of `PosTrunc` and `Trunc` and of essentially nothing else
+        in the building-block table.'
+      - This is the same operator that costs DeepProve the largest single share of its prover, reached
+        from a different substrate -- and, as there, it is discharged by decomposing a wide value into
+        narrow chunks and looking the chunks up.
+  debate:
+    title: Two philosophies
+    quotes:
+    - text: Modern prover-efficient SNARKs can benefit from being able to operate directly over small
+        finite fields, closer to standard CPU word sizes (e.g., 64-bit Goldilocks field). While this allows
+        for faster prover times, in our verifiable LLM inference application it introduces an additional
+        challenge. During quantized integer inference we need to perform requantization after every few
+        operations (mainly multiplications) to prevent overflow in the finite field. However, requantization
+        itself is a lossy operation and can further degrade accuracy.
+      src: DeepProve
+      sec: §1.1
+      name: Requantization strategy
+    body: |-
+      DeepProve requantizes constantly and pays **27% of its prover** for it. Jolt Atlas barely mentions the operation. This is not an oversight so much as a different bet: DeepProve keeps values small so tables stay small; Jolt Atlas keeps tables small by **decomposing them** (prefix-suffix) and by **shrinking their input domain** (teleportation), which relieves the pressure to requantize in the first place.
+
+      The open question is whether the second approach survives a deep transformer without an overflow-management story. Nobody has published the experiment.
+- id: clamp
+  name: Clamping
+  sub: saturating out-of-range activations
+  group: Numeric substrate
+  difficulty: mid
+  difficulty_label: Table-size sensitive
+  tex: |-
+    \mathrm{Clamp}(x)=\min\big(\max(x,\,\mathrm{CMin}),\,\mathrm{CMax}\big)
+    \\[8pt]
+    \text{naive: one lookup table over the full } q'\text{-bit domain} \;\Rightarrow\; \text{far too large to commit}
+  what: Outliers exceed the calibrated range. Rather than let them corrupt the scale — or fall outside
+    the lookup table's domain and become unprovable — saturate them at the boundary.
+  why: The obvious protocol, one table mapping every possible input to its clamped output, has a domain
+    the size of the pre-shift value range. You must express the clamp algebraically instead.
+  kit:
+  - Zero-indicator polynomials evaluated by sumcheck
+  - Sign-indicator polynomials for signed ranges
+  - Fusing the clamp into the requantization decomposition
+  schemes:
+    deepprove:
+      tldr: 'Never build a clamp table — and the code confirms it literally: there is no `Clamp` table
+        type. Clamping lives inside the Requantise/ReLU tables (their apply is input.clamp) plus a zero-chunk
+        selector folded into the sumcheck.'
+      grounded: zkml/src/lookup/{table,operation}/ @ Lagrange-Labs/deep-prove master
+      quotes:
+      - text: The simplest solution would be to have another lookup table that takes as input Out(x̄)
+          and outputs Clamp(x̄). In practice though this clamping lookup table is too large and so DeepProve
+          uses two different approaches based on whether the value is expected to be signed or not.
+        src: DeepProve
+        sec: Appendix C
+        name: Proving clamping
+      - text: Since re-quantization and non-linear functions are usually proven via lookup arguments,
+          using a fixed scaling factor without clamping can lead to situations where the values generated
+          during inference are too large to be looked up, thus forcing a larger lookup table to commit.
+        src: DeepProve
+        sec: §6
+        name: Related Work — on zkGPT
+      bullets:
+      - '**Unsigned.** Decompose into `ZeroIn` chunks, each paired with a multilinear `ZeroOut` that is
+        1 iff its chunk is zero. Then sumcheck $\mathrm{Out}(r)=\sum_b \mathrm{eq}(r,b)\big[(\prod_j \mathrm{ZeroOut}_j)\mathrm{Value}(b)
+        + (1-\prod_j \mathrm{ZeroOut}_j)\mathrm{CMax}\big]$. The product is 1 exactly when no high chunk
+        fired.'
+      - '**Signed.** Add a `SgnIn`/`SgnOut` pair returning $-1/0/{+}1$, so the clamp target interpolates:
+        $\frac{\mathrm{CMax}-\mathrm{CMin}}{2}\mathrm{SgnOut} + \frac{\mathrm{CMax}+\mathrm{CMin}}{2}$.'
+      - Because clamping is folded into the requantization lookup, the downstream non-linearity receives
+        the *unclamped* linear output — strictly more accurate than clamping first.
+      - 'This is exactly the gap DeepProve identifies in zkGPT: a fixed scaling factor without clamping
+        means inference can produce values too large to look up, forcing a larger committed table.'
+      - In code the eight `TableType`s are `Exp, GeLU, ReLU, SiLU, Requantise, ShiftCheck, SignedZeroCheck,
+        ZeroCheck` — **none of them is a clamp table**. The Requantise and ReLU tables clamp inside their
+        own `apply_op` (`input.clamp(min,max)`); the out-of-range selector is the product of `ZeroCheck`
+        chunk outputs. See [Lookup arguments & range checks](#/op/lookups).
+    jolt-atlas:
+      tldr: Two clamps, and only one is proven. The fused saturating clamp after a rebase is a real SatClamp<64>
+        lookup; the standalone ONNX Clamp operator is an unproven passthrough.
+      grounded: clamp_lookups/ + lookup_tables/sat_clamp.rs @b20cdce
+      bullets:
+      - '**The fused clamp is real.** After a rebase, `output = SatClamp(rescaled)` is discharged by a
+        64-bit `SatClampTable` lookup via prefix-suffix Shout, with the pre-clamp value carried as `ClampAcc`
+        advice and one-hot read-address checks. Shared by Einsum / Mul / Square / Cube / Add / Sub / Sum.'
+      - 'The table is never materialized at $2^{64}$: its MLE is a prefix-suffix combination of sign-extension-detection
+        prefixes and saturating-value suffixes.'
+      - '**But the standalone `Clamp` op is a TODO dummy** that forwards its operand claim with no clamp
+        check at all — a distinct code path from the fused `SatClamp`.'
+      code:
+      - file: jolt-atlas-core/src/onnx_proof/ops/clamp.rs
+        lines: 20-30
+        caption: The standalone ONNX Clamp operator is an unproven passthrough — any model using a bare
+          Clamp node is effectively unproven for it.
+        src: |-
+          // TODO: Clamp
+          // Currently this is just a dummy implementation that passes down an operand claim for the rest of the proof system
+          let accessor = AccOpeningAccessor::new(&mut prover.accumulator, node);
+          let (opening_point, _claim) = accessor.get_reduced_opening();
+      audit: '**A bare `Clamp` ONNX node is unproven** (`ops/clamp.rs` passthrough). Only the *fused*
+        saturating clamp is sound. Also: `SatClampTable`''s prefix-suffix combine hard-codes the i32 split
+        and asserts `XLEN==64` only via `debug_assert` — a release build wouldn''t catch a wrong-XLEN
+        misuse.'
+- id: matmul
+  name: Matrix multiplication
+  sub: QKV projections, FFN, logits
+  group: Linear algebra
+  difficulty: friendly
+  difficulty_label: SNARK-friendly
+  tex: |-
+    D = a\,(A\cdot B) + b\,C, \qquad A\in\mathbb{F}^{m\times l},\; B\in\mathbb{F}^{l\times n}
+    \\[10pt]
+    \text{sumcheck instance:}\qquad
+    y_D - b\,y_C \;=\; a \!\!\sum_{x\in\{0,1\}^{\log l}}\!\! \tilde{f}_A(r_1,x)\cdot \tilde{f}_B(x,r_2)
+    \\[6pt]
+    \text{prover } O(ml+ln+mn), \qquad \text{proof } O(\log l)
+  what: 'The workhorse: $Q = XW_Q$, the FFN''s two dense layers, the final unembedding. Quantized, $x_4[i,k]=z_4+M\sum_j(x_1[i,j]-z_1)(x_2[j,k]-z_2)+B(x_3[k]-z_3)$
+    with $M=s_1s_2/s_4$.'
+  why: It does not resist. Sumcheck proves it with a linear-time prover, a logarithmic proof, and **no
+    commitment to the product matrix**. Only the inputs need oracles; their claims pass down the chain.
+    The danger is treating it as a generic circuit, which costs large constant factors.
+  kit:
+  - Thaler's matmul sumcheck
+  - Batched sumcheck across heads / layers
+  - 'Virtual polynomials: never commit intermediates'
+  - Verifying tensor relations directly at the multilinear level (Schwartz–Zippel)
+  schemes:
+    zkllm:
+      tldr: The standard sumcheck for tensor multiplication, GPU-parallelised. The arithmetic backbone
+        under Q·Kᵀ, ·V, and the projections.
+      bullets:
+      - $C=AB$ is one sumcheck over the multilinear extensions, reduced to evaluation claims on $\tilde
+        A, \tilde B, \tilde C$ and closed by Hyrax openings.
+      - Tensor structure is preserved, so the sumcheck parallelises across dimensions. That is the design
+        constraint that makes GPU proving of a 13B model feasible.
+    deepprove:
+      tldr: Generalised, batched matmul-with-bias sumcheck; the primitive everything else reduces to.
+      bullets:
+      - A single *batched general matmul* PIOP handles $h$ instances $a_iA_iB_i + b_iC_i = D_i$ with one
+        sumcheck. Used for all attention heads, and for the padding and permutation matrices elsewhere.
+      - Round-by-round soundness error $h(1+2\log \max(n_i)\max(m_i))/|\mathbb{F}|$, composed with the
+        sumcheck's own — this is what licenses Fiat–Shamir via the BCS transform.
+      - Padding and re-arrangement (needed when $d/h$ isn't a power of two) are themselves proven as matmuls
+        against sparse 0/1 matrices whose MLEs the verifier evaluates locally in $\tilde{O}(d)$.
+      - Measured at only **14.9%** of PIOP time. The classical ZKML intuition that matmul dominates is
+        wrong at LLM scale.
+      cost: 'Einsum / MatMul: 14.91% of PIOP time (GPT-2, seq 512).'
+    jolt-atlas:
+      tldr: ONNX Einsum, verified directly at the polynomial level — no decomposition into scalar operations,
+        no R1CS.
+      grounded: einsum/ + fused_rebase.rs @b20cdce
+      quotes:
+      - text: Instead of naively decomposing tensor operations into scalar computations and verifying
+          each element independently, we verify tensor relations directly at the multilinear polynomial
+          level.
+        src: Jolt Atlas
+        sec: §1.2
+        name: Our Contributions
+      - text: Nearly all verification checks are performed using virtual polynomials, and the approach
+          neither uses nor requires R1CS.
+        src: Jolt Atlas
+        sec: §5.4
+        name: CPU trace vs Tensor trace
+      bullets:
+      - '**One engine, all patterns.** `einsum/dot.rs` proves ~11 einsum patterns; each supplies three
+        hooks via the `EinsumLayout` trait: `fold` (collapse the non-contracted output axes into eq-weights
+        at the output randomness), an `EqSchedule` (where a batch eq-poly rides in the round order), and
+        `operand_points` (scatter the final point back to the two operand openings). Attention `Q·Kᵀ`
+        and `·V` are the *same code path* as a feed-forward matmul.'
+      - '**After folding, a matmul is a degree-2 dot product** over the contraction cube: $\sum_h L(h)R(h)$
+        (`EqSchedule::None`), or degree-3 $\sum_h L(h)R(h)\,\mathrm{EQ}(h)$ when a batch eq-poly rides
+        along (`High`/`Low` bind the batch bits first or last) — one sumcheck covers batch matmul, no
+        per-head loop.'
+      - '**The initial claim is not the output opening.** For quantized nodes `fused_input_claim` reconstructs
+        $\mathrm{acc}(r)=\mathrm{rescaled}(r)\cdot 2^S + R(r)$ from two prover advice openings (`ClampAcc`,
+        `RescaleRemainder`) — the divide-by-$2^S$ is fused into the matmul sumcheck, never a separate
+        Div node.'
+      - 'The outer-product pattern `m,an->a1nm` is a degenerate **zero-round** instance: `num_rounds()==0`,
+        it just claims the product of two point evaluations. And the shipped pipeline still lowers ONNX
+        to a CPU trace first, so the "no R1CS" tensor-native path is a **design in transition**.'
+      code:
+      - file: onnx_proof/fused_rebase.rs
+        lines: 122-135
+        caption: The matmul sumcheck's initial claim is reconstructed from two prover-supplied advice
+          openings, not the output opening — the central soundness seam.
+        src: |-
+          pub fn fused_input_claim<F: JoltField>(...) -> F {
+              match rebase_bits(&node.operator) {
+                  Some(bits) if bits > 0 => {
+                      let rescaled = accessor.get_advice(VirtualPoly::ClampAcc).1;
+                      let remainder = accessor.get_advice(VirtualPoly::RescaleRemainder).1;
+                      rescaled * F::from_u64(1u64 << bits) + remainder
+                  }
+                  _ => accessor.get_reduced_opening().1,
+              }
+          }
+      audit: 'Operand values `L`, `R` are opened via the accumulator but **are not range-checked in the
+        einsum module** — no field-overflow guard on `acc` lives here; it relies on upstream quantization
+        invariants. Uniqueness of the `(rescaled, R)` split rests entirely on the `R ∈ [0,2^S)` range
+        check being complete: a weak one lets a prover shift value between quotient and remainder and
+        forge the clamped output. Two concrete gaps: **non-power-of-two shapes are behind `#[ignore]`d
+        tests** ("not fully validated yet"), and **in ZK mode the remainder claim is a placeholder** that
+        "reaches the proof only through the prover-supplied baked initial claims of the following stages"
+        (`fused_rebase.rs:305`) — a documented trust seam.'
+    mystique:
+      tldr: 'A generalised Freivalds check: prove $u^\top ABv = u^\top Cv$ for random $u,v$ instead of
+        $AB = C$. The circuit collapses to a single inner product, with communication independent of the
+        inner dimension -- but the prover still multiplies the matrices.'
+      quotes:
+      - text: Directly proving matrix multiplication in zero knowledge would require O(n³) number of
+          multiplications, which could be improved to O(n^2.8) (or even lower) based on a better algorithm.
+          Although the prover time has to be linear to this complexity, we could reduce the circuit size
+          for ZK proofs significantly.
+        src: Mystique
+        sec: §3.3
+        name: Optimizations for ML Applications
+      bullets:
+      - '$\Pi_{\mathrm{MatMul}}$: the verifier samples $u \in (\mathbb{F}_{q^k})^n$, $v \in (\mathbb{F}_{q^k})^\ell$;
+        both parties locally fold the authenticated matrices into $[x]^\top = u^\top[A]$, $[y] = [B]v$
+        and $[z] = u^\top[C]v$, and prove only the single inner product $[x]^\top[y] = [z]$. Soundness
+        error $3/q^k$.'
+      - With the multivariate-polynomial optimisation, communication drops to $O(k\log q)$ bits -- **independent
+        of the contracted dimension $m$**. The linear layer is essentially free on the wire.
+      - '**The saving is in circuit size, not prover work.** The prover must still compute $A\cdot B$
+        locally to know $C$, and the paper names that local multiplication as the efficiency bottleneck.
+        Read the headline improvement as a statement about communication.'
+      - 'The same random-linear-combination idea recurs across the whole field: it is Freivalds'' algorithm,
+        and it is what the sum-check matmul PIOP is doing too -- reduce a matrix identity to a scalar
+        identity at a random point, and never commit the product.'
+  debate:
+    title: Is GKR the wrong hammer for matmul?
+    quotes:
+    - text: As described in [Thaler], the GKR protocol is considered a general-purpose technique and "general-purpose
+        techniques should sometimes be viewed as heavy hammers that are capable of pounding arbitrary
+        nails, but are not necessarily the most efficient way of hammering any particular nail". In particular,
+        for matrix multiplication, a primitive operation in ML models, "the GKR protocol introduces at
+        least a constant factor overhead for the prover. In practice, this is the difference between a
+        prover that runs many times slower than an (unverifiable) MATMULT algorithm, and a prover that
+        runs a fraction of a percent slower".
+      src: Jolt Atlas
+      sec: §1.3
+      name: Related Work — on DeepProve
+    body: |-
+      Jolt Atlas's central architectural criticism of DeepProve is that a GKR-style protocol imposes a constant-factor prover overhead on matrix multiplication, the primitive operation of ML — the difference between "many times slower than MATMULT" and "a fraction of a percent slower".
+
+      DeepProve's own measurements complicate the charge: matmul is **14.9%** of its PIOP time, and its prover is dominated by softmax, requantization and activations. A constant factor on 14.9% is not where the system lives. But the criticism bites harder as models grow and the linear-algebra share rises.
+
+      **Nobody has run both systems on the same model and hardware.** Until someone does, this stays an argument about asymptotic taste.
+- id: embed
+  name: Embedding lookup
+  sub: token id → vector · ONNX Gather
+  group: Linear algebra
+  difficulty: friendly
+  difficulty_label: Cheap if you're clever
+  tex: |-
+    \mathrm{Embed}(T,x) = \big(T[x_0],\,T[x_1],\,\dots,\,T[x_{s-1}]\big)
+    \\[10pt]
+    \text{rewrite as a matrix product:}\qquad \mathrm{Embed}(T,x) = H_x \cdot T
+    \\[6pt]
+    H_x\in\{0,1\}^{s\times t},\qquad H_x[i,\,x_i]=1,\; \text{else } 0 \qquad\Rightarrow\qquad s \text{ non-zeros}
+  what: Index the vocabulary-sized embedding table with each input token id. In ONNX this is the `Gather`
+    operator.
+  why: 'The instinct is a lookup argument, which forces the prover to commit to a polynomial of size $\Omega(sd)$
+    — the whole embedded sequence. Wasteful, because the verifier *already knows the token indices*: they
+    are public input. But if you *do* treat it as a memory read, you now owe a read-consistency proof.'
+  kit:
+  - One-hot matrix reformulation ⇒ reuse the matmul sumcheck
+  - Sparse MLE evaluated locally by the verifier
+  - 'Or: treat as a memory read and prove read/write consistency'
+  schemes:
+    deepprove:
+      tldr: Rewrite the lookup as a sparse matrix product and reuse matmul. Zero additional commitments.
+      grounded: zkml/src/layers/transformer/embeddings.rs @ Lagrange-Labs/deep-prove master
+      quotes:
+      - text: In order to prove the above, someone could directly use any state-of-the-art lookup argument.
+          In practice, however, this would result in large prover overhead since it would have to additionally
+          commit and open to a polynomial of size $\Omega(sd)$. Instead, we observe that the verifier
+          has direct access to the index vector x meaning that the verification cost can be proportional
+          to $|x| = s$. We thus propose a lightweight protocol that requires no additional commitments.
+        src: DeepProve
+        sec: §4.3.1
+        name: Proving Embeddings
+      bullets:
+      - '$Y = H_x\cdot T$ where $H_x$ is the one-hot encoding of the token sequence. The code confirms
+        the paper: the prover builds a length-vocab reduced one-hot vector by scattering $\beta$ weights,
+        and the **verifier reconstructs its MLE directly from the plaintext token indices** — no lookup,
+        no memory argument.'
+      - 'Correction to our old page''s "zero commitments": that is true only of the one-hot input. The
+        embedding matrix $T$ **is** committed — registered as a model polynomial and opened through the
+        PCS like any weight. Only $H_x$ is uncommitted.'
+      - Prover $O((t+s)d)$; the verifier's local reconstruction is $O(\text{seq len})$. Soundness inherits
+        from the matmul PIOP.
+      code:
+      - file: zkml/src/layers/transformer/embeddings.rs
+        lines: 569-579
+        caption: The verifier reconstructs the one-hot MLE claim from plaintext token indices — this replaces
+          a lookup / read-consistency argument, and is O(seq_len).
+        src: |2-
+                  let (r1, r2) = one_hot_claim.point.split_at(vocab_nv as usize);
+                  let b1 = evals(r2);
+                  let sum = input.data().iter().take(unpadded_length).zip(b1).fold(
+                      F::ZERO,
+                      |sum, (token, beta)| {
+                          let token_value = token.to_element() as usize;
+                          let token_le_bits = to_bit_sequence_le(token_value, r1.len())
+                              .map(|b| F::from(b as u64))
+                              .collect_vec();
+                          let selector = beta * identity_eval(r1, &token_le_bits);
+                          sum + selector
+                      },
+                  );
+    jolt-atlas:
+      tldr: Gather is a memory read, so it owes a read-consistency proof — and this is where Jolt Atlas
+        attacks DeepProve directly.
+      grounded: gather/ @b20cdce
+      quotes:
+      - text: Operations such as Gather require reading the tensor on which they operate, so we need to
+          prove that those reads were correct. The most recent open-source implementation of DeepProve
+          lacks these lookup arguments.
+        src: Jolt Atlas
+        sec: §1.3
+        name: Related Work — on DeepProve
+      bullets:
+      - '**A dedicated Read-RAF sumcheck** (not the general memory stage): the prover commits a one-hot
+        address polynomial `ra`, and one degree-2 sumcheck proves both the gathered value and the address
+        read-back by γ-folding $\mathrm{dict}(k)+\gamma\!\cdot\!k$. The verifier supplies the address
+        value from an `IdentityPolynomial` it evaluates in-circuit.'
+      - '**Vocabulary-adaptive.** `GatherSmall` (dict ≤ 65536) commits a single-chunk one-hot; `GatherLarge`
+        uses the Shout $d$-chunk decomposition so the effective table is $d\cdot 2^{\log k_{chunk}}$ wide
+        instead of a single ~70k-wide commitment.'
+      - '**Only `ra` is committed**; the dictionary and index tensors arrive as prior-node openings. `ra`''s
+        well-formedness is the standard Shout trio: booleanity (0/1), hamming-weight = 1 (exactly one
+        row hot), ra-virtualization.'
+      - This resolves the paper's own charge against DeepProve ("*the most recent open-source implementation
+        … lacks these lookup arguments*") by showing exactly what a proven `Gather` read looks like in
+        Jolt's own model.
+      audit: '`compute_ra_evals` scatters using the **raw trace indices with no `k < num_words` range
+        check** here — an out-of-range index would OOB the prover, and correctness leans on booleanity
+        + hamming-weight over the *padded* power-of-two domain plus the identity poly covering the padded
+        range. `test_gather_non_power_of_two_input_len` is `#[ignore]`d. `fold_dictionary` carries `//
+        TODO: Assert correct behavior for axis != 0` — only axis 0 is validated.'
+  debate:
+    title: 'Settled: confirmed at the letter, misleading in spirit'
+    quotes:
+    - text: Note that since $H_x$ has only $s$ non-zero elements, the prover does not have to commit to
+        its MLE since the verifier can evaluate it locally in $O(s \log n)$ field operations.
+      src: DeepProve
+      sec: §4.3.1
+      name: Proving Embeddings
+    body: |-
+      Jolt Atlas asserts that DeepProve's open-source code "lacks these lookup arguments" for `Gather` reads. We read the repository (`zkml/src/layers/transformer/embeddings.rs`). The verdict: **true at the letter, misleading in spirit.**
+
+      The embedding `Gather` genuinely uses **no** lookup or memory argument — because it is reformulated as a sparse one-hot matmul whose one-hot MLE the verifier evaluates locally from the plaintext token indices (shown above). Read-consistency is enforced by that local evaluation, not by a lookup. So there is nothing missing to add.
+
+      And the implication that the repo is lookup-free is wrong: DeepProve *does* contain LogUp/GKR lookups — the [argmax head](#/op/logits) is one user, and every non-linear layer is another. The charge picks a real absence (a `Gather` lookup) and frames it as a gap, when it is a deliberate design choice that needs no lookup at all.
+- id: residual
+  name: Residual addition
+  sub: x + sublayer(x)
+  group: Linear algebra
+  difficulty: friendly
+  difficulty_label: Trivial — except for scales
+  tex: |-
+    Y = X_1 + X_2
+    \\[8pt]
+    \text{but quantized, both addends must share a scale } s.
+    \\[4pt]
+    X_1 \text{ is a raw hidden state; } X_2 \text{ left a normalized block.}
+    \\[2pt]
+    \text{Their dynamic ranges differ by orders of magnitude.}
+  what: Add the block's output back to its input. Mathematically the simplest node in the graph.
+  why: In quantized-land it is a trap. Rescaling the narrow-range tensor onto the wide-range tensor's
+    grid at low precision destroys it. Residual connections are also a primary *source* of the outlier
+    activations that break quantization globally. zkGPT's evaluation simply deletes them from GPT-2.
+  kit:
+  - 'Mixed precision: widen the bit-length locally'
+  - Scale-factor alignment before addition
+  - 'Free in the PIOP: MLE addition checked at a random point'
+  schemes:
+    deepprove:
+      tldr: Prove it for free; pay for it in bits, not in cryptography.
+      quotes:
+      - text: The authors prove the correctness of a modified version of GPT-2 that doesn't contain residual
+          connections, attention masks, and the final projection layer. These relaxations significantly
+          circumvent the outlier issues that we discussed in Section 1.
+        src: DeepProve
+        sec: §6
+        name: Related Work — on zkGPT
+      bullets:
+      - 'The PIOP is a one-line check: sample $r$, verify $y_Y = y_{X_1} + y_{X_2}$ against the three
+        oracles.'
+      - 'The engineering is entirely numeric: residual layers run at a *larger bit-length* than the rest
+        of the model, chosen so the quantization grid is fine enough to represent both addends.'
+      - DeepProve keeps residuals, attention masks, and the final projection. zkGPT removes all three,
+        which is how it avoids the outlier problem it never discusses.
+      cost: 'Add: 1.03% of PIOP time.'
+    jolt-atlas:
+      tldr: An elementwise Add over tensors, with NumPy broadcast semantics. Nothing to say, and nothing
+        said.
+      grounded: ops/{add,sub,div}.rs + clamp_lookups/ @b20cdce
+      bullets:
+      - '`Add`, `Sub`, `Mul`, `Div` are supported elementwise ops; broadcasting is automatic.'
+      - '**Not "nothing said" in code.** Each is a small degree-1/2/3 sumcheck whose 64-bit pre-clamp
+        accumulation is re-executed into a `ClampAcc` virtual MLE (never committed), tied to the committed
+        operands by a cheap linear equality, then clamped by the shared `SatClamp` lookup. `Div` proves
+        the Euclidean identity `right·q + R − left = 0` with a committed quotient and an `UnsignedLessThan`-range-checked
+        remainder.'
+      audit: 'The pre-clamp `acc` is prover-supplied advice (re-executed, appended as `ClampAcc`, no separate
+        commitment); its only anchors are the operand tie and the clamp lookup. The soundness-test harness
+        (`malicious_sub.rs`) is worth teaching: a *faithful* attacker forges exactly one opening (proves
+        `left+1`) to isolate which single check rejects — here, the operand tie. **In ZK mode, Add/Sub/Sum
+        are proved un-clamped** and deliberately don''t commit `ClampRaD`, so their saturating clamp is
+        not range-checked under ZK.'
+- id: ape
+  name: Absolute positional encoding
+  sub: GPT-2
+  group: Positional information
+  difficulty: friendly
+  difficulty_label: Nearly free
+  tex: |-
+    Y = X + W[1:s], \qquad W\in\mathbb{F}^{s'\times d},\quad s\le s'
+    \\[8pt]
+    \text{problem: the verifier's random point } r\in\mathbb{F}^{\log(sd)} \text{ doesn't "fit" the MLE of the taller } W.
+  what: Add a learned position matrix, row-truncated to the actual sequence length.
+  why: 'Only a shape mismatch: the committed $W$ has $s''$ rows (max context) but you need its first $s$.
+    You cannot just evaluate $\tilde f_W$ at $r$.'
+  kit:
+  - Prefix-restriction of an MLE by zero-padding the challenge point
+  schemes:
+    deepprove:
+      tldr: Evaluate the truncated W by prepending zeros to the challenge point.
+      bullets:
+      - Observe $\tilde f_{W,\le s}(x) = \tilde f_W(\mathbf{0}\,\|\,x)$ with $\mathbf{0}\in\mathbb{F}^{\log(s'/s)}$.
+        The prover sends $y_W = \tilde f_W(\mathbf{0}\|r)$ and the verifier queries the existing oracle
+        there.
+      - 'Whole protocol: verifier samples $r$, prover sends three evaluations, verifier checks $y_Y =
+        y_X + y_W$. $O(1)$ proof and verification; soundness error $3\log(sd)/|\mathbb{F}|$.'
+    jolt-atlas:
+      tldr: GPT-2's learned absolute encoding is not a bespoke op in Jolt — it decomposes into a Gather
+        of the position table plus an Add, both already proven.
+      grounded: ops/gather + ops/add @b20cdce
+      bullets:
+      - GPT-2 (nanoGPT, the repo's actual target) uses *learned* position embeddings, so APE = [`Gather`](#/op/embed)(position
+        table) + [`Add`](#/op/residual). Both have dedicated protocols above; there is nothing new to
+        prove.
+      - Sinusoidal APE would instead route through the [`sin`/`cos` neural-teleport](#/op/rope) path —
+        but no sinusoidal-APE model ships in the repo.
+- id: rope
+  name: Rotary positional embedding
+  sub: Gemma 3, Llama, most modern LLMs
+  group: Positional information
+  difficulty: mid
+  difficulty_label: Needs a structural trick
+  tex: |-
+    Y_i = X_i \circ W_{1,i} \;+\; X_i' \circ W_{2,i}
+    \\[6pt]
+    X_i' = \big[-X_i[2],\, X_i[1],\, -X_i[4],\, X_i[3],\, \dots\big] \quad\text{(pairwise swap and negate)}
+    \\[10pt]
+    \text{trick:}\quad
+    \tilde f_X(x,z) = (1-x)\tilde f_X(0,z) + x\,\tilde f_X(1,z)
+    \\[2pt]
+    \tilde f_{X'}(x,z) = (1-x)\big(-\tilde f_X(1,z)\big) + x\,\tilde f_X(0,z)
+  what: Rotate each pair of query/key dimensions by an angle proportional to position. Two Hadamard products
+    against learned cos/sin matrices, with a swap-and-negate shuffle between them.
+  why: The shuffled tensor $X'$ is a *derived* witness. Naively the prover must commit to it and open
+    it, doubling the cost of a cheap operator — so the trick is to avoid ever materialising $X'$.
+  kit:
+  - Hadamard-product sumcheck
+  - 'permuted_eq_poly: fold the swap-and-negate into the eq weights'
+  - 'Two layouts: Adjacent (pairwise) and RotateHalf (half-rows)'
+  schemes:
+    deepprove:
+      tldr: Never commit X′ — but the mechanism is not the paper's 'two evaluations of f_X'. The code
+        reuses a single input MLE and folds the swap-and-negate into the eq weights (permuted_eq_poly),
+        emitting one input claim, not two.
+      grounded: zkml/src/layers/transformer/positional/rope.rs @ Lagrange-Labs/deep-prove master
+      bullets:
+      - 'Correction: our old page said the verifier reconstructs $X''$ from two evaluations of $f_X$.
+        The code instead builds **one** `input_mle` and uses it in *both* sumcheck terms; the permutation
+        lives in the eq weights via `permuted_eq_poly`. The sumcheck emits exactly three evals (input,
+        cos, sin) and a single input claim.'
+      - The single virtual polynomial is $\text{input}\cdot\text{lt}\cdot(\text{eq}\cdot\cos + \text{permuted\_eq}\cdot\sin)$
+        — the swap-and-negate never touches the input tensor, only the equality polynomial.
+      - 'There are **two layouts**, not one: `RopeLayout::Adjacent` (swap-and-negate adjacent pairs, as
+        our old page assumed) and `RopeLayout::RotateHalf` (negate/rotate half-rows), which permutes differently
+        and drops the top row-bit instead of the lowest.'
+      - Prover $O(sd)$, proof $O(\log sd)$. Costs **0.06%** of PIOP time in GPT-2, 0.83% in Gemma 3.
+      code:
+      - file: zkml/src/layers/transformer/positional/rope.rs
+        lines: 238-249
+        caption: permuted_eq_poly folds swap-and-negate into the eq weights instead of building X′ — the
+          actual mechanism, not 'two evaluations of f_X'.
+        src: |2-
+              fn permuted_eq_poly<F: PrimeField>(&self, eq_evals: &[F], row_size: usize) -> Vec<F> {
+                  match self {
+                      RopeLayout::Adjacent => eq_evals
+                          .chunks(2)
+                          .flat_map(|chunk| vec![chunk[1], F::ZERO - chunk[0]])
+                          .collect_vec(),
+                      RopeLayout::RotateHalf => {
+                          let half_len = row_size / 2;
+                          eq_evals
+                              .chunks(row_size)
+                              .flat_map(|chunk| {
+                                  let (first_half, second_half) = chunk.split_at(half_len);
+                                  second_half.iter().copied()
+                                      .chain(first_half.iter().map(|e| F::ZERO - *e))
+                              })
+                              .collect_vec()
+                      }
+                  }
+              }
+    jolt-atlas:
+      tldr: 'The trig is proven by neural teleportation: range-reduce the angle modulo τ=4π, look the
+        reduced value up in a tiny 2¹² table, range-check the remainder. No RoPE LLM ships in the repo,
+        so this is proven-out by unit tests only.'
+      grounded: neural_teleport/{sin,cos,division}.rs @b20cdce
+      bullets:
+      - 'A three-stage protocol: a degree-2 *division* sumcheck enforcing $\mathrm{input} = \tau\!\cdot\!q
+        + r$ with $\tau = \texttt{FOUR\_PI\_APPROX}$ ($4\pi$ scaled by 256 ≈ 3217), a one-hot lookup of
+        the reduced value into a dense $2^{12}$ table, and a remainder range check $r \in [0,\tau)$.'
+      - The only algebraic tie between quotient, remainder and input is a single constraint `eq · (τ·q
+        + r − input)` — everything else about $q, r$ is prover advice.
+      - '**Scope:** the repo ships only GPT-2 / nanoGPT (absolute positional), so `sin`/`cos` exist as
+        operator support but no rotary-embedding model exercises them end-to-end.'
+      audit: Because $q, r$ are constrained *only jointly* by `τ·q + r − input = 0`, **uniqueness rests
+        entirely on the remainder range check `r < τ`**. The remainder-range assertion at `cos.rs:329`
+        is a plain `assert!` that always runs in the prover — confirm the in-circuit Shout range check
+        (not the assert) is what the verifier actually relies on.
+- id: scores
+  name: Attention scores
+  sub: Q·Kᵀ / √dₖ
+  group: Attention
+  difficulty: friendly
+  difficulty_label: A matmul in disguise
+  tex: |-
+    T_p = Q\cdot K^\top, \qquad\text{then scale by } 1/\sqrt{d_k}
+    \\[8pt]
+    \text{the scale is absorbed into the claim:}\qquad y_{T_p} \leftarrow y_{T_p}\cdot \mathrm{Quant}(1/\sqrt{d_k})^{-1}
+  what: The $s\times s$ score matrix, before masking and softmax.
+  why: Nothing special — a matmul with a transposed operand and a scalar. The transpose is handled by
+    permuting the challenge point rather than materialising $K^\top$.
+  kit:
+  - Batched matmul sumcheck
+  - Challenge-point permutation for the transpose
+  - Scalar folding into the evaluation claim
+  schemes:
+    zkllm:
+      tldr: 'Q·Kᵀ is step 1 of zkAttn: a dedicated matmul sumcheck. Nothing separate.'
+      bullets:
+      - The score matrix $Z = QK^\top$ is proven by the tensor matmul sumcheck, then fed straight into
+        the digit-decomposition softmax (zkAttn). Scaling by $1/\sqrt{d}$ is folded into the quantization
+        scale factor.
+    deepprove:
+      tldr: Batched matmul; the transpose costs nothing.
+      bullets:
+      - Given $r_{K^\top}=(r_1,r_2)$, set $y_K = y_{K^\top}$ and $r_K = (r_2,r_1)$. Free.
+      - The $1/\sqrt{d_k}$ scaling is undone on the verifier's evaluation claim before entering the matmul
+        PIOP, rather than proven as its own layer.
+    jolt-atlas:
+      tldr: 'An Einsum with an attention contraction pattern — and in code that reuse is the point: Q·Kᵀ
+        runs the same folding engine as a feed-forward matmul, so there is no bespoke scores protocol
+        to give.'
+      grounded: einsum/ @b20cdce
+      bullets:
+      - Einsum explicitly "supports patterns like `mk,kn->mn`, `bmk,bkn->bmn`, and attention patterns".
+      - In code, `Q·Kᵀ` is literally the [same `einsum/dot.rs` engine](#/op/matmul) as a feed-forward
+        matmul — the attention contraction is one more `EqSchedule`, not a bespoke protocol. The transpose
+        is a choice of `fold` axes; the $1/\sqrt{d_k}$ scale rides the fused-rebase seam.
+- id: mask
+  name: Causal masking
+  sub: the −∞ upper triangle
+  group: Attention
+  difficulty: friendly
+  difficulty_label: O(s), not O(s²)
+  tex: |-
+    \mathrm{Mask}(T) = T \circ D_1 + D_2
+    \\[6pt]
+    D_1 = \text{lower-triangular ones},\qquad D_2 = \text{upper-triangular } -\infty
+    \\[10pt]
+    \tilde f_{D_1}(r_1,r_2) = \sum_i \beta(i,r_1)\,\tilde f^{(i)}_{D_1}(r_2),
+    \qquad
+    \tilde f^{(i)}_{D_1}(r_2) = \tilde f^{(i-1)}_{D_1}(r_2) + \beta(i,r_2)
+  what: 'Zero out attention to future tokens. This is the operator that makes the certification trick
+    sound: the prediction at position $t$ provably cannot see token $t{+}1$.'
+  why: Naively the verifier evaluates two $s\times s$ structured matrices' MLEs — $O(s^2)$ work, which
+    would destroy succinct verification.
+  kit:
+  - Hadamard sumcheck with an additive correction
+  - Closed-form lower-triangular MLE ⇒ O(log s) verifier (causal)
+  - An extra sumcheck only for the local sliding-window mask
+  schemes:
+    deepprove:
+      tldr: A single Hadamard-style sumcheck — but the causal-mask verifier is O(log s), not O(s). The
+        lower-triangular mask MLE is evaluated in closed form (eval_zeroifier_mle); only the local sliding-window
+        mask needs an extra sumcheck.
+      grounded: zkml/src/layers/transformer/attention_mask/ @ Lagrange-Labs/deep-prove master
+      bullets:
+      - 'Correction: our old page said the verifier sweeps the triangular MLE in $O(s)$ via a prefix sum.
+        The code evaluates the lower-triangular (zeroifier) MLE and the row/column less-than polynomials
+        in **closed form** — the full causal-mask verifier is $O(\log s)$.'
+      - The verifier negates $D_2$'s $-\infty$ contribution first, reducing to a plain Hadamard check
+        against the triangular $D_1$. It slots into single-head attention between the score matmul and
+        the softmax.
+      - The $O(s)$ cost only appears for the *local* sliding-window mask (Gemma-style), which needs an
+        extra sumcheck plus an $O(s)$ shift-matrix evaluation. The plain causal mask does not.
+      - zkGPT's evaluated model has no attention mask at all.
+      cost: 'Attention mask: 3.96% (GPT-2) / 0.97% (Gemma 3) of PIOP time.'
+    jolt-atlas:
+      tldr: 'There is no masking PIOP because the mask is a baked constant: future positions carry a large-negative
+        quantized sentinel that flows through the softmax as ≈0. Nothing separate is proven.'
+      grounded: softmax_last_axis/mod.rs + models/transformer @b20cdce
+      bullets:
+      - In the traced model the causal mask is applied *before* quantization (`att.masked_fill(bias==0,
+        -10)` in `models/transformer/gen.py`), so by the time the score matrix reaches the prover the
+        upper triangle is already a constant.
+      - 'The softmax test layout documents the exact sentinel: upper-triangular entries use `-(11 << 12)
+        = -45056` (a $-\infty$ proxy at scale 12). It is just a very small input to the exp lookup, which
+        returns ≈0 — no triangular-MLE argument, no Hadamard correction.'
+      - 'So Jolt Atlas needs neither DeepProve''s prefix-sum triangular trick nor a masking cost line:
+        masking is absorbed into the [softmax](#/op/softmax) it already proves.'
+      audit: Because masking is a **trace-time constant**, its correctness is *not proven* — it is trusted
+        as part of the committed input graph. That is sound for a fixed causal mask compiled into the
+        model, but an auditor should confirm the mask constants in the committed graph actually match
+        the claimed causal pattern (nothing in the proof forces the upper triangle to be the sentinel
+        rather than a real score).
+- id: softmax
+  name: Softmax
+  sub: the exponential problem
+  group: Attention
+  difficulty: hostile
+  difficulty_label: 'DeepProve''s #2 cost'
+  tex: |-
+    Y[i,j] \;=\; \frac{e^{-X[i,j]}}{\sum_k e^{-X[i,k]}}
+    \\[10pt]
+    \text{shift-invariance:}\qquad Y = \mathrm{Softmax}(X - Z) = e^{-X[i,j] + Z[i,j]}
+    \\[10pt]
+    \text{so prove: (1) an exponentiation, by lookup; (2) } \textstyle\sum_j Y[i,j] \approx \mathrm{Quant}(1.0)
+  what: Row-normalise the masked score matrix into an attention distribution.
+  why: '$e^x$ is not a polynomial and the denominator is a division. DeepProve''s fix (from the code)
+    is cleverer than the paper''s "subtract the max for stability": the shift $Z$ it subtracts is the
+    *log-sum-exp*, so the exp lookup output is already the normalised probability and the division vanishes.'
+  kit:
+  - Shift by the log-sum-exp Z ⇒ exp lookup emits normalised probabilities
+  - Exponent lookup table (domain ≤ 0), masked −∞ ↦ 0
+  - Tolerant row-sum range check (error_bound), not exact equality
+  - Batched lookup + batched sumcheck across heads
+  schemes:
+    zkllm:
+      tldr: zkAttn — the softmax proof DeepProve inherits. Shift each row so exp sums to 1, then decompose
+        into base-b digits and run one tlookup per digit.
+      quotes:
+      - text: Exploit the shift-invariance property of Softmax to adjust each row of Z by a constant,
+          represented as a vector ẑ, so that exp(Z − ẑ1⊤) sums to 1 row-wise.
+        src: zkLLM
+        sec: §2, zkAttn
+      bullets:
+      - '**Shift-invariance.** Subtract a per-row $\hat z$ so $\exp(Z-\hat z\mathbf{1}^\top)$ sums to
+        1. The exp output is then the normalised probability. DeepProve''s log-sum-exp shift is the same
+        idea, generalised.'
+      - '**Digit decomposition.** Rather than one giant exp table, write $Z''$ in $K$ base-$b$ digits
+        and use $\exp(-\sum_k b^k Z^{(k)}) = \prod_k \exp(-b^k Z^{(k)})$ — one small tlookup per digit.
+        This is the memory win over listing all input-output pairs.'
+      - $\hat z$ is never verified directly; instead the rowwise sums of $Y$ are checked to equal 1. DeepProve
+        extends zkAttn to batch across heads and to allow real-valued, not power-of-two, scale factors.
+    deepprove:
+      tldr: 'zkLLM''s protocol batched across heads — but the code corrects two paper-level framings:
+        the shift Z is the log-sum-exp (not a max), and the normalisation check is a tolerant range check
+        (not exact Quant(1.0)).'
+      grounded: zkml/src/layers/transformer/softmax/ @ Lagrange-Labs/deep-prove master
+      quotes:
+      - text: The main difference between our protocol and that of zkLLM is that their protocol only uses
+          scaling factors of the form $2^k$ with $k \in \mathbb{Z}$ whereas we allow for $k \in \mathbb{R}$
+          to allow for smaller step sizes between table entries for the same table size.
+        src: DeepProve
+        sec: Appendix B.7
+        name: Softmax
+      bullets:
+      - '**Z is not a max-subtraction stability shift.** The committed witness is the quantised *log-sum-exp*:
+        the row max *plus* $\log\sum_k e^{\text{scalar}\cdot(X-\max)}$. Subtracting it means the single
+        exp lookup emits **already-normalised probabilities** — the normaliser is folded into the exponent,
+        so no division is ever proven.'
+      - Exponentiation is a lookup against a `TableType::Exp` whose domain is $[-(2^b)+1, 0]$ (the shifted
+        input is always ≤ 0). A value ≤ the min maps to 0, which is also how the masked `−∞` sentinel
+        cleanly yields $e=0$.
+      - '**Row-sum well-formedness is a tolerant range check, not exact equality.** The code emits `offset
+        + (Quant(1.0) + error_bound) − row_sum` and range-checks it in the 16-bit ShiftCheck table, enforcing
+        $|\text{row\_sum} - \mathrm{Quant}(1.0)| \le \text{error\_bound}$.'
+      - '**The "real-valued scale factors vs zkLLM" advantage is half the story:** the exp *input* scale
+        is a general f32, but the *output* scale `output_sf` is deliberately a power of two (capped at
+        16 bits). The flexibility is on the input side.'
+      - The `SoftmaxProof` bundles four LogUp proofs (exp, range, error/shift-check, zero) plus one sumcheck;
+        it commits the shift tensor per row and has no weight commitments. Batched across heads, it is
+        what makes multi-head attention tractable.
+      code:
+      - file: zkml/src/layers/transformer/softmax/evaluate.rs
+        lines: 92-99
+        caption: The shift Z is the quantised log-sum-exp — subtract the row max, exp, sum, log — not
+          just a stabilising max.
+        src: |2-
+                  let dim_maxes = input.clone().max_dim(-1);
+                  let log_sum_exp = (input.clone().sub(dim_maxes.clone())?)
+                      .float()
+                      .mul_scalar(scalar)
+                      .mask_fill(input_mask, f32::NEG_INFINITY)?
+                      .exp()
+                      .sum_dim(-1)
+                      .log();
+      cost: '**29.7%** of witness-commitment time (the single largest) and 19.4% of PIOP time, for GPT-2.'
+    jolt-atlas:
+      tldr: Not "just a lookup" — the code has a dedicated 4-stage batched-sumcheck protocol. It decomposes
+        softmax into a max-indicator, a two-sub-table exponentiation, a complementary-slackness clamp,
+        and a reciprocal-multiply, and never proves a division.
+      grounded: softmax_last_axis/ @b20cdce
+      quotes:
+      - text: 'Non-linear operations like Softmax cannot be expressed as polynomial relations. Jolt Atlas
+          uses lookup arguments to verify these operations: the prover demonstrates that each input-output
+          pair appears in a precomputed lookup table.'
+        src: Jolt Atlas
+        sec: §4
+        name: Lookup Arguments in Small Space
+      bullets:
+      - '**The paper is terse; the code is not.** `SoftmaxLastAxisProver::prove` drives four `SoftmaxStage`
+        sumchecks: (1) reciprocal-multiply + exp-sum + range-check; (2) exp-mult + max-indicator + remainder
+        checks + slackness; (3) two Shout exp lookups + range-checks; (4) the Shout one-hot provers.'
+      - '**Exponentiation by two tiny tables.** Using $e^{a+b}=e^a\!\cdot\!e^b$, the centered logit $z=\max_k-x$
+        is clamped to $z_c=\min(z, z_{bound}-1)$, split into digits $z_c=z_{hi}\!\cdot\!B+z_{lo}$, each
+        a Shout lookup into `lut_hi`/`lut_lo` (~401 entries vs a flat ~65k table), recombined as $\exp_q=\lfloor
+        \exp_{hi}\exp_{lo}/S\rfloor$ with a range-checked remainder.'
+      - '**The max is pinned without a comparator.** A `MaxIndicator` sumcheck forces $\max_k = x$ at
+        the one-hot argmax; an *operand link* then reconstructs $x = \max_k - z_c - \mathrm{sat\_diff}$
+        so the non-negativity of $z_c$ (Shout table membership) and $\mathrm{sat\_diff}$ (range check)
+        forces $\max_k \ge x$ everywhere.'
+      - '**The clamp is made unique** by a complementary-slackness sumcheck (input claim 0) proving $\mathrm{sat\_diff}\cdot(z_{bound}-1-z_c)=0$
+        — either the slack is zero or the clamp is saturated. A reusable pattern for any saturating quantized
+        op.'
+      - '**No division is proven.** The three per-row scalars $\max_k$, $\exp\_sum_q$, $\mathrm{argmax}_k$
+        are sent as *uncommitted transcript advice*, and the verifier recomputes $\mathrm{inv\_sum}=\lfloor
+        S^2/\exp\_sum_q\rfloor$ itself. Normalization is then $\exp_q\cdot\mathrm{inv\_sum}=\mathrm{softmax}_q\cdot
+        S + R$.'
+      code:
+      - file: softmax_last_axis/mod.rs
+        lines: 4-8
+        caption: The three auxiliary vectors are transcript advice, not committed — an acknowledged proof-size
+          cost with an open TODO.
+        src: |-
+          //! The prover sends three auxiliary vectors (`max_k`, `exp_sum_q`, `argmax_k`) to the
+          //! verifier via the transcript. These let the verifier derive `inv_sum[k]` without a
+          //! committed polynomial, but they add O(F) field elements to the proof size.
+          //!
+          //! TODO(#218): Remove auxiliary vectors and derive them inside the protocol.
+      - file: softmax_last_axis/mod.rs
+        lines: 1043-1058
+        caption: 'Operand link: X is algebraically reconstructed from max_k, the digit-recombined clamped
+          logit, and sat_diff, then matched to the upstream opening. This is what makes max_k the true
+          max.'
+        src: |-
+          let max_k_eval = MultilinearPolynomial::from(self.max_k.clone()).evaluate(&r2_lead.r);
+          let z_hi_eval = accessor.get_advice(VirtualPoly::SoftmaxZHi).1;
+          let z_lo_eval = accessor.get_advice(VirtualPoly::SoftmaxZLo).1;
+          let z_c_eval = z_hi_eval * F::from_u64(lut.base) + z_lo_eval;
+          let sat_diff_eval = accessor.get_advice(VirtualPoly::SoftmaxSatDiff).1;
+          let x_r2 = max_k_eval - z_c_eval - sat_diff_eval;
+          let prover_x_r2 = accessor.get_nodeio(Target::Input(0)).1;
+          if prover_x_r2 != x_r2 {
+              return Err(ProofVerifyError::InvalidOpeningProof(
+                  "Operand link failed: prover's X(r2) does not match max_k - z_c - sat_diff".to_string(),
+              ));
+          }
+      audit: |-
+        The highest-value findings in the sweep sit here.
+
+        - **`argmax_k` has no `< N` bound.** It is a public index used to build the one-hot via `index_to_field_bitvector(argmax_j, log_n)` (`max.rs:146`) with no range check; an out-of-range value silently takes the low `log_n` bits. Likely non-exploitable (operand-link non-negativity still forces `max_k ≥ x`), but the missing bound wants a written argument.
+        - **Uncommitted advice roundtrip.** `max_k` is packed `from_u32(val as u32)` and read back `to_u64() as i32`; confirm a crafted field element can't roundtrip to a different `i32` than the sumchecks bound.
+        - **`sat_diff` range is completeness-only** (`rc.rs` says so outright); soundness comes from the slackness sumcheck. Fine — but verify honest `sat_diff` stays in range on real workloads.
+        - **The reciprocal remainder is a `debug_assert` only**, never proven — sound *only* because the verifier recomputes `inv_sum` deterministically. If `inv_sum` ever became prover-supplied this breaks. See also the [ZK section](#/op/zk): the operand link above is **skipped entirely in ZK mode**.
+    mystique:
+      tldr: Softmax is just another float circuit -- exponentiation and division evaluated in IEEE-754
+        inside the Boolean domain. No shift-invariance trick, no exp lookup table, no tolerant row-sum
+        check, because none of those is needed once you have real floats.
+      bullets:
+      - 'SoftMax is listed among the non-linear layers implemented directly (with ReLU, Sigmoid, Max Pooling
+        and Batch Normalization). It inherits the generic path: convert to Boolean, convert to float,
+        evaluate the circuit, convert back.'
+      - '**The division is genuinely computed, not avoided.** Every other system here contorts to eliminate
+        the normaliser -- zkLLM and DeepProve subtract a per-row shift so the exponential emits already-normalised
+        probabilities; Jolt Atlas has the verifier recompute a reciprocal. Mystique just does the division,
+        in float, because in float division is a circuit like any other.'
+      - 'This is the cleanest illustration of the paper''s whole bet: the operator that costs the sum-check
+        lineage its single largest prover slice is, here, unremarkable -- and the cost has moved to Batch
+        Normalization and to the conversions instead.'
+      cost: Softmax is not separately reported; Batch Normalization dominates, at around 70% of ResNet-101
+        inference time in both the public-model and private-model settings.
+    hao-et-al:
+      tldr: 'A genuine softmax protocol, and it independently reinvents the shift: subtract the row max
+        (via the maxpool protocol), exponentiate by digit-decomposed lookup, then divide -- with the input
+        range bound exploited to make the division narrow.'
+      bullets:
+      - '$\Pi_{\mathrm{Softmax}}$ first invokes $\Pi_{\mathrm{Maxpool}}$ to obtain $x_{\max}$, then computes
+        $e^{x_i - x_{\max}}$ by the digit-decomposed exponential, sums, and divides. **Subtracting the
+        max is exactly zkLLM''s and DeepProve''s shift-invariance move**, and for exactly the same reason:
+        it bounds the exponent''s range so the table can be small.'
+      - 'The division is then made cheap by a range argument rather than by elimination: the summed input
+        is bounded by $n$, so the divisor''s bitlength is only $s + \lceil\log n\rceil$. The paper notes
+        that for $n = 256$ and $s = 12$ this means dividing on just 20 bits.'
+      - Unlike DeepProve, the normaliser is **not** folded into the exponent -- a real division is proven,
+        using the division building block. That building block runs with zero refinement iterations by
+        default, which is where softmax's accuracy risk actually lives.
+      - 'Softmax is the operator where the improvement over Mystique is largest, which is unsurprising:
+        it is the one that most punished Mystique''s arithmetic-to-Boolean round trip, needing exponentiation
+        *and* division in a Boolean circuit.'
+      cost: Reported per operator, amortised over a batch of 10^5 evaluations at dim 10 -- not as part
+        of any model. See papers.yml for the figures.
+- id: mha
+  name: Multi-head attention
+  sub: and GQA for Gemma 3
+  group: Attention
+  difficulty: hostile
+  difficulty_label: Composition + padding pain
+  tex: |-
+    Y_i = \mathrm{Softmax}\!\left(\frac{Q_i K_i^\top}{\sqrt{d/h}}\right) V_i,\quad i\in[h],
+    \qquad Y = [Y_1 \,\|\, \cdots \,\|\, Y_h]
+    \\[10pt]
+    \text{if } d/h \text{ is not a power of two: pad to } \tilde d_k = \text{next\_pow2}(d/h)
+    \\[4pt]
+    \text{and prove the padding: } \hat Y = Y\cdot P_1,\qquad P_1\in\{0,1\}^{d\times \tilde d_k h}
+  what: Run $h$ independent attention heads on column-slices of $Q,K,V$, then concatenate. Gemma 3 uses
+    grouped-query attention, sharing $K/V$ across query groups.
+  why: Two problems. First, the verifier holds an oracle for the concatenated $Y$, not each $Y_i$, so
+    per-head evaluation claims must be recombined — which only works cleanly when the head dimension is
+    a power of two, and it usually isn't. Second, every sub-operator must be batched or you pay $h$ times
+    over.
+  kit:
+  - 'Batched everything: matmul, softmax, lookups'
+  - Random linear combination of per-head claims via β(i, r_h)
+  - Sparse 0/1 padding matrices, MLE-evaluable in Õ(d)
+  schemes:
+    zkllm:
+      tldr: zkAttn runs per head; heads are concatenated and projected by another matmul sumcheck. Multi-head
+        is composition, not a new protocol.
+      bullets:
+      - Each head is an independent zkAttn instance (scores → digit-decomposition softmax → ·V). The concat
+        and output projection $W^O$ are proven as one more matmul sumcheck.
+      - Isolated-zkAttn benchmarks show proof size and verify time sublinear in the layer count; sequence
+        length is the dominant cost.
+    deepprove:
+      tldr: A 13-step composition that runs the whole block backwards, batching across heads, with an
+        explicit power-of-two padding argument.
+      bullets:
+      - '**Power-of-two case.** Recombine per-head claims as $y_Y = \sum_i \beta(i, r_h)\,y_{Y_i}$ for
+        a fresh random $r_h\in\mathbb{F}^{\log h}$. Same trick for $Q, K^\top, V$.'
+      - '**General case.** Pad each head to $\tilde d_k$ with zero columns, then *prove the padding* as
+        a matmul $\hat Y = Y P_1$ against a sparse permutation matrix with exactly $d$ non-zeros. The
+        verifier evaluates $\tilde f_{P_1}$ locally in $\tilde{O}(d)$.'
+      - 'Order, output → input: recombine $Y$ → batch matmul $(\hat Y_i = T_{s,i}\hat V_i)$ → batch softmax
+        → masking PIOP → batch matmul $(T_p = \hat Q \hat K^\top)$ → recombine $Q,K,V$ → batch matmul
+        $(Q = XW_Q)$.'
+      - Every step hands the next an evaluation claim rather than a committed tensor. Intermediate activations
+        are never committed.
+      - 'Gemma 3''s grouped-query attention drops out of the same machinery: it is MHA where $K/V$ heads
+        are shared, so the batched instance count changes but no protocol does.'
+    jolt-atlas:
+      tldr: 'Composed from Einsum contractions and the 4-stage softmax, with no head-recombination or
+        padding argument — and the code shows why: batching rides inside the one contraction sumcheck,
+        so the problem DeepProve solves never arises.'
+      grounded: einsum/ + softmax_last_axis/ @b20cdce
+      bullets:
+      - Attention is named as one of three target workloads (classification, embedding generation, transformer
+        attention), and Einsum covers the batched contractions.
+      - The composition is [Einsum scores](#/op/scores) → causal [mask](#/op/mask) (a baked sentinel)
+        → [the 4-stage softmax](#/op/softmax) → Einsum context. Batch matmul over heads is one `EqSchedule`
+        inside a single contraction sumcheck, not a per-head loop.
+      - So the power-of-two head-dimension problem, per-head claim recombination and explicit padding
+        matrices that DeepProve needs **genuinely do not appear** — the batched einsum absorbs them. The
+        paper doesn't spell this out; the code does.
+- id: rmsnorm
+  name: RMSNorm
+  sub: Gemma 3, Llama
+  group: Normalization & activation
+  difficulty: hostile
+  difficulty_label: Square roots and inverses
+  tex: |-
+    Y[i,j] = \frac{X[i,j]}{\sqrt{\frac{1}{d}\sum_{j} X[i,j]^2}}
+    \\[12pt]
+    \text{DeepProve instead:}\quad
+    \text{witness } d[i] = \mathrm{Quant}\!\left(1 \Big/ \sqrt{\tfrac{1}{d}\textstyle\sum_j X[i,j]^2}\right)
+    \\[4pt]
+    \text{prove } Y[i,j] = X[i,j]\cdot d[i] \quad\text{(Phase 1)}
+    \qquad
+    \text{prove } \textstyle\sum_j Y[i,j]^2 \approx \mathrm{Quant}(1.0) \quad\text{(Phase 2)}
+  what: Rescale each row to unit root-mean-square. No mean subtraction.
+  why: A circuit for RMSNorm contains a square root and a reciprocal. Both are SNARK-hostile, and both
+    must be represented as quantized values — so you eat a rounding error at each, on every row, of every
+    layer. The errors accumulate through the variance sum and crater accuracy.
+  kit:
+  - Non-deterministic witness for the reciprocal norm
+  - Well-formedness via a normalized-output invariant
+  - Adapted requantization instead of an inverse-sqrt lookup
+  - 'Or: a direct Rsqrt lookup table'
+  schemes:
+    deepprove:
+      tldr: Never prove a square root. Guess the inverse norm, multiply by it, and prove the result is
+        normalized.
+      quotes:
+      - text: The "standard" approach of proving the above, which was also adopted by all prior works,
+          is to first construct a circuit that directly computes the RMSNorm layer and subsequently invoke
+          a PIOP for proving the correct computation of that circuit. Unfortunately, this approach not
+          only incurs significant prover overheads since it contains many "SNARK-unfriendly" operations
+          such as square roots and inverses, but also leads to a significant accuracy loss.
+        src: DeepProve
+        sec: §4.3.3
+        name: Proving RMSNorm
+      - text: Proving norms is challenging because small errors accumulate during the sum on the variance
+          and expected value. This, in turn, drastically reduces the accuracy.
+        src: DeepProve
+        sec: Appendix C
+        name: Norm layers relying on zkLLM technique
+      bullets:
+      - 'The idea is the paper''s: never prove a square root. Supply the inverse norm as a witness, multiply
+        by it, and prove the result is normalized. But three details from the code correct our old page.'
+      - '**The witness is not $\mathrm{Quant}(1/\mathrm{rms})$.** It is a per-row fixed-point multiplier
+        `fract_mul` (the mantissa of $nws=\sqrt{\text{target}/\sum x^2}$) plus a single *shared* right-shift,
+        and **ε is deliberately dropped** — the factor targets the centre of the check-table range, not
+        the true $1/\sqrt{\mathrm{mean}(x^2)+\epsilon}$.'
+      - '**Applying it is not a bare $Y=X\cdot d$.** It is multiply → add rounding constant → shared right-shift
+        → *clamping table lookup*. The lookup handles clamping internally.'
+      - '**Well-formedness is not a separate "Phase 2."** The normalized-output bound is carried as parameters
+        of a single `LookupVariant::Normalisation`, verified inside *one* LogUp argument — not a second
+        proof phase. The verifier recomputes the target sum-of-squares and error bound from public context.'
+      - 'Appendix C''s error bound still holds in spirit: $\sum_j Y[i,j]^2$ must land within `error_bound`
+        of the target, so the output really is normalized up to a bound set by the output scale.'
+      code:
+      - file: zkml/src/layers/transformer/normalisation/rmsnorm/mod.rs
+        lines: 202-209
+        caption: Applying the witness is multiply + round + shared right-shift + a clamping table lookup
+          — not a bare Y = X·d.
+        src: |2-
+                  // Apply the fixed point multipliers, rounding and right shift
+                  let rescaled_input = input
+                      .mul(self.normalisation.clone())?
+                      .add_scalar(self.rounding_constant())
+                      .bitwise_right_shift_scalar(self.right_shift() as Element);
+                  // Perform the lookup, the table will handle clamping internally
+                  table.lookup_tensor(rescaled_input)
+      cost: 'RMSNorm: 6.02% of PIOP / 10.6% of witness commit (GPT-2); 15.2% / 21.9% (Gemma 3).'
+    jolt-atlas:
+      tldr: Rsqrt is a first-class ONNX op, proven by lookup. The rounding-error accumulation DeepProve
+        engineers around is not analysed.
+      grounded: ops/{mean_of_squares,rsqrt}.rs @b20cdce
+      bullets:
+      - '`Rsqrt` (reciprocal square root) appears directly in the supported "Math Functions" set, so the
+        whole normalisation is `Mul` ∘ `Rsqrt` ∘ `Div` ∘ `ReduceSum` of squares.'
+      - This is precisely the "standard approach" DeepProve rejects — quantizing the inverse square root
+        introduces rounding error at each row, of each layer, and the errors accumulate through the variance
+        sum.
+      - Whether that matters for Jolt Atlas depends on its fixed-point precision, which the paper does
+        not report. With 16-bit activations it may well be fine; with 8-bit it would not be.
+      audit: 'In code it is a chain, not a gadget: a fused `MeanOfSquares` node (i64 accumulate $\sum
+        x^2$, rebase, saturating clamp) feeds an `Rsqrt` node that **batches two integer identities**
+        (a division and a square-root) into one sumcheck, with the inverse and both remainders supplied
+        non-deterministically. Honesty of `inv`/`sqrt` hinges on the two remainder range checks — **not**
+        on the batched identity equation alone (`rsqrt.rs:472`). Note the sqrt-remainder bound is *data-dependent*
+        (`r_s < 2·v̂+1`, a function of the output) via `transform_right_claim` — a good reminder that
+        Shout range-check bounds needn''t be constant. Confirm both remainder range checks are present
+        and their bounds correct.'
+- id: layernorm
+  name: LayerNorm
+  sub: GPT-2
+  group: Normalization & activation
+  difficulty: hostile
+  difficulty_label: A separate layer (keeps ε)
+  tex: |-
+    Y[i,j] = \frac{X[i,j]-\mu_i}{\sqrt{\frac{1}{d}\sum_j (X[i,j]-\mu_i)^2 + \epsilon}}
+    \\[12pt]
+    \text{paper's identity:}\quad \mathrm{LayerNorm}(X[i,:]) = \mathrm{RMSNorm}\big(X[i,:] - \mu_i\big)\ \text{— but the code does }\textbf{not}\text{ reduce this way}
+  what: Centre each row, then rescale to unit variance.
+  why: The same square root and reciprocal as RMSNorm, plus a mean that is itself a division by $d$. LayerNorm
+    is also a documented source of the outlier activations that break quantization elsewhere in the model.
+  kit:
+  - A dedicated LayerNorm layer (not a reduction)
+  - Committed mean + std-dev witnesses
+  - Multiply by std, subtract mean, shift, clamping lookup
+  - Keeps ε, unlike RMSNorm
+  schemes:
+    deepprove:
+      tldr: The paper reduces LayerNorm to RMSNorm(X−μ); the code does not. LayerNorm is a fully separate
+        layer with its own proof — it commits both mean and std-dev witnesses, keeps ε, and calls no RMSNorm
+        code.
+      grounded: zkml/src/layers/transformer/normalisation/layernorm/ @ Lagrange-Labs/deep-prove master
+      bullets:
+      - 'Correction: our old page said "reduce to the RMSNorm protocol on X−μ." The implementation is
+        a standalone `LayerNorm` layer with its own `LayerNormProvingData` and `LayerNormLookupVerifier`.
+        It never invokes RMSNorm.'
+      - It commits *two* witnesses (the per-row mean and std-dev), and its `apply` multiplies by the std-dev,
+        subtracts the committed mean, then shifts and looks up — a clamping table lookup, not a bare rescale.
+      - 'Two things distinguish it from RMSNorm in code: it adds a sum/mean well-formedness check that
+        RMSNorm lacks, and — unlike RMSNorm — it **keeps ε** (`.add_scalar(self.eps)`).'
+      code:
+      - file: zkml/src/layers/transformer/normalisation/layernorm/mod.rs
+        lines: 307-319
+        caption: 'LayerNorm''s own apply: multiply by std-dev, subtract the committed mean, shift, then
+          a clamping table lookup — it does not call RMSNorm.'
+        src: |2-
+              fn apply(
+                  &self,
+                  input: WrappedTensor<Element>,
+                  table: &Table,
+              ) -> Result<WrappedTensor<Element>> {
+                  let rescaled_input = input.mul(self.std_dev.clone())?;
+                  let zero_mean_input = rescaled_input.sub(self.mean.clone())?;
+
+                  let to_lookup = zero_mean_input
+                      .add_scalar(self.rounding_constant())
+                      .bitwise_right_shift_scalar(self.right_shift() as Element);
+                  table.lookup_tensor(to_lookup)
+              }
+    jolt-atlas:
+      tldr: 'Assembled from ONNX primitives: ReduceMean is decomposed internally into ReduceSum + Div.'
+      grounded: ops/{mean_of_squares,rsqrt}.rs @b20cdce
+      quotes:
+      - text: 'Reduction Operations: ReduceSum along arbitrary axes; ReduceMean (decomposed internally
+          into ReduceSum + Div). Math Functions: Rsqrt (reciprocal square root).'
+        src: Jolt Atlas
+        sec: §5.2
+        name: Operator Support
+      bullets:
+      - '`ReduceMean` is explicitly "decomposed internally into `ReduceSum` + `Div`", and `ReduceSum`
+        works along arbitrary axes.'
+      - The `Div` carries a non-deterministic advice value; the `Rsqrt` is a lookup. Composition gives
+        LayerNorm with no bespoke protocol.
+      - Elegant in the graph-compiler sense — you get LayerNorm for free once the primitives exist — but
+        it inherits exactly the accuracy concern DeepProve raises about quantizing inverses and square
+        roots.
+      - In code it bottoms out in the same [fused `MeanOfSquares` + `Rsqrt`](#/op/rmsnorm) chain, so the
+        same "honesty rests on the remainder range checks" caveat applies. Note the repo ships only GPT-2
+        / nanoGPT models, so the norm operators are proven-out by unit tests but not exercised by a real
+        RMSNorm/LayerNorm LLM end-to-end.
+    hao-et-al:
+      tldr: 'Normalization is a named target, covering batch and layer norm together: $y_i = \gamma\,(x_i
+        - \mu)/\sigma + \beta$, with the reciprocal square root discharged as a first-class lookup-based
+        building block.'
+      bullets:
+      - The protocol is built from the reciprocal-square-root building block, which -- like division --
+        is a digit-decomposed table lookup refined by a fixed number of iterations ($I = 1$ by default,
+        at a 6-bit lookup).
+      - '**This is the ''standard approach'' DeepProve explicitly rejects**: quantize the inverse square
+        root and eat a rounding error per row, per layer. DeepProve''s objection is that these errors
+        accumulate through the variance sum and crater accuracy. Hao et al. take the rejected path and
+        report no accuracy measurement, so the objection is neither confirmed nor answered.'
+      - 'It also directly attacks Mystique''s worst operator: Batch Normalization consumed the majority
+        of Mystique''s ResNet-101 prover precisely because of the float/fixed conversions this paper deletes.'
+      - The reported shapes are small -- normalization over dimension 16, a CIFAR-class shape. An LLM's
+        LayerNorm runs over the model dimension, and the digit-decomposition cost model is sensitive to
+        input range, so these figures should not be extrapolated to a transformer.
+- id: gelu
+  name: GeLU activation
+  sub: and Erf, Tanh, SiLU by the same recipe
+  group: Normalization & activation
+  difficulty: hostile
+  difficulty_label: 'DeepProve''s #3 cost'
+  tex: |-
+    \mathrm{GeLU}(x) = x\cdot \mathbb{P}[X \le x], \qquad X\sim\mathcal{N}(0,1)
+    \\[10pt]
+    \text{table: } T_{\mathrm{GeLU}}[j] = \mathrm{Quant}\big(\mathrm{DeQuant}(j)\cdot \mathbb{P}[X \le \mathrm{DeQuant}(j)]\big),\quad j\in[2^q]
+  what: 'The FFN''s non-linearity: a Gaussian CDF multiplied by its input. In ONNX it is typically expressed
+    through `Erf`.'
+  why: A CDF is not remotely algebraic. The only sane approach is a lookup table over the quantized domain
+    — which means the input must already be small enough to address the table. Making that true costs
+    you either a requantization or a range reduction.
+  kit:
+  - Direct lookup table over the q-bit domain
+  - Table replacement inside the requantization argument (operator fusion)
+  - 'Prefix-suffix decomposition: 2^{Cb} entries → O(C·2^b)'
+  - 'Neural teleportation: shrink the input domain σ(x/τ)'
+  schemes:
+    zkllm:
+      tldr: 'Activations are tlookups. GeLU, ReLU, SwiGLU: build a two-column table (x, f(x)) and prove
+        the input-output pairs lie in it with one tlookup.'
+      bullets:
+      - 'For elementwise $f: X\to Y$, build tables $T_X$ and $T_Y$. A random linear combination reduces
+        "$Y=f(X)$" to one set-inclusion check $X+\alpha Y \subseteq T_X + \alpha T_Y$.'
+      - Same primitive as the rest of zkLLM. DeepProve fuses the activation table into the preceding requantization;
+        zkLLM keeps them separate.
+    deepprove:
+      tldr: 'Fuse GeLU into the preceding requantization: swap the range-check table for a GeLU table
+        and adjust the recombination function''s edge cases.'
+      quotes:
+      - text: If a non-linear layer is followed after a linear one, then, instead of adding a separate
+          and explicit requantization layer we can merge both the requantization and the non-linear layer
+          operation as a unified layer. […] This not only reduces the proving time and proof size but
+          also increases the accuracy since the nonlinear layer now takes the unclamped output of the
+          linear layer as its input.
+        src: DeepProve
+        sec: Appendix B.2
+        name: Merging requantization with Non-Linear Layers
+      bullets:
+      - '**Case 1 — input already $q$-bit.** A plain lookup PIOP against $T_{\mathrm{GeLU}}$.'
+      - '**Case 2 — input is $q''$-bit or wider.** Run the requantization lookup argument, but replace
+        table $T_{q''/q}$ with $T_{\mathrm{GeLU}}$, and replace the clamped edge values of $\mathrm{Comb}_y$
+        with $\mathrm{Quant}(\mathrm{DeQuant}(\pm 2^{q-1})\cdot \mathbb{P}[X \le \mathrm{DeQuant}(\pm
+        2^{q-1})])$.'
+      - 'This is *operator fusion*: one lookup argument instead of two. Smaller proof, faster prover,
+        and higher accuracy, because GeLU now sees the unclamped, un-rounded linear output.'
+      - 'The same construction covers any tabulatable elementwise non-linearity: SiLU, GeGLU, tanh soft-capping.'
+      cost: 'Activation: 22.96% of witness commit / 13.96% of PIOP time (GPT-2).'
+    jolt-atlas:
+      tldr: 'Neural teleportation, in code: divide the input by τ into a prover-supplied quotient+remainder,
+        then a single Read-RAF sumcheck proves output=Table[idx] AND idx=signed(quotient) at once. But
+        the input clamp is where a real gap lives.'
+      grounded: ops/{erf,tanh,sigmoid}.rs + neural_teleport/ @b20cdce
+      quotes:
+      - text: 'Jolt Atlas therefore uses a global, one-sided approximation: every pre-activation input
+          to a selected activation is divided by a single factor τ > 1, with no compensating output multiplication
+          and no weight rescaling. Concretely, the original computation y = σ(x) is replaced by y′ = σ(x/τ),
+          which is a lossy approximation (i.e., y′ ≠ y in general) but it is not significant in practice.'
+        src: Jolt Atlas
+        sec: §4.2
+        name: Neural Teleportation for Lookup Table Compression
+      - text: With τ = 4, the effective input range shrinks by 4×, from [−R, R] to [−R/4, R/4], and the
+          lookup table is bounded by $2^{16}$ entries. Empirical evaluation shows that τ = 4 introduces
+          output differences of less than 55 units on a 128-scale fixed-point representation, acceptable
+          for most inference tasks.
+        src: Jolt Atlas
+        sec: §4.2
+        name: Neural Teleportation for Lookup Table Compression
+      bullets:
+      - '**Prefix-suffix decomposition.** A table on two 64-bit inputs would need $2^{128}$ entries. Partition
+        the input bits into $C$ segments of width $b$; for decomposable tables the MLE factors as $\tilde
+        T(x) = \sum_i \prod_{j=1}^{C} s_{i,j}(x^{(j)})$, reducing table size from $2^{Cb}$ to $O(C\cdot
+        2^b)$.'
+      - 'Worked example for ReLU: $\mathrm{ReLU}(x)=(1-b_0)\cdot x$ is determined entirely by the sign
+        bit, so it splits into $p_{\mathrm{ReLU}}(x_{hi})s_{\mathrm{One}}(x_{lo}) + p_{\mathrm{NotMSB}}(x_{hi})s_{\mathrm{ReLU}}(x_{lo})$.'
+      - '**Neural teleportation** (adapted from TeleSparse). Replace $y=\sigma(x)$ with $y''=\sigma(x/\tau)$,
+        a *global one-sided* transform with no compensating output multiplication and no weight rescaling
+        — so no re-committing to modified weights.'
+      - 'Why it works: saturating activations like $\mathrm{erf}$ and $\tanh$ spend most of their range
+        in flat regions where $\sigma(x)\approx\pm 1$. For any input already saturated, $\sigma(x/\tau)=\sigma(x)$
+        exactly. Error concentrates in the narrow linear region near the origin.'
+      - With $\tau = 4$ the effective input range shrinks 4×, bounding the table at $2^{16}$ entries,
+        and introducing output differences of **<55 units on a 128-scale fixed-point representation**.
+        It is lossy — unlike TeleSparse's two-sided form, which is exact.
+      code:
+      - file: jolt-atlas-core/src/onnx_proof/ops/tanh.rs
+        lines: 310-326
+        caption: 'A real gap: tanh''s clamp is NOT proven — the clamped value is unconstrained advice
+          and the in-range property is a prover-side assert! (which binds nobody). erf.rs and sigmoid.rs
+          carry the same TODO.'
+        src: |-
+          // TODO: rm once clamp is implemented for tanh
+          provider.append_advice(VirtualPoly::DummyClampedTanhInput, clamped_eval);
+
+          // TODO: Pass these input in a clamping lookup table ...
+          assert!(clamped_tensor.iter().all(|&x| {
+              let lower_bound = -(1 << (params.op.log_table - 1));
+              let upper_bound = (1 << (params.op.log_table - 1)) - 1;
+              x >= lower_bound && x <= upper_bound
+          }));
+      audit: '**tanh / erf / sigmoid clamps are unproven.** The clamped value is committed as *unconstrained*
+        advice (`DummyClampedTanhInput`) and used as a lookup source, with the in-range property enforced
+        only by a **prover-side `assert!`** plus a `// TODO` — a malicious prover isn''t bound by an assertion
+        in prover code. Separately, the teleportation quotient/remainder are constrained *only jointly*
+        by `τ·q + r − input = 0`, so uniqueness rests entirely on the remainder range check `r < τ` being
+        the in-circuit Shout check (not the accompanying `assert!`).'
+      cost: τ is tunable per model; the paper flags joint optimisation of τ with the prefix-suffix chunk
+        count C as open work.
+    mystique:
+      tldr: 'Not GeLU, and not a lookup: Mystique implements ReLU and Sigmoid (plus Max Pooling) as **IEEE-754
+        single-precision floating-point Boolean circuits**. The activation is computed exactly; you pay
+        at the conversion boundary instead of in a table.'
+      bullets:
+      - The recipe is representation, not approximation. An arithmetic-to-Boolean conversion (zk-edaBits)
+        followed by a Fix2Float conversion puts the value in a real IEEE-754 float, where the activation
+        is evaluated by the standard single-precision circuits from EMP. Any elementwise nonlinearity
+        -- ReLU, Sigmoid, and by the same recipe GeLU or tanh -- costs the same shape of circuit.
+      - '**No table, therefore no table domain, therefore no clamping and no range reduction.** The entire
+        problem that prefix-suffix decomposition and neural teleportation exist to solve simply does not
+        arise: there is nothing whose domain has to stay addressable.'
+      - The price is the conversion. Fix2Float and Float2Fix rest on private logical shifts, and the paper
+        notes fixed-to-float is about 3x slower than float-to-fixed because the shift widths differ --
+        fixed by IEEE-754's 24-bit significand on one side and the 61-bit field on the other.
+      - 'The accuracy consequence is the point of the design: because the nonlinearity sees a true float,
+        error does not compound through depth, which is what lets Mystique run 101 layers with a reported
+        accuracy delta of 0.02% on CIFAR-10.'
+    hao-et-al:
+      tldr: A real GeLU protocol, and the one operator here explicitly aimed at LLMs. GeLU is reduced
+        to Tanh, Tanh to Sigmoid, and Sigmoid to digit-decomposed exponential and division -- all by table
+        lookup, all inside the field.
+      quotes:
+      - text: GELU activation is used in LLMs.
+        src: Hao et al.
+        sec: §5
+        name: Mathematical Functions
+      bullets:
+      - 'The reduction chain is explicit: $\mathrm{GELU}(x) = 0.5\,x\,[1 + \mathrm{Tanh}(\sqrt{2/\pi}\,x
+        + 0.044715\,x^3)]$ with $\mathrm{Tanh}(x) := 2\cdot\mathrm{Sigmoid}(2x) - 1$, so the GeLU proof
+        is an invocation of the Sigmoid proof.'
+      - Sigmoid in turn rests on the exponential protocol, which decomposes the exponent into digits and
+        uses $e^{-\sum_k 2^{d_k} x_k} = \prod_k e^{-2^{d_k} x_k}$ -- one small table per digit, products
+        recombined with a truncation after each step. **This is precisely zkLLM's zkAttn digit trick**,
+        independently rediscovered on a VOLE substrate.
+      - 'The comparison against Mystique is the paper''s headline for this operator, and it is a fair
+        one: they re-ran Mystique''s own EMP implementation under identical network and hardware conditions
+        rather than citing its printed numbers.'
+      - '**But the approximation parameters are set to the cheapest setting and never validated.** Division
+        runs with $I = 0$ refinement iterations and reciprocal square root with $I = 1$, following prior
+        work -- and no accuracy consequence is reported for GeLU, or for any function.'
+  debate:
+    title: Fuse, or shrink?
+    body: |-
+      Both systems face the same wall: an activation table must be addressable. DeepProve **fuses** the table into the requantization it already had to perform, getting accuracy back as a side-effect. Jolt Atlas **shrinks** the table twice over — algebraically (prefix-suffix) and by deliberately distorting the model (teleportation).
+
+      Note the asymmetry in honesty about cost. DeepProve reports activation as 23% of its witness commitment. Jolt Atlas reports that teleportation is lossy and bounds the error, but never reports what activations cost in its prover, nor what the τ=4 distortion does to **model-level** accuracy — only to raw output units.
+- id: logits
+  name: Unembedding → logits
+  sub: h · Wᵀ over the vocabulary
+  group: Output & decoding
+  difficulty: mid
+  difficulty_label: A matmul, then an argmax
+  tex: |-
+    \text{projection:}\quad \mathrm{logits} = h \cdot W_U^\top, \qquad W_U \in \mathbb{F}^{V\times d}
+    \\[6pt]
+    \text{then:}\quad \text{next token} = \arg\max_v \mathrm{logits}[v]
+    \\[6pt]
+    V \approx 50{,}000 \;(\text{GPT-2}) \qquad V \approx 262{,}000 \;(\text{Gemma 3})
+  what: Project the final hidden state onto the vocabulary, then pick the next token. The paper's cost
+    table bundles these as "logits," but in DeepProve's code they are *two distinct layers*, and only
+    the first is a matmul.
+  why: 'The projection is trivial but heavy: the vocabulary dimension is enormous, so this matmul and
+    its committed output dwarf any attention layer. For Gemma 3''s 262k vocabulary it is the second-largest
+    witness in the trace. The selection that follows is the interesting part, and it is not a matmul.'
+  kit:
+  - Matmul sumcheck for the projection
+  - A separate argmax layer for the selection
+  - LogUp range-check + Hadamard sumcheck (the argmax)
+  schemes:
+    deepprove:
+      tldr: Two layers, not one. The vocab projection is an EinSum (an ordinary matmul); the layer literally
+        named `Logits` is the argmax head — proven with a LogUp lookup plus a Hadamard sumcheck, not a
+        matmul.
+      grounded: zkml/src/layers/transformer/logits.rs @ Lagrange-Labs/deep-prove master
+      bullets:
+      - Our old page called this "just a matmul." That is true only of the projection, which is an `EinSum`
+        node. The code's `Logits` layer is the **argmax** that selects the output token, and its `LogitsProof`
+        carries a `logup_proof` (a range-check lookup) plus a `hadamard_proof` sumcheck.
+      - 'This is also incidental evidence for the [Gather debate](#/op/embed): the repository *does* contain
+        LogUp/GKR lookup arguments — the argmax head is one of their users.'
+      - For Gemma 3 the projection is **18.1%** of witness-commitment time and 16.1% of PIOP time — roughly
+        double GPT-2's share, tracking the vocabulary ratio. zkGPT's evaluated model omits the final projection
+        entirely.
+      code:
+      - file: zkml/src/layers/transformer/logits.rs
+        lines: 163-172
+        caption: 'The Logits layer is an argmax, not the vocab matmul: its proof is a LogUp lookup plus
+          a Hadamard-product sumcheck.'
+        src: |-
+          pub struct LogitsProof<F: PrimeField, PCS: CommitmentScheme> {
+              logup_proof: LogUpBatchProof<F>,
+              /// Commitment to the MLE of the vector of maximum values
+              commitments: Vec<VerifierCommitment<PCS>>,
+              /// Proof of hadamard product sum-check
+              hadamard_proof: IOPProof<F>,
+              /// Evaluation of the input tensor MLE and max values MLE in this order
+              #[serde(with = "dp_crypto::serialization")]
+              sumcheck_evals: Vec<F>,
+          }
+      cost: 'Logits (projection): 9.19% (GPT-2) / 18.11% (Gemma 3) of witness commit.'
+    jolt-atlas:
+      tldr: The vocabulary projection is just another Einsum — the same fold-and-dot engine as any matmul.
+        The only special thing is the shape.
+      grounded: einsum/ @b20cdce
+      bullets:
+      - $h\cdot W_U^\top$ is one more [`einsum/dot.rs`](#/op/matmul) contraction; there is no dedicated
+        logits protocol.
+      - 'The cost is the vocabulary dimension: GPT-2''s 50257 is padded to the next power of two (65536),
+        so the traced output is `[1, 16, 65536]` — the projection and its committed output dwarf any single
+        attention layer, exactly as on the DeepProve side.'
+- id: argmax
+  name: Argmax / greedy decode
+  sub: and the sampling problem
+  group: Output & decoding
+  difficulty: mid
+  difficulty_label: Two checks, one grand product
+  tex: |-
+    m[i] = \max\big(X[i,:]\big)
+    \\[10pt]
+    \text{decompose into:}\qquad
+    \text{(i) } D[i,j] = m[i]-X[i,j] \ge 0 \;\;\forall j \quad(\text{upper bound})
+    \\[4pt]
+    \text{(ii) } \prod_{j} D[i,j] = 0 \quad(\text{attained})
+  what: Pick the highest-scoring token. This is what makes inference deterministic, and therefore what
+    makes the certification algorithm sound.
+  why: $\max$ is a comparison, not arithmetic. Proving "this is the largest" requires both a range argument
+    (nothing exceeds it) and an existence argument (something equals it). And if the model samples instead,
+    the whole soundness statement evaporates.
+  kit:
+  - Lookup range check for non-negativity
+  - Grand-product GKR circuit for the zero-existence check
+  - 'Claim-linking: f_D(r₁,r₂) = f_m(r₂) − f_X(r₁,r₂)'
+  - De-randomization for top-k sampling
+  schemes:
+    deepprove:
+      tldr: Split max into 'upper bound' plus 'attained', and prove the second with a grand product.
+      quotes:
+      - text: In practice, this is not a limitation since any randomized algorithm can be "de-randomized"
+          by providing a single purely random seed as additional input. […] The main challenge comes from
+          actually showing that the initial random seed has been sampled correctly. […] We note that we
+          do not include this in our implementation, same as all prior works on verifiable LLM inference.
+        src: DeepProve
+        sec: §4.3.6
+        name: Handling Non-Determinism
+      bullets:
+      - The prover computes $D[i,j] = m[i]-X[i,j]$ and runs a lookup range PIOP to show $D \ge 0$ everywhere.
+      - Then a specialised GKR grand-product circuit shows $\prod_j D[i,j] = 0$ for each row — the max
+        is actually achieved.
+      - $D$ is linked back to the committed $m$ and $X$ by $\tilde f_D(r_1,r_2) = \tilde f_m(r_2) - \tilde
+        f_X(r_1,r_2)$, checked at both random points the two subprotocols produce.
+      - '**Sampling.** If decoding is stochastic, de-randomize: take the seed as public input and prove
+        the decode stage against it. Proving the seed was honestly sampled needs a randomness beacon or
+        an interactive coin flip. *Not implemented — nor in any prior work.*'
+- id: certify
+  name: Autoregression & certification
+  sub: KV caching, sequence certification — the trick that kills the quadratic
+  group: Output & decoding
+  difficulty: friendly
+  difficulty_label: DeepProve's best idea
+  tex: |-
+    \begin{aligned}
+    \text{prompt} &: \texttt{"The cat"}\\
+    \text{claimed} &: \texttt{"sat on the mat"}\\[6pt]
+    \text{concatenated} &: [\texttt{The},\, \texttt{cat},\, \texttt{sat},\, \texttt{on},\, \texttt{the},\, \texttt{mat}]\\
+    \text{predicted} &: [\texttt{cat},\, \texttt{sat},\, \texttt{on},\, \texttt{the},\, \texttt{mat},\, \bot]\\[6pt]
+    \text{certify} &\iff \text{predicted}[t] = \text{concatenated}[t{+}1]\quad \forall t
+    \end{aligned}
+    \\[8pt]
+    \text{one forward pass} \;\Rightarrow\; \text{prover } O(t\,|C|),\;\text{not } O(t^2 |C|)
+  what: Rather than proving $t$ sequential generation steps, prove one forward pass over the concatenated
+    prompt-and-output, and check that every position predicts its successor.
+  why: This is the difference between a demo and a system. Every prior work proves a single token, because
+    the honest alternative — emulating a KV cache as in-circuit RAM — requires committing to auxiliary
+    data linear in the number of reads and writes.
+  kit:
+  - Causal mask ⇒ position t cannot see token t+1
+  - Argmax ⇒ the forward pass is deterministic
+  - Many predictions in one pass ⇒ everything batches
+  schemes:
+    deepprove:
+      tldr: Certify the output rather than replay the computation. Soundness rests entirely on the causal
+        mask plus determinism.
+      quotes:
+      - text: 'Our certification algorithm for this is extremely simple: It just feeds the entire sequence
+          of input and output tokens into the model at once, essentially performing a single inference
+          step. In practice, this translates to proving only the last inference step leading to prover
+          times that are only linear to the input and output tokens rather than quadratic.'
+        src: DeepProve
+        sec: §3.1
+        name: Certification of the LLM Inference
+      - text: Because of the Attention Mask, the model's calculation for the $t$-th token cannot use the
+          values of the $(t+1)$-th token. Moreover, argmax in the final layer of GPT-2 and Gemma 3 provides
+          determinism to the execution.
+        src: DeepProve
+        sec: §3.1
+        name: Certification of the LLM Inference
+      bullets:
+      - The attention mask guarantees the model's computation at position $t$ cannot depend on token $t{+}1$.
+        So if the prediction at $t$ equals the claimed token at $t{+}1$, that token was correctly computed.
+        Argmax supplies the determinism.
+      - Reduces prover cost from quadratic to **linear** in total sequence length, with no in-circuit
+        RAM and no KV-cache emulation.
+      - A single pass produces $s$ predictions simultaneously, which is exactly what the *batched* softmax,
+        lookup and sumcheck variants exist to exploit. The trick and the batching are co-designed.
+      - 'This is why throughput *increases* with sequence length (127 → 175 TPM as sequence goes 64 →
+        512): matmul''s sublinear prover cost amortizes across more tokens.'
+    jolt-atlas:
+      tldr: The prover proves a single forward pass over a fixed-length sequence — there is no autoregression
+        and no KV cache in the proving path. Generation exists only as an unproven execution helper, and
+        it re-runs the whole model per token.
+      grounded: examples/gpt2.rs + examples/gpt2_generate.rs @b20cdce
+      bullets:
+      - '**The prover proves one forward pass.** Every prover entry point (`gpt2.rs`, `qwen.rs`, `bge.rs`,
+        `gpt2_zk_bench.rs`, e2e tests) builds one input with `("sequence_length", s), ("past_sequence_length",
+        0)`, calls `ONNXProof::prove` once and `verify` once. There is no loop over generated tokens anywhere
+        in `jolt-atlas-core`.'
+      - '**No KV cache exists** — grepping `kv_cache` / `past_key_values` / `present_key` / `use_cache`
+        returns nothing. `past_sequence_length` is a plumbing parameter the exported ONNX graph accepts,
+        but it is hard-coded to `0` at all ~10 call sites; a past-KV input is never populated.'
+      - '**Generation is a naive quadratic helper** in the *tracer* (`gpt2_generate.rs`), not the prover:
+        each token reloads the model and runs a full forward pass over the entire growing sequence `[1,
+        cur_len]`, argmaxes the last logit row, appends, repeats. It exists to sanity-check quantized-vs-float
+        coherence, and produces no proof.'
+      - '**So the two systems live on opposite ends of this axis.** DeepProve certifies the *whole generated
+        sequence* in one pass with the trick on the left; Jolt Atlas proves a *single* forward pass and
+        never composes tokens. [zkPyTorch](#/op/logits) takes a third route — it *batches* all tokens
+        into one circuit by decoupling the autoregressive dependency (a proof only verifies the output).'
+      - 'Note Jolt Atlas *could* express a KV cache as read/write consistency — it already has the Twist-and-Shout
+        [memory](#/op/memory) machinery for `Gather`. It simply doesn''t, because there is no cache to
+        check. That is the same trade DeepProve names: emulating a KV cache would *introduce* RAM into
+        a computation that otherwise has none.'
+  debate:
+    title: 'Answered: what Jolt Atlas''s 38 seconds covers'
+    body: |-
+      The docs used to ask this and note "the paper does not say." Reading the code (`@b20cdce`) settles it: the ~38 s is **a single forward pass** over a fixed-length sequence with `past_sequence_length = 0`. It is **not** a full generation — there is no autoregressive proving loop and no KV cache in `jolt-atlas-core`.
+
+      So against DeepProve's 174 TPM (a whole-sequence certification), the comparison is now clear rather than open: Jolt Atlas's number is one pass on a laptop, which is why it [cannot join the throughput axis](#/timeline) — it has no per-token decode figure to place there. The remaining unknown is only the **sequence length** behind the 38 s, which the paper still omits.
+- id: memory
+  name: Memory & read consistency
+  sub: KV cache, tensor reads — what a read owes you
+  group: Systems-level obligations
+  difficulty: mid
+  difficulty_label: 'Or: avoid it entirely'
+  tex: |-
+    \widetilde{\mathrm{Val}}(r_{\mathrm{addr}}, r_{\mathrm{cycle}}) \;=\; \sum_{j} \mathrm{Inc}(j)\cdot \mathrm{Wa}(j)\cdot \mathrm{Lt}(j, r_{\mathrm{cycle}})
+    \\[8pt]
+    \mathrm{Wa}(j) = \widetilde{\mathrm{eq}}(r_{\mathrm{addr}},\, \mathrm{td}(j)) \quad\text{(does cycle } j \text{ write this address?)}
+    \\[4pt]
+    \mathrm{Lt}(j, r_{\mathrm{cycle}}) \quad\text{(the "less-than" MLE: only writes before the queried cycle)}
+  what: If your computational model has tensor buffers that get written and later read — `Gather`, `Select`,
+    any data-dependent index — you must prove every read returned the value most recently written to that
+    address.
+  why: 'This is the classical offline memory-checking problem, and it is expensive: naive approaches commit
+    to auxiliary bookkeeping linear in the number of accesses. Whether you owe it at all depends on whether
+    your model of computation has mutable state.'
+  kit:
+  - 'Twist and Shout: one-hot addressing, structured increments'
+  - Read/write consistency as a sumcheck DAG
+  - Booleanity + Hamming-weight checks on one-hot address polynomials
+  - 'Or: choose a computational model with no mutable state'
+  schemes:
+    deepprove:
+      tldr: Sidesteps the obligation entirely. There is no RAM, so there is nothing to check.
+      quotes:
+      - text: To realize KV-caching, the prover has to emulate read/write RAM operations within the SNARK
+          circuit. This complicates the prover's logic and leads to large concrete overheads even when
+          using state-of-the-art protocols for emulating RAM (e.g., via lookup arguments) as they require
+          the prover to commit to additional auxiliary data that scales linearly to the number of reads/writes.
+        src: DeepProve
+        sec: §1.1
+        name: Quadratic blowup from vanilla inference
+      bullets:
+      - Proving proceeds layer-by-layer, backwards, GKR-style. Each operator converts a claim about its
+        output into a claim about its input. No addresses, no cycles, no mutable buffers.
+      - 'This is exactly why the certification trick matters: emulating a KV cache would *introduce* RAM
+        into a model that otherwise has none, "requiring the prover to commit to additional auxiliary
+        data that scales linearly to the number of reads/writes."'
+      - Embedding — the one genuinely data-dependent read — is reformulated as a sparse one-hot matmul
+        the verifier checks locally, so it needs no memory argument.
+    jolt-atlas:
+      tldr: Inherited from Jolt's Twist and Shout, adapted from CPU RAM to ONNX tensor buffers. It is
+        Stages 4 and 5 of the proof.
+      grounded: subprotocols/{shout,ra_virtual,booleanity} @b20cdce
+      quotes:
+      - text: Although ONNX computation removes general-purpose registers and arbitrary RAM access, we
+          still need a notion of consistency of reads and writes over tensor buffers; the lesson from
+          Twist and Shout is that domain-specific access patterns admit much cheaper consistency proofs
+          than prior offline memory checking arguments.
+        src: Jolt Atlas
+        sec: §1.1
+        name: Jolt's inheritance
+      bullets:
+      - ONNX removes general-purpose registers and arbitrary RAM, but reads and writes over tensor buffers
+        still need consistency. The lesson taken from Twist and Shout is that *domain-specific access
+        patterns admit much cheaper consistency proofs* than generic offline memory checking.
+      - '**Stage 4** batches `RASumCheck` (virtualising $D=8$ per-chunk one-hot address polynomials into
+        groups) with `MemoryDag` (read-write consistency).'
+      - '**Stage 5** evaluates the memory-value polynomial: $\mathrm{Inc}$ is the committed increment,
+        $\mathrm{Wa}$ the write-allocation indicator, and $\mathrm{Lt}$ the less-than MLE selecting only
+        writes before the queried cycle.'
+      - 'Supporting checks: `BooleanitySumcheck` forces $ra_i(k)^2 = ra_i(k)$, and `HammingWeightSumcheck`
+        forces $\sum_k ra_i(k) = 1$ — together, each address polynomial is genuinely one-hot.'
+      - '**This is the substrate under everything.** The same Shout read-checking + RAF sumcheck (with
+        the booleanity / hamming-weight / ra-virtualization trio) proves *every* table lookup in the system
+        — `exp`, `SatClamp`, `UnsignedLessThan`, ReLU, the activation tables. Large tables never materialize:
+        their MLE is prefix-suffix decomposed.'
+      code:
+      - file: joltworks/src/subprotocols/shout.rs
+        lines: 308-320
+        caption: The verifier recomputes the public table value and the identity (address) MLE itself;
+          only ra_claim comes from the prover, gated by the one-hot sumchecks.
+        src: |-
+          // val (public table MLE) and int (identity / read-back index) are
+          // recomputed by the verifier; only ra_claim is prover-supplied and
+          // is constrained by the booleanity + hamming-weight + ra-virtual sumchecks.
+          let expected = rv_claim + gamma * raf_claim;
+      audit: 'The one-hot address `ra` is the only prover-committed object in most lookups; its honesty
+        is *entirely* the booleanity + hamming-weight + ra-virtualization trio. Those three sumchecks
+        are soundness-critical, not completeness — a gap in any one lets a prover forge a non-one-hot
+        address and read an arbitrary table value. When auditing any operator above, the question reduces
+        to: is its lookup''s one-hot trio present and complete?'
+  debate:
+    title: The cost of generality
+    body: |-
+      Jolt Atlas pays for memory checking because it inherited a zkVM's computational model, where a trace is a sequence of steps over mutable buffers. DeepProve pays nothing because it treats the model as a static DAG of tensor operators and never materialises state.
+
+      What Jolt Atlas buys with that payment is **generality**: any ONNX graph, any operator, no bespoke PIOP per layer. DeepProve buys **speed on one architecture** at the cost of writing a hand-crafted protocol for RMSNorm, for softmax, for RoPE, for argmax. Both are defensible. Neither is free.
+- id: zk
+  name: Zero-knowledge
+  sub: hiding the weights and the prompt
+  group: Systems-level obligations
+  difficulty: mid
+  difficulty_label: Usually not implemented
+  tex: |-
+    \text{relaxed R1CS: } (AZ)\circ(BZ) = u\cdot(CZ) + E
+    \\[10pt]
+    \text{fold two satisfying pairs with challenge } r:
+    \\[4pt]
+    \bar{E}' = \bar{E}_1 + r\bar{T} + r^2 \bar{E}_2, \quad
+    u' = u_1 + r u_2, \quad
+    \bar{W}' = \bar{W}_1 + r\bar{W}_2
+    \\[8pt]
+    \text{correctness from Pedersen homomorphism: } \mathrm{Com}(W', r_W') = \bar{W}_1 + r\bar{W}_2 = \bar{W}'
+  what: Make the proof reveal nothing beyond the statement's validity — hiding the model weights, the
+    user's input, or both. The "zk" in zkML is frequently aspirational.
+  why: A sumcheck transcript is not zero-knowledge. Round polynomial coefficients, claimed evaluations
+    and opened commitments all leak information about the witness. Retrofitting hiding onto a multi-stage
+    sumcheck system without destroying its performance is a distinct research problem.
+  kit:
+  - Pedersen-commit every prover message
+  - Encode the sumcheck verifier as an R1CS circuit
+  - Nova-style folding with a random satisfying instance
+  - Zero-knowledge sumcheck (Chiesa–Forbes–Spooner)
+  schemes:
+    zkllm:
+      tldr: The one indexed system that is zero-knowledge by construction. Hyrax commitments hide the
+        weights; a zk-sumcheck hides the transcript. This is zkLLM's whole motivation — the weights are
+        the prover's IP.
+      quotes:
+      - text: The resulting proof, compactly sized at less than 200 kB, is designed to uphold the privacy
+          of the model parameters, ensuring no inadvertent information leakage.
+        src: zkLLM
+        sec: Abstract
+      bullets:
+      - 'Commitments are Hyrax (Pedersen-based): transparent (no trusted setup), homomorphic, and hiding.
+        The proof leaks nothing about the model.'
+      - The sumcheck is a zero-knowledge variant, so the transcript reveals nothing beyond the claimed
+        evaluation. The whole proof is <200 kB and hides the weights end-to-end.
+      - 'This is the design goal, not an afterthought: prover = an AI company, weights = its IP, verifier
+        = a regulator. DeepProve offers no hiding; Jolt Atlas adds it separately with BlindFold.'
+    jolt-atlas:
+      tldr: 'BlindFold, and it is real, implemented code: every round polynomial and claim is Pedersen-committed,
+        and one aggregate relaxed-R1CS of all the sumcheck checks is proved via Nova folding + Spartan.
+        But the ZK path is younger than the clear path, and several bindings are not yet R1CS constraints.'
+      grounded: zk.rs + subprotocols/blindfold @b20cdce
+      quotes:
+      - text: Jolt Atlas' prover executes multiple sumcheck stages, each producing a transcript of polynomial
+          coefficients and verifier challenges. These transcripts are not zero-knowledge, since they reveal
+          the witness. BlindFold retrofits zero-knowledge onto these proofs by encoding the sumcheck verifier
+          as an R1CS circuit and applying Nova-style folding with a random satisfying pair.
+        src: Jolt Atlas
+        sec: §3
+        name: Zero Knowledge via BlindFold
+      - text: Since the number of sumcheck rounds is logarithmic in the original computation size (each
+          round halves the domain), the BlindFold circuit is logarithmic in the size of the computation
+          being proven.
+        src: Jolt Atlas
+        sec: §3.2
+        name: R1CS Encoding of the Sumcheck Verifier
+      - text: The verifier never sees the polynomial coefficients, Horner intermediates, or evaluation
+          values, only their commitments. BlindFold guarantees that these hidden values satisfy the sumcheck
+          verification equations, completing the zero-knowledge property.
+        src: Jolt Atlas
+        sec: §3.3
+        name: Integration with Jolt Atlas
+      bullets:
+      - '**1. Hide the messages.** All prover messages — round polynomial coefficients, claimed evaluations
+        — are sent as Pedersen commitments rather than plaintext.'
+      - '**2. Encode the verifier.** Each sumcheck round contributes one sumcheck-identity constraint
+        $2c_0 + c_1 + \cdots + c_{d_s} = \sigma_j$ and $d_s$ Horner-evaluation constraints implementing
+        $\sigma_{j+1} = g_j(r_j)$ through auxiliary variables $t_0,\dots,t_{d_s-2}$.'
+      - '**3. Fold.** Relaxed R1CS $(AZ)\circ(BZ) = u(CZ) + E$ folds cleanly under Nova; the real instance
+        $(u=1, E=0)$ is folded with a randomly sampled satisfying instance, so $W_{\text{folded}} = W
+        + r\cdot W_{\text{rand}}$ reveals nothing.'
+      - '**Circuit size.** $O\!\left(\sum_s n_s d_s\right) = O(N\cdot d_{\max})$. Since sumcheck rounds
+        are logarithmic in the computation size, *the BlindFold circuit is logarithmic in the size of
+        the computation being proven.*'
+      - 'One extra constraint binds the sumcheck reductions to the PCS: $y_{\text{joint}} = \sum_i \beta_i
+        y_{\omega_i}$, with the evaluation commitment $\bar V = y_{\text{joint}}G + bH$ in the instance.
+        Without it, a prover could satisfy every sumcheck constraint using evaluation values inconsistent
+        with the committed polynomials.'
+      code:
+      - file: joltworks/src/subprotocols/sumcheck.rs
+        lines: 349-360
+        caption: 'The hiding step: each round polynomial is Pedersen-committed with fresh blinding; only
+          the commitment enters the transcript, and the challenge is squeezed from it.'
+        src: |-
+          let blinding = F::random(rng);
+          let commitment = pedersen_gens.commit(&batched_univariate_poly.coeffs, &blinding);
+          transcript.append_serializable(&commitment);
+          let r_j = transcript.challenge_scalar_optimized::<F>();
+      - file: jolt-atlas-core/src/onnx_proof/zk.rs
+        lines: 381-391
+        caption: 'The most serious finding: the softmax operand_link — the identity that pins the max
+          in the clear path — is intentionally skipped in ZK, with no R1CS constraint replacing it yet.'
+        src: |-
+          // NOTE: operand_link (X(r2) == max_k - z_c - sat_diff ...) is intentionally skipped here.
+          //
+          // In the ZK pipeline all four openings are private and surface to the
+          // verifier as the zk_mode placeholder zero, while max_k is non-zero,
+          // so a direct verifier-side check would always fail.
+      audit: |-
+        The most serious findings in the sweep live in this younger path.
+
+        - **Softmax `operand_link` is not enforced in ZK.** The identity binding the input to the max / digit / `sat_diff` decomposition (the very thing that makes `max_k` the true max in the clear path) is skipped; the intended BlindFold constraint "does not yet exist". A genuine under-constraint in the softmax ZK flow.
+        - **Public-node claims are compared in cleartext** — "catches honest-prover errors; full soundness against an active malicious prover additionally requires an R1CS constraint … tracked as future work" (`zk.rs:113`).
+        - **Add/Sub/Sum clamps are not range-checked under ZK** (no `ClampRaD` committed, `zk.rs:2089`).
+        - **One aggregate scalar leaks:** the γ-weighted `joint_claim` is revealed in cleartext ("Full ZK … would require a hiding HyperKZG (none today)"). Per-poly openings stay hidden.
+        - The `zk_mode` toggle (placeholder-zero appends around genuinely-public scalars) is the transcript lynchpin — any mis-toggle desyncs Fiat–Shamir or leaks a private value.
+      cost: The verifier never sees coefficients, Horner intermediates, or evaluation values — only their
+        commitments.
+    mystique:
+      tldr: Genuinely and unconditionally zero-knowledge -- it hides the model, which is the whole point
+        -- but **designated-verifier**. The proof convinces exactly one party, who had to be online to
+        produce it, and it cannot be shown to anyone else.
+      quotes:
+      - text: In particular, our ZK protocol can only prove to one verifier at a time, and the communication
+          cost is fairly high compared to succinct ZK proofs like zk-SNARKs.
+        src: Mystique
+        sec: §8
+        name: Conclusion
+      bullets:
+      - The witness is authenticated with information-theoretic MACs held pairwise between prover and
+        verifier, so hiding is not retrofitted -- it is what the substrate does natively. Contrast DeepProve,
+        which never constructs a hiding argument at all, and Jolt Atlas, which rebuilds hiding on top
+        of sum-check with BlindFold.
+      - '**But the proof is not an artifact.** Soundness rests on the verifier''s secret MAC key, so anyone
+        holding that key could have forged the transcript. It cannot be published, posted on-chain, cached,
+        or checked by a second customer. It is a conversation, not a proof.'
+      - 'The C2A conversion is what makes the interesting claim possible: a model can be *publicly committed*
+        in advance, then pulled into privately authenticated values for the proof, so the verifier learns
+        the prover used the model everyone already saw a commitment to -- without learning the weights.'
+      - The economic sting is that authenticated values are bound to *one* verifier's key. In the MLaaS
+        setting the paper motivates, the expensive commitment pull is therefore **per client**, not amortised
+        once across all of them.
+    hao-et-al:
+      tldr: 'Inherited from Mystique, unchanged: VOLE-based, interactive, **designated-verifier**. The
+        paper chooses this substrate deliberately, for prover speed and small memory -- and accepts that
+        the output convinces exactly one party.'
+      quotes:
+      - text: in our implementation, we use the recent VOLE-based interactive designated-verifier ZK proofs
+          [56–59] due to their fast prover time and small memory footprint.
+        src: Hao et al.
+        sec: §3.3
+        name: Zero-knowledge proofs
+      bullets:
+      - The model is hidden -- that is the stated MLaaS goal, protecting the provider's intellectual property
+        -- and hiding comes free with the IT-MAC substrate rather than being retrofitted.
+      - '**But there is still no proof object.** Everything the Mystique entry says applies verbatim:
+        the transcript is bound to one verifier''s key, cannot be published or re-verified, and its size
+        is interactive communication rather than a proof size.'
+      - 'This is the axis on which the VOLE lineage wins outright and is still not adopted: it is genuinely
+        zero-knowledge today, where DeepProve is not zero-knowledge at all and Jolt Atlas''s BlindFold
+        path is young and incompletely constrained. The reason nobody adopts it is public verifiability,
+        not privacy.'
+  debate:
+    title: DeepProve is not zero-knowledge
+    body: |-
+      Despite framing the work in terms of zero-knowledge proofs, the DeepProve paper constructs PIOPs, proves round-by-round **knowledge soundness**, and applies the BCS transform for non-interactivity. It never constructs a hiding argument, and never claims the proof hides the weights or the prompt.
+
+      That is a perfectly reasonable scope — verifiable inference is the stated goal, and integrity is the property enterprises actually want. But if your threat model needs the **model weights** or the **user's prompt** hidden from the verifier, DeepProve as published does not give it to you and Jolt Atlas does.
+- id: scale
+  name: The memory wall
+  sub: scale out, or scale down
+  group: Systems-level obligations
+  difficulty: hostile
+  difficulty_label: The real binding constraint
+  tex: |-
+    \textbf{DeepProve — scale out.}\quad \text{partition the operator DAG into chunks of consecutive layers}
+    \\[3pt]
+    \text{verifier checks } \mathrm{chunk}_i.\mathrm{out\_commit} = \mathrm{chunk}_{i+1}.\mathrm{in\_commit}
+    \\[10pt]
+    \textbf{Jolt Atlas — scale down.}\quad \tilde T(x) = \sum_i \prod_{j=1}^{C} s_{i,j}\big(x^{(j)}\big)
+    \\[3pt]
+    \text{peak memory } O(|T|) \rightarrow O\big(|T|^{1/C}\big), \qquad \text{time } O(C|T|)
+  what: Not an optimisation — a necessity. DeepProve needs 147 GB of RAM for Gemma 3 at sequence length
+    512, and estimates that a 3B-parameter model would need over a terabyte.
+  why: Many SNARKs materialise large portions of the witness and intermediate polynomials in memory to
+    commit and open them. Memory utilisation, not prover time, is what actually stops you.
+  kit:
+  - Horizontal DAG partitioning; commit to chunk boundaries
+  - Single-round aggregation for WAN tolerance
+  - Prefix-suffix table decomposition ⇒ streaming prover
+  - Space-efficient or disk-based SNARKs (open)
+  schemes:
+    zkllm:
+      tldr: Fit on one GPU. tlookup's memory efficiency keeps a 13B proof under 23 GB — a V100 or A100.
+        No distribution.
+      bullets:
+      - Peak memory ≤ 23.1 GB for LLaMa-2 13B. Committing to the model takes up to ~20 min; the per-prompt
+        proof is 1–15 min.
+      - About 50× faster than zkML on 10× larger models at identical hardware, because tlookup and zkAttn
+        avoid the lookup-table blowup. This is the same memory-vs-throughput split as Jolt Atlas (scale
+        down) against DeepProve (scale out).
+      cost: 'LLaMa-2 13B: prover 803 s, proof 188 kB, verify 3.95 s, memory 23.1 GB (GPU).'
+    deepprove:
+      tldr: Scale out. Partition the DAG horizontally, prove chunks in parallel, concatenate. One round
+        of communication.
+      quotes:
+      - text: This makes memory utilization the main bottleneck of our prover (e.g., proving models with
+          more than 3 billion parameters, such as GPT-J, would likely require over a terabyte of RAM).
+          We leave as an interesting future direction efficiently reducing total memory utilization using
+          space-efficient or disk-based SNARKs.
+        src: DeepProve
+        sec: §5
+        name: Memory Utilization
+      bullets:
+      - All three proving steps — witness commitment, PIOP, PCS opening — work on a subgraph with little
+        added cost and no dependence on the underlying cryptography.
+      - Committing to each chunk's inputs and outputs makes chunks independent, so they prove simultaneously.
+        The coordinator streams each subtrace to its worker as soon as it is ready, overlapping proving
+        with inference.
+      - The verifier must check that the partition is consistent with the real model DAG (no dropped nodes)
+        and that each chunk's input commitment matches the previous chunk's output commitment.
+      - '**1855 TPM** with 17 machines (10.6× speedup); 1079 TPM with 9. Total communication equals the
+        proof size (43–54 MB). At 100 Mb/s WAN, only a 2% slowdown.'
+      - The authors name space-efficient and disk-based SNARKs as the open direction for attacking memory
+        directly — which is precisely what Jolt Atlas does.
+      cost: 96 GB (BaseFold) / 147 GB (HyperKZG) single-machine RAM at Gemma 3, seq 512.
+    jolt-atlas:
+      tldr: Scale down. Decompose the lookup tables so the prover streams, and the whole thing fits on
+        a laptop.
+      grounded: lookup_tables/{prefixes,suffixes} + subprotocols/ps_shout @b20cdce
+      quotes:
+      - text: This enables streaming provers that trade time (typically $O(C)$ streaming passes) for space,
+          reducing peak memory from $O(|T|)$ to roughly $O(|T|^{1/C})$ while incurring total prover time
+          on the order of $O(C|T|)$ field operations. This directly motivates Jolt Atlas's focus on "streaming"
+          proving for large models on constrained devices.
+        src: Jolt Atlas
+        sec: §1.1
+        name: Prefix-suffix decomposition and streaming
+      - text: Unlike Jolt, our computational model doesn't require us to commit to the full witness at
+          once, but rather to the inner values of tensors. Dory, the polynomial commitment scheme used
+          in Jolt, is only justified for witnesses over $2^{26}$ elements. We therefore replace it with
+          HyperKZG.
+        src: Jolt Atlas
+        sec: §1.2
+        name: Our Contributions — Faster commitments
+      - text: 'On-Chain Verification: Deploying proofs on Ethereum is challenging due to HyperKZG''s $\mathbb{G}_T$
+          operations. Replacing HyperKZG with a lattice-based PCS may also mitigate this limitation.'
+        src: Jolt Atlas
+        sec: §7
+        name: Future Work
+      bullets:
+      - 'Prefix-suffix decomposition lets a large table''s MLE factor into components over smaller domains,
+        enabling a streaming prover: peak memory falls from $O(|T|)$ to roughly $O(|T|^{1/C})$ at a cost
+        of $O(C|T|)$ field operations, for tunable $C$.'
+      - They also replace Jolt's Dory PCS with **HyperKZG**, arguing Dory "is only justified for witnesses
+        over $2^{26}$ elements", and that the tensor model doesn't require committing to the full witness
+        at once — only to the inner values of tensors. Trading a transparent setup for pairing-based succinct
+        openings suited to on-chain verification.
+      - 'Result: GPT-2 (125M) proves end-to-end in **~38 s on a MacBook Pro M3 with 16 GB RAM**. nanoGPT
+        (~0.25M) in 14 s, versus EZKL''s 237 s — a ~17× speedup before counting EZKL''s >400 s of key
+        generation.'
+      - 'Cost of the pairing choice: they flag that on-chain Ethereum verification is *challenging* because
+        of HyperKZG''s $\mathbb{G}_T$ operations, and float lattice-based PCS (Hachi, ABBA) as future
+        work for post-quantum security and on-chain viability.'
+      - 'The streaming claim is visible in the code''s shape: the [prefix-suffix Shout](#/op/memory) machinery
+        lets a large table''s read-checking run over small prefix/suffix tables refreshed every couple
+        of sumcheck rounds, so the prover never materializes the full table — which is exactly why the
+        whole GPT-2 proof fits in 16 GB on a laptop.'
+      cost: 'GPT-2 (125M) breakdown: sumcheck ~16 s, witness gen ~7.5 s, reduction opening ~7 s, commitment
+        ~3.5 s, HyperKZG ~3 s.'
+    mystique:
+      tldr: 'The opposite trade from every SNARK here: the sVOLE prover streams, so memory is small and
+        the *transcript* is enormous. Scale is bounded by the network, not by RAM.'
+      bullets:
+      - 'The paper''s stated motivation for choosing sVOLE over a zk-SNARK is precisely the memory wall:
+        it argues a state-of-the-art SNARK prover''s memory scales with the statement, putting a billion-constraint
+        statement far out of reach of commodity hardware.'
+      - 'Result: ResNet-101 proves inside a fraction of a 32 GB machine -- no cluster, no distributed
+        prover, no partitioning of the operator DAG. DeepProve needs to scale *out* to 17 machines; Jolt
+        Atlas needs prefix-suffix streaming to scale *down*. Mystique needs neither, because the witness
+        was never materialised as a committed polynomial.'
+      - '**The cost simply moves to the wire.** Where DeepProve ships a proof measured in tens of megabytes
+        and Jolt Atlas ships one measured in kilobytes, Mystique''s ResNet-101 interaction exchanges gigabytes.
+        Prover memory and transcript size are the two ends of the same seesaw, and this is the far end.'
+      cost: ResNet-101 uses about 12 GB of the 32 GB machine; the interaction exchanges 0.99-1.98 GB depending
+        on whether the model is public or private.
+  debate:
+    title: Opposite answers to the same question
+    body: |-
+      This is the cleanest philosophical split between the two systems, and the one most likely to determine which you should use.
+
+      DeepProve accepts a large memory footprint and buys throughput with a cluster: 1855 tokens per minute, if you have 17 machines. Jolt Atlas accepts a slower asymptotic prover — $O(C|T|)$ field operations instead of $O(|T|)$ — to fit inside 16 GB and run on the user's own device.
+
+      **These serve different deployments.** A cloud inference provider proving to an enterprise customer wants DeepProve's throughput. A user proving on their own laptop that a local model produced a given answer — Jolt Atlas's stated target, agentic guardrails and trustless AI memory — wants streaming.
+- id: halluc
+  name: Proof of non-hallucination
+  sub: an unexpected freebie
+  group: Systems-level obligations
+  difficulty: friendly
+  difficulty_label: Nearly free
+  tex: |-
+    \mathrm{Ker}(Q,K) = \mathrm{softmax}\!\left(\frac{Q K^\top}{\sqrt{d}}\right) \qquad \text{— already computed as } T_s
+    \\[10pt]
+    \text{attention score} = \log\det \mathrm{Ker}(Q,K) = \sum_{i=0}^{s-1} \log \mathrm{Ker}_{i,i}
+    \\[6pt]
+    \text{(lower-triangular after masking} \Rightarrow \det = \text{product of the diagonal)}
+  what: Prove that the generated response passed a white-box hallucination detector (LLM-Check), alongside
+    the proof of inference itself.
+  why: Not hard — and that is the point. The detector's core quantity is the log-determinant of the attention
+    kernel, which the inference proof *already contains* as the softmax output $T_s$. Masking makes the
+    kernel triangular, so the determinant is the diagonal product, so the log-det is a sum of logs.
+  kit:
+  - Lookup table to approximate log₂
+  - Sumcheck to aggregate the diagonal
+  - Reuse of the existing softmax witness
+  schemes:
+    deepprove:
+      tldr: First cryptographic proof of LLM non-hallucination. A lookup for log, a sumcheck for the sum,
+        riding on witnesses that already exist.
+      bullets:
+      - 'Detection algorithm: LLM-Check''s Attention Score, aggregated across heads by averaging (a summation,
+        since shapes are fixed).'
+      - Chosen because it is white-box (the prover has all internal states anyway), needs no external
+        database, and needs no second LLM for post-processing — the three properties that make a detector
+        provable.
+      - 'Measured: **68.69% AUROC / 67.96% accuracy** on GPT-2 (Fava annotation dataset, 460 samples),
+        65.84% / 64.16% on Gemma 3. Quantization slightly *improved* GPT-2''s detection and slightly degraded
+        Gemma 3''s.'
+      - 'Prover overhead for the gadget: **98 ms** (GPT-2), 21 ms (Gemma 3) at sequence length 512 — a
+        rounding error against a multi-minute proof.'
+      cost: 98.1 ms (GPT-2) / 21.1 ms (Gemma 3), seq 512.
+- id: sumcheck
+  name: The sumcheck protocol
+  sub: the workhorse under every page
+  group: Cryptographic machinery
+  difficulty: core
+  difficulty_label: Foundational
+  tex: |-
+    \text{claim: } \sum_{x\in\{0,1\}^n} g(x) = S
+    \\[8pt]
+    \text{each round, prover sends a low-degree univariate } g_i(X);\ \text{verifier folds in one random } r_i
+    \\[6pt]
+    \Longrightarrow\ \text{after } n \text{ rounds, one check: } g(r_1,\dots,r_n) \stackrel{?}{=} e
+  what: 'Every operator page says "run a sumcheck." A sumcheck reduces a claim about a sum over the boolean
+    hypercube ($2^n$ terms) to a claim about the summand at one random point, in $n$ rounds of $O(1)$-size
+    messages. This is why matmul is cheap: the product is never committed, only evaluated at one point.'
+  why: 'Two facts from the code. The round loop is not in `zkml`; the engine (`IOPProverState`, `IOPVerifierState`,
+    `IOPProof`) lives in `dp_crypto`, and `zkml` only builds a virtual polynomial whose hypercube sum
+    equals the claim. And a sumcheck opens nothing: its output is a deferred claim $f(\text{point})=e$,
+    discharged later against a commitment.'
+  kit:
+  - Virtual polynomial builder (the summand as an expression tree)
+  - Fiat–Shamir challenges via the transcript
+  - Random-linear-combination batching of many claims into one
+  - Deferred claims, opened later by the PCS
+  schemes:
+    zkllm:
+      tldr: The base protocol, GPU-first. zkLLM's contribution is making sumcheck-based lookups (tlookup)
+        and attention (zkAttn) fully parallel, and adding a zero-knowledge variant.
+      bullets:
+      - Arithmetic tensor ops (matmul, convolution) are verified by sumcheck over multilinear extensions.
+        Preserving the tensor structure is what enables CUDA parallelism.
+      - A zero-knowledge sumcheck hides the tensors, at negligible extra cost. This is the piece DeepProve
+        does not have and Jolt Atlas rebuilds with BlindFold.
+    deepprove:
+      tldr: 'zkml builds a virtual polynomial and calls the dp_crypto engine. The clearest instance is
+        same_poly: it folds many claims about one committed polynomial into a single reduced claim.'
+      grounded: zkml/src/iop/ @ Lagrange-Labs/deep-prove master
+      bullets:
+      - '**same_poly.** One committed polynomial $f$ has accumulated claims $f(r_i)=y_i$ from downstream
+        layers. Sample one coefficient $a_i$ per claim; build $f\cdot(\sum_i a_i\,\beta_{r_i})$. Its hypercube
+        sum is $\sum_i a_i y_i$, because $\sum_x f(x)\beta_{r_i}(x)=f(r_i)$.'
+      - The verifier cannot open $f$. It computes the $\beta$ factor itself ($\sum_i a_i\,\mathrm{identity\_eval}(r_i,\text{point})$),
+        multiplies by the prover's $f(\text{point})$, and checks the product against `expected_evaluation`.
+        The surviving `Claim{point,eval}` is returned unopened.
+      - 'Batching has two layers: a random linear combination folds many claims into one sumcheck, and
+        a `ChunkProof` is a sequence of per-layer sumcheck proofs, output layer to input.'
+      code:
+      - file: zkml/src/iop/same_poly.rs
+        lines: 96-105
+        caption: Build the virtual polynomial f · (Σ aᵢ·β_{rᵢ}) as an expression tree, then hand it to
+          the dp_crypto sumcheck engine — zkml never runs the round loop itself.
+        src: |-
+          let mut expr_builder = VirtualPolynomialsBuilder::<F>::new(num_threads, num_vars);
+          let poly_expr = expr_builder.lift(Either::Left(&self.poly));
+          let sum_expr =
+              beta_evals
+                  .iter()
+                  .enumerate()
+                  .fold(Expression::Constant(F::ZERO), |acc, (i, p)| {
+                      acc + Expression::Challenge(i as u16, 1, F::ONE, F::ZERO)
+                          * expr_builder.lift(Either::Left(p))
+                  });
+          let virtual_poly = expr_builder.to_virtual_polys(&[poly_expr * sum_expr], &challenges);
+          let (sumcheck_proof, state) = IOPProverState::<F>::prove(virtual_poly, t);
+      - file: zkml/src/iop/mod.rs
+        lines: 67-69
+        caption: A whole-model proof is a sequence of sumcheck proofs — one per layer, output layer to
+          input.
+        src: |-
+          pub struct ChunkProof<F: PrimeField, PCS: CommitmentScheme> {
+              /// The successive sumchecks proofs. From output layer to input.
+              steps: HashMap<NodeId, LayerProof<F, PCS>>,
+- id: lookups
+  name: Lookup arguments & range checks
+  sub: how non-linearity is discharged
+  group: Cryptographic machinery
+  difficulty: core
+  difficulty_label: Foundational
+  tex: |-
+    \text{prove every looked-up row appears in table } T \iff \sum_{i}\frac{M_i}{\alpha + t_i} = \sum_{j}\frac{1}{\alpha + \ell_j}
+    \\[8pt]
+    \alpha\ \text{a verifier challenge},\quad M_i\ \text{the multiplicity of row } i
+    \\[6pt]
+    \text{a lookup into a table whose domain is exactly } [\min,\max]\ \textbf{is}\ \text{a range check}
+  what: 'The primitive that discharges everything a field cannot compute cheaply — exp, GeLU, right-shifts,
+    sign, "is this zero," "is this in range." The prover shows the multiset of looked-up rows is contained
+    in a fixed table $T$ by proving the **LogUp fractional-sum identity**. Range checks are not a separate
+    mechanism: a lookup whose table is exactly the interval $[\min,\max]$ *is* a range check, which is
+    why our old separate pages are merged here.'
+  why: 'DeepProve computes each side of the identity with a **GKR fraction tree**, not one big sumcheck:
+    a binary tree of $a/b + c/d = (ad+bc)/(bd)$ nodes halving the width each layer until one fraction
+    remains. Two subtleties the paper glosses: each denominator entry is a random linear combination of
+    *all* columns of its row (tables are genuinely multi-column), and the two sides use different numerators
+    — the table side carries multiplicities, the lookup side hard-codes every numerator to $-1$.'
+  kit:
+  - LogUp fractional-sum identity
+  - GKR fraction tree (Fraction add nodes)
+  - Multi-column denominators via a column-separation challenge
+  - Multiplicities Mᵢ = count(lookups)/count(table rows), by field inverse
+  - 'Decomposable tables: split a wide value into k-bit chunks'
+  schemes:
+    zkllm:
+      tldr: tlookup — the lookup argument DeepProve's descends from. Same LogUp identity, but run as one
+        parallel sumcheck instead of a GKR tree, so it maps onto a GPU.
+      quotes:
+      - text: tlookup, a parallelized lookup argument designed for non-arithmetic tensor operations in
+          deep learning, offering a solution with no asymptotic overhead.
+        src: zkLLM
+        sec: Abstract
+      bullets:
+      - tlookup proves set inclusion $S \subseteq T$ via the LogUp identity $\sum_i 1/(\beta+S_i) = \sum_i
+        m_i/(\beta+T_i)$, checked at a random $\beta$. Multiplicities $m$ come from counting, in $O(D)$.
+      - The point is parallelism. Prior lookup arguments were sequential (univariate polynomials); tlookup
+        runs the identity as one sumcheck over tensors, so it uses a GPU. No asymptotic overhead in time
+        or memory.
+      - It is the foundation for zkAttn (softmax) and every activation. DeepProve keeps the identity but
+        computes it with a GKR fraction tree and batches many table sizes into one proof.
+    deepprove:
+      tldr: LogUp-GKR with three shared 16-bit auxiliary tables and one op-specific value table. Exactly
+        eight table types exist — and there is no 'clamp table' or 'argmax table'; clamping is a selector
+        folded into the sumcheck.
+      grounded: zkml/src/lookup/ @ Lagrange-Labs/deep-prove master
+      bullets:
+      - The acceptance condition is that the combined numerator over all instances is **zero** and the
+        combined denominator non-zero. The lookup side sets every numerator to $-1$; the table side carries
+        multiplicities $M_i=\mathrm{count(lookups)}/\mathrm{count(table\ rows)}$ computed by a field inverse,
+        so non-power-of-two tables padded with repeated rows still satisfy the identity.
+      - There are exactly eight `TableType`s — `Exp, GeLU, ReLU, SiLU, Requantise, ShiftCheck, SignedZeroCheck,
+        ZeroCheck` — generated on demand as an input range, never materialised as a stored array. Three
+        of them are *shared, fixed 16-bit* auxiliary tables (ShiftCheck = pure range, ZeroCheck = "is
+        this chunk zero," SignedZeroCheck = sign), independent of the 12-bit quantization width.
+      - 'A wide accumulator (~62 bits) is range-checked by **decomposition**: split into a low value chunk
+        (hits the op table) plus 16-bit shifted chunks (the requant shift, range-checked) and 16-bit zeroing
+        chunks (the high bits, forced to zero). Clamping is not a table at all — it is the *product of
+        the zeroing-chunk outputs* acting as a selector, multiplied into the value inside the lookup expression.'
+      - Instances of one proof type at different sizes are batched into a single GKR, required in decreasing-`num_vars`
+        order and rolled in at the round where their height matches.
+      code:
+      - file: zkml/src/lookup/logup_gkr/structs.rs
+        lines: 48-58
+        caption: 'The GKR node operation: adding two fractions a/b + c/d = (ad+bc)/(bd). The whole lookup
+          is a tree of these.'
+        src: |-
+          impl<F: PrimeField, T: Borrow<Fraction<F>>> AddAssign<T> for Fraction<F> {
+              fn add_assign(&mut self, rhs: T) {
+                  let rhs: &Fraction<F> = rhs.borrow();
+                  let numerator = (self.numerator * rhs.denominator) + (self.denominator * rhs.numerator);
+                  let denominator = self.denominator * rhs.denominator;
+                  *self = Fraction { numerator, denominator };
+              }
+          }
+      - file: zkml/src/lookup/table/mod.rs
+        lines: 19-23
+        caption: The shared chunk-range tables are hard-coded to 16 bits — decoupled from the (default
+          12-bit) quantization width.
+        src: |-
+          /// The bit size for the zero check table.
+          pub const ZERO_CHECK_TABLE_BIT_SIZE: usize = 16;
+
+          /// The bit size for the shift check table.
+          pub const SHIFT_CHECK_TABLE_BIT_SIZE: usize = 16;
+    hao-et-al:
+      tldr: 'The heart of the paper, and a genuinely different instantiation: the lookup argument is built
+        from **ZK proofs of read-only memory**, not from LogUp, Lasso or a polynomial commitment. Amortised
+        cost is 2 multiplications per lookup.'
+      quotes:
+      - text: considering N ≫ T , the amortized computation complexity per lookup is 2 multiplications.
+        src: Hao et al.
+        sec: §3.5
+        name: ZK proofs of table lookup from ZK-ROM
+      - text: We re-run the source code of Caulk [61], and the results show that the ZK lookup protocol
+          of Caulk costs 177.451ms for each amortized access on a table of size 2¹², while our protocol
+          from ZK-ROM only requires 0.069ms (about 2571× better) for the same setting.
+        src: Hao et al.
+        sec: §2.1
+        name: New perspective from table lookup
+      bullets:
+      - For $N$ lookups into a public size-$T$ table the cost is $T + 2N$ multiplications. Because the
+        table is public, its $T$ tuples are appended to the ROM's write set *in plaintext*, saving the
+        $T$ multiplications the generic ZK-ROM would spend committing them.
+      - '**Range checks are the degenerate case**, exactly as in the sum-check systems: a range check
+        is a table lookup whose output is empty. Same unification DeepProve arrives at with its ShiftCheck
+        / ZeroCheck tables.'
+      - '**They benchmarked the folklore choice instead of inheriting it.** Caulk was re-run and found
+        far slower per amortised access at the same table size; Lasso was rejected because it wants decomposable
+        or structured tables. Almost nobody else in this literature justifies their lookup argument empirically.'
+      - 'The amortisation is load-bearing and honestly stated: the cost is $O(1)$ per lookup *given* $N
+        \gg T$. With a $2^{12}$-entry table and the default batch of $10^5$ instances that holds comfortably
+        -- and the paper defends the regime by noting a single ResNet-50 layer contains on the order of
+        800K ReLUs -- but it is an assumption, and $T$ grows exponentially in the digit width.'
+- id: composition
+  name: Claims & the backward pass
+  sub: how operators compose into one proof
+  group: Cryptographic machinery
+  difficulty: core
+  difficulty_label: Foundational
+  tex: |-
+    \text{a claim is tiny: } \mathrm{Claim}\{\,\text{point},\ \text{eval}\,\}\ \text{asserting}\ \widetilde{f}(\text{point}) = \text{eval}
+    \\[8pt]
+    \text{each layer: } \underbrace{\text{claims about its outputs}}_{\text{last\_claims}}\ \xrightarrow{\ \mathrm{prove}\ }\ \underbrace{\text{claims about its inputs}}_{\text{returned}}
+    \\[6pt]
+    \text{run output-layer} \to \text{input-layer, until only boundary MLE claims remain}
+  what: The glue. A whole-model proof is not one monolithic circuit — it is a *backward pass* that threads
+    small claims through the operator DAG. Each layer converts claims about its outputs into claims about
+    its inputs; run from the output layer to the input layer, the entire model collapses to a handful
+    of claims on the boundary polynomials (weights and inputs), which the commitment scheme then opens.
+  why: Our docs called these "virtual claims." The code shows they are concrete `Claim{point,eval}` structs
+    — owned, stored in a register, and (across distributed chunks) backed by polynomial commitments. And
+    the layer role is not one trait but *five* — `OpInfo, Evaluate, ProveInfo, ProvableOp, VerifiableCtx`
+    — with `prove(last_claims) → input claims` as the load-bearing method. Non-provable layers (Flatten,
+    Reshape) propagate claims unchanged.
+  kit:
+  - The five-trait layer anatomy
+  - 'A claim register: HashMap<NodeInput, Claim>'
+  - flatten_and_merge_claims for fan-out
+  - Committed boundary edges across distributed chunks
+  schemes:
+    deepprove:
+      tldr: A claim is one MLE evaluation. The backward pass over the DAG turns each layer's output claims
+        into input claims; across chunk boundaries, claims are threaded by committing the edge MLEs, not
+        passed inline.
+      grounded: zkml/src/iop/, zkml/src/layers/provable/ @ Lagrange-Labs/deep-prove master
+      bullets:
+      - '`Prover::prove_chunk` walks `chunk.subgraph.backward_iter()`. `Node::Output` seeds a register
+        `HashMap<NodeInput, Claim>`; each provable node reads the claims its successors deposited on its
+        output ports, merges fan-out with `flatten_and_merge_claims`, calls `op.prove(...)`, and writes
+        the returned input claims back for its predecessors.'
+      - Non-provable layers don't prove anything — they *propagate the claims unchanged*, because they
+        don't alter values. The recursion bottoms out at model inputs, where the verifier checks `input.into_mle().evaluate(claim.point)
+        == claim.eval` directly.
+      - Distributed proving cuts the model into `ModelChunk`s; claims crossing a boundary are *not* passed
+        inline. Each chunk commits its boundary-edge MLEs, keys claims by a SHA256-derived commitment
+        id, and a consistency check verifies an input-edge commitment equals the matching output-edge
+        commitment in the source chunk.
+      - The verifier context is stored *already reversed*, because proving runs last-layer-to-first.
+      code:
+      - file: zkml/src/iop/claim.rs
+        lines: 26-31
+        caption: 'A claim is just an MLE evaluation: f(point) = eval. Nothing ''virtual'' about it.'
+        src: |-
+          pub struct Claim<F> {
+              #[serde(with = "dp_crypto::serialization")]
+              pub point: Vec<F>,
+              #[serde(with = "dp_crypto::serialization")]
+              pub eval: F,
+          }
+      - file: zkml/src/iop/prover.rs
+        lines: 764-785
+        caption: 'The backward pass: provable ops derive input claims via prove(); non-provable layers
+          propagate their claims unchanged.'
+        src: |-
+          let my_claims = if op.is_provable() {
+              op.prove(
+                  node_id,
+                  ctx,
+                  claims_for_prove.iter().collect::<Vec<_>>(),
+                  section,
+                  &mut self,
+              )
+              .with_context(|| format!("proving {}: {}", node_id, op.describe()))?
+          } else {
+              // we only propagate the claims, without changing them, as a non-provable layer
+              // shouldn't change the input values
+              claims_for_prove
+          };
+- id: fusion
+  name: Model transforms & fusion
+  sub: the graph rewrite before proving
+  group: Cryptographic machinery
+  difficulty: core
+  difficulty_label: Foundational
+  tex: |-
+    \text{a transform is one method: } \mathrm{apply}(\text{Model}) \to \text{Model}
+    \\[8pt]
+    \text{GPT2RMSNorm: } \mathrm{LayerNorm} \to \mathrm{RMSNorm},\ \text{pushing mean-subtraction and } \gamma,\beta\ \text{into neighbours}
+    \\[6pt]
+    \text{numerics preserved (tests assert pre/post traces are close)}
+  what: Before proving, DeepProve runs a **graph-rewrite pass** over the model — the concrete mechanism
+    behind the "operator fusion" our docs only mentioned in the abstract. Rewrites fold constants into
+    neighbouring layers so an expensive operator becomes a cheaper one, without changing the numbers.
+  why: 'This page also corrects a framing error: **DeepProve is not LLM-only.** The `Layer` enum carries
+    CNN/MLP operators (`Convolution, Pooling, Activation, Flatten`) beside the transformer ops, all behind
+    the same `Evaluate/ProveInfo/ProvableOp` traits, so the transform, quantization and proving passes
+    are uniform across architectures. LLM models are loaded from GGUF and safetensors, not only ONNX.'
+  kit:
+  - ModelTransform trait + apply_transformations driver
+  - 'GPT2RMSNorm: LayerNorm → RMSNorm, absorb γ/β into neighbours'
+  - 'Gemma3Transform: absorb the RMSNorm α scale'
+  - 'SoftmaxMaskTransform: set the quantized −∞ sentinel'
+  schemes:
+    deepprove:
+      tldr: 'Three named graph rewrites fold arithmetic into neighbours: LayerNorm becomes RMSNorm, RMSNorm''s
+        scale is absorbed, and the attention mask''s quantized −∞ is fixed up post-quantization.'
+      grounded: zkml/src/model/transform/ @ Lagrange-Labs/deep-prove master
+      bullets:
+      - '**GPT2RMSNorm** replaces every `LayerNorm` with a cheaper `RMSNorm`. It right-multiplies the
+        *preceding* matrix by a "mean-subtraction" matrix so every output row already has mean 0, and
+        absorbs $\gamma,\beta$ into the *following* `EinSum`. It pattern-matches the GPT-2 graph shape
+        (and detects the final projection by the magic number `vocab == 50257`).'
+      - '**Gemma3Transform** absorbs an RMSNorm''s $\alpha$ scale into the next layer, *inserting* a new
+        scaling `EinSum` node when the successor can''t absorb it. **SoftmaxMaskTransform** is a post-quantization
+        fixup that writes the correct quantized $-\infty$ sentinel onto the attention mask feeding a softmax.'
+      - 'Correctness is guarded by trace-equivalence tests: each rewrite runs the model before and after
+        and asserts the inputs to the final logits node match within tolerance; the GPT-2 rewrite is additionally
+        proved end-to-end.'
+      code:
+      - file: zkml/src/model/transform/mod.rs
+        lines: 12-33
+        caption: A transform is one method apply(Model)→Model; a driver folds a list of them over the
+          model in order.
+        src: |-
+          pub trait ModelTransform<N>: Debug
+          where
+              N: TensorTypeParam,
+          {
+              /// This applies the transformation returning a new model with the changes applied.
+              fn apply(&self, model: Model<N>) -> Result<Model<N>>;
+          }
+
+          pub fn apply_transformations<N>(
+              mut model: Model<N>,
+              transforms: Vec<Box<dyn ModelTransform<N>>>,
+          ) -> Result<Model<N>>
+          where
+              N: TensorTypeParam,
+          {
+              for transform in transforms {
+                  model = transform.apply(model)?;
+              }
+              Ok(model)
+          }
+      - file: zkml/src/layers/mod.rs
+        lines: 78-98
+        caption: 'The model-generic Layer enum: CNN/MLP ops (Convolution, Pooling, Flatten) sit beside
+          the transformer ops.'
+        src: |-
+          Convolution(Convolution<T>),
+          Activation(Activation<T>),
+          Requant(Requant),
+          Pooling(Pooling),
+          Flatten(Flatten),
+          EinSum(EinSum<T>),
+          LayerNorm(LayerNorm<T>),
+          RMSNorm(RMSNorm<T>),
+          Softmax(Softmax<T>),
+          Add(Add<T>),
+          Reshape(Reshape),
+          Embeddings(Embeddings<T>),
+          Positional(Positional<T>),
+          AttentionMask(AttentionMask<T>),
+          Logits(Logits),
+          Split(SplitLayer),
+          Recombination(RecombinationLayer),
+audit_surface:
+  title: Audit surface
+  source: github.com/ICME-Lab/jolt-atlas @ b20cdce
+  lede: Read from the Jolt Atlas source (`@b20cdce`), not the paper. None of these is a claimed break
+    of a shipped system -- Jolt Atlas is research code and several are self-documented `TODO`s -- but
+    each is where a security review would start. Per-operator detail lives inline under each Audit surface
+    callout in the operator pages.
+  pattern: 'The pattern across all ten: the **non-ZK path is fairly tightly constrained** by sumchecks
+    + range checks + the Shout one-hot trio, but the **ZK (BlindFold) path is younger**, and several bindings
+    that hold in the clear are not yet re-expressed as R1CS constraints. If a review is scoped, scope
+    it to the ZK flow first -- findings on [zero-knowledge](#/op/zk), [matmul](#/op/matmul), and [activations](#/op/gelu).'
+  method: 14 operator groups, each read in full by one agent then re-verified by a second adversarial
+    agent that re-opened every cited file. See `jolt-atlas-from-source.md` for the long-form companion
+    with full snippets.
+  findings:
+  - sev: high
+    op: zk
+    find: Softmax `operand_link` (the identity that pins the max in the clear path) is **not enforced
+      in ZK mode**; no R1CS constraint replaces it yet.
+    where: zk.rs:381
+    status: Intentional, no replacement
+  - sev: high
+    op: clamp
+    find: The standalone ONNX `Clamp` operator is an **unproven passthrough** — a bare Clamp node is effectively
+      unproven for that node.
+    where: ops/clamp.rs:20
+    status: '`// TODO: Clamp` dummy'
+  - sev: high
+    op: gelu
+    find: '**tanh / erf / sigmoid clamps are unproven** — dummy advice + a prover-side `assert!` that
+      binds nobody.'
+    where: tanh.rs:310
+    status: '`// TODO: rm once…`'
+  - sev: med
+    op: zk
+    find: Add / Sub / Sum **saturating clamp is not range-checked under ZK** (no `ClampRaD` committed).
+    where: zk.rs:2089
+    status: Deliberate
+  - sev: med
+    op: zk
+    find: Public-node reduced claims are checked in **cleartext only**; malicious soundness needs an R1CS
+      binding.
+    where: zk.rs:113
+    status: Acknowledged future work
+  - sev: med
+    op: matmul
+    find: Fused-rebase ZK remainder is a **placeholder trust seam** — value reaches the proof only via
+      later baked initial claims.
+    where: fused_rebase.rs:305
+    status: Documented
+  - sev: med
+    op: softmax
+    find: '`argmax_k` is used as a one-hot index with **no `< N` bound**. Likely non-exploitable; wants
+      a written argument.'
+    where: max.rs:146
+    status: Unwritten argument
+  - sev: med
+    op: requant
+    find: Requant uniqueness is **load-bearing on the `R < 2^S` range check being complete**; several
+      range checks are soundness gates, others only completeness, uncommented.
+    where: range_checking/
+    status: By design; verify per-op
+  - sev: low
+    op: matmul
+    find: Non-power-of-two shapes (einsum, gather) sit behind **`#[ignore]`d tests** ("not fully validated
+      yet").
+    where: multiple
+    status: Completeness gap
+  - sev: low
+    op: zk
+    find: The γ-weighted `joint_claim` aggregate scalar **leaks in cleartext** (no hiding HyperKZG today).
+      Per-poly openings stay hidden.
+    where: zk.rs:96
+    status: Accepted privacy leak

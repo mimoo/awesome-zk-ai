@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepProve — zkAI</title>
+<meta name="description" content="DeepProve: Verifiable End-to-End Large Language Model Inference">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>DeepProve</b></div><h2 class="ptitle">DeepProve</h2><p class="psub">DeepProve: Verifiable End-to-End Large Language Model Inference</p><p class="authors">Nicolas Gailly, Ismael Hishon-Rezaizadeh, Tianyi Liu, Nicholas Mainardi, Dimitrios Papadopoulos, Charalampos Papamanthou, Christodoulos Pappas, Shravan Srinivasan, Zack Youell, Yupeng Zhang</p><div class="pmeta"><div><dt>Venue</dt><dd>IACR ePrint 2026/1112</dd></div><div><dt>Date</dt><dd>2026-05-30</dd></div><div><dt>Affiliation</dt><dd>Lagrange Labs / HKUST / Yale / UIUC</dd></div><div><dt>Proof system</dt><dd>Sum-check + lookup arguments</dd></div><div><dt>Commitment</dt><dd>HyperKZG, BaseFold</dd></div><div><dt>Hardware</dt><dd>primary: AMD EPYC 9254, 24 cores @ 2.9 GHz, 504 GB RAM (48 threads); secondary: AMD Ryzen 9 7950X3D, 16 cores @ 4.2 GHz, 128 GB RAM (32 threads)</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Open source</dt><dd>yes</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2026/1112">https://eprint.iacr.org/2026/1112</a></dd></div><div><dt>PDF</dt><dd><a href="https://eprint.iacr.org/2026/1112.pdf">https://eprint.iacr.org/2026/1112.pdf</a></dd></div><div><dt>Code</dt><dd><a href="https://github.com/Lagrange-Labs/deep-prove">https://github.com/Lagrange-Labs/deep-prove</a></dd></div><div><dt>Quantization</dt><dd>12 bits</dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>params</th><th>context window</th><th>tokens per minute</th><th>proof size mb</th><th>verification time s</th><th>peak ram gb</th></tr></thead><tbody><tr><td>GPT-2</td><td>124M</td><td>512</td><td>174</td><td>7–27</td><td>1.2</td><td>41.85</td></tr><tr><td>Gemma 3</td><td>270M</td><td>512</td><td>86</td><td>16–54</td><td>3.7</td><td>96.27</td></tr><tr><td>GPT-2 (distributed prover)</td><td>124M</td><td>512</td><td>1855</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>tokens_per_minute_note:</b> BaseFold, secondary machine. HyperKZG on the same machine: 146 TPM; primary machine: 127 TPM.</p><p style="font-size:13px;color:#6f7d86"><b>verification_time_note:</b> Sec. 1.2 says &quot;around 1.2 seconds for GPT-2&quot;; the abstract says &quot;1 to 3.7 seconds&quot; across both models; Table 2 (secondary, BaseFold, seq 512) prints 1.65 s and Table 1 (primary, HyperKZG, seq 512) prints 3.22 s. The paper is internally inconsistent.</p><p style="font-size:13px;color:#6f7d86"><b>verification_time_note:</b> Sec. 1.2 says ~4 s; abstract&#x27;s range tops out at 3.7 s.</p><h3 class="head">Notes</h3><div class="prose"><p>First system to prove full end-to-end LLM inference across all generated tokens of a prompt, rather than a single forward pass. Also reports a distributed prover reaching 1855 tokens/min. Bit width now confirmed at 12 (see quantization.bits): the 174 TPM is therefore at 12 bits vs zkGPT's 2.75 TPM at 16 bits, so the ~63x gap is NOT bit-width-normalized -- and the two also differ in context (512 vs 32) and in what is proven (full sequence certification vs a single token).</p></div><h3 class="head">On the hardware</h3><div class="prose"><p>The headline 174/86 TPM figures are from the SECONDARY machine (faster clock, fewer cores). The primary machine peaks at 127 TPM (GPT-2) and 64 TPM (Gemma 3). Gemma 3 at seq 512 with HyperKZG OOMs on the secondary machine.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>12</pre></td></tr><tr><th>bits_note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>&quot;We run inference on the GPT-2 and Gemma 3 models using DeepProve using 12-bit quantization level&quot; (Sec. 5, Experiments). Accuracy is also reported at 8 and 10 bits. Going 8 -&gt; 12 bits costs only 0.8% extra prover time, because the number of lookup tables barely changes -- so the 12-bit accuracy is bought almost for free.</pre></td></tr><tr><th>scheme</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Symmetric affine quantization centered at zero (zero-point vanishes), for both weights and activations. Post-training static quantization with a calibration dataset; s = a / (2^(b-1) - 1) with a = max(|x_max|, |x_min|); activations clamped to [-a, a]. Mixed precision: residual layers use a larger bit length. Outlier smoothing via orthonormal rotation X*W = (X*M)(M^T*W), with M absorbed into the previous layer&#x27;s weights. Unlike zkGPT/zkTorch, scale factors are NOT restricted to powers of two.</pre></td></tr><tr><th>rescale_mechanism</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>PRIMARY, Sec 4.3.2. y = floor( (Quant(2^f * eps) * x + 2^(f+delta-1)) / 2^(f+delta) ) - 2^(q-1). The arbitrary float scale eps is fixed-point-encoded as the integer Quant(2^f * eps), so the MULTIPLIER is arbitrary but the DIVISOR is a power of two -- i.e. a right shift, which the paper notes is &quot;easier to prove&quot;. The shift is proven with a lookup argument over decomposable tables (Lasso/Shout-style): decompose x&#x27; into k-bit chunks, range-check each chunk, keep the q/k most significant. The +2^(f+delta-1) term is round-to-nearest (add a half before flooring). DeepProve&#x27;s real novelty here is Case 2: it also proves requantization when the input is OUT of the expected range, via tables that emit -1/0/+1 to flag and correct overflowing elements. It states that the in-range case is &quot;the only scenario considered by prior works [SLZ24 = zkLLM, QSL+25 = zkGPT]&quot; -- i.e. those two ASSUME in-range inputs, which is accurate. CORRECTION, do not overclaim: DeepProve is the only PAPER with an explicit out-of-range protocol, NOT the only SYSTEM with out-of-range handling. Jolt Atlas does it too -- a saturating clamp (SatClamp: i64 accumulator clamped to i32) discharged by a prefix-suffix Shout sumcheck and FUSED INTO THE SAME REBASE SEAM as the rescale -- but only its SOURCE CODE says so; the paper never mentions it. The mechanisms differ: DeepProve DETECTS out-of-range with a proven predicate (zero-detector + sign-extractor tables blended to +/-2^(q-1)); Jolt SATURATES unconditionally with one clamp lookup. Proven predicate vs proven function. Jolt&#x27;s coverage is partial where it matters: in ZK mode Add/Sub/Sum are proved UNCLAMPED, the ONNX Clamp op is an unproven passthrough (// TODO: Clamp), and the tanh/erf/sigmoid clamps are prover-side assert!s over unconstrained advice.</pre></td></tr><tr><th>conflict_flag</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>UNRESOLVED. DeepProve asserts that zkGPT/zkTorch restrict scale factors to powers of two. zkGPT&#x27;s own text does NOT support this: zkGPT Sec 2.1/4.1 computes qz = round((C1/C2) * qx * qy) where C1, C2 are Q-bit integers &quot;obtained by searching&quot;, approximating the arbitrary float ratio Sx*Sy/Sz -- an arbitrary rational, not a power of two. Both systems in fact support arbitrary float scales; they differ in HOW (DeepProve: integer multiplier + power-of-two shift; zkGPT: rational C1/C2 enforced by a double inequality, no division at all). Treat DeepProve&#x27;s characterization of prior work with care. See docs/numerics.md.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>metric:
+- cosine_similarity
+- perplexity
+dataset: Wikitext-2
+gpt2:
+  fp32_perplexity: 49.2198
+  by_bits:
+    8:
+      cosine: 0.9967
+      perplexity: 60.9273
+    10:
+      cosine: 0.9993
+      perplexity: 50.0806
+    12:
+      cosine: 0.9966
+      perplexity: 49.4863
+gemma3:
+  fp32_perplexity: 515.46
+  by_bits:
+    8:
+      cosine: 0.2035
+      perplexity: null
+    10:
+      cosine: 0.6998
+      perplexity: 1150.43
+    12:
+      cosine: 0.9587
+      perplexity: 454.72
+summary: GPT-2 at 12 bits is within 0.54% of the fp32 perplexity baseline.</pre></td></tr><tr><th>note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Gemma 3 collapses below 12 bits (cosine 0.20 at 8 bits). The paper attributes this to extremely large outlier activations plus extra RMSNorm layers in the transformer blocks, which block the orthonormal-rotation smoothing that works for GPT-2. Two oddities as printed: GPT-2&#x27;s cosine similarity is slightly WORSE at 12 bits (0.9966) than at 10 (0.9993), and Gemma 3&#x27;s 12-bit perplexity (454.72) is BETTER than its own fp32 baseline (515.46). Both reproduced verbatim from Table 4; neither is explained.</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>The contribution that matters is not cryptographic. It is a <em>certification argument</em>, and it is
+almost embarrassingly simple:</p>
+<blockquote class="q"><p>It just feeds the entire sequence of input and output tokens into the model at once, essentially
+performing a single inference step.</p><cite><b>DeepProve</b> · §3.1, Certification of the LLM Inference</cite></blockquote>
+
+<p>Because a causal attention mask means the model's prediction at position <code>t</code> cannot see position
+<code>t+1</code>, running one forward pass over the <em>concatenated</em> prompt-plus-answer sequence and checking
+that each position predicts its successor certifies the whole generation. Proving cost drops from
+quadratic in the token count to linear — really, to the cost of a single forward pass, whatever
+the answer length. Everything else in the paper (per-layer PIOPs for requantization, RMSNorm,
+grouped-query attention, RoPE; delayed requantization; outlier clamping) is competent
+engineering in service of that one observation.</p>
+<p>Two things genuinely distinguish it from the rest of the field. First, it is the only system here
+that <strong>proves round-by-round knowledge soundness for each component</strong> — "We formally prove that
+each component is round-by-round (knowledge) sound" — which is precisely the property that makes
+the Fiat–Shamir compilation safe, and therefore the only direct answer anyone in this repo has
+given to the Fiat–Shamir/GKR attack. Second, it is a <em>complete, open-source</em> system rather than a
+proof-of-concept for one layer, which is a fair criticism of <a href="../papers/zkgpt.html">zkGPT</a> and <a href="../papers/zkllm.html">zkLLM</a> and DeepProve
+is right to make it.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p>A <strong>single forward pass over the concatenated prompt-and-answer sequence</strong>, under <strong>greedy
+(argmax) decoding</strong>, at 12-bit quantization, against a model the prover committed to.</p>
+<p>Unpack that, because the abstract's "full LLM inference (i.e., for all generated tokens of a
+prompt)" invites a stronger reading than the system supports:</p>
+<ul>
+<li><strong>The prover does not re-run the generation loop.</strong> It proves one pass and <em>infers</em> the rest
+  from the attention mask. This is sound, and it is the paper's contribution — but the <em>cost</em> is
+  one forward pass, exactly like <a href="../papers/zkgpt.html">zkGPT</a> and <a href="../papers/zkllm.html">zkLLM</a>. What differs is what the paper counts
+  against that cost (see below).</li>
+<li><strong>Sampling is not proven.</strong> The certification depends on argmax giving determinism. The paper
+  sketches a de-randomization via a public randomness beacon and then states plainly: "we do not
+  include this in our implementation, same as all prior works on verifiable LLM inference." Every
+  benchmarked number is greedy decoding. Real serving uses temperature and top-p. Note that
+  <a href="../papers/ciphergpt.html">CipherGPT</a>, on the <em>privacy</em> side, does build a secure top-K sampling protocol — the zkML
+  column still has no answer here.</li>
+<li><strong>Zero-knowledge is not achieved.</strong> The paper defines zero-knowledge in an appendix and never
+  claims its construction satisfies it; there is no hiding commitment, no masking polynomial, no
+  ZK theorem. DeepProve is a succinct <em>argument</em>, not a zero-knowledge one. The weights are
+  committed, not hidden. That is fine for the "lazy cloud swapped the model" threat, and fatal for
+  the "model weights are a trade secret" motivation the introduction leans on.</li>
+<li><strong>The quantization is assumed, not proven.</strong> The prover picks the calibration set, the scale
+  factors, and the outlier-smoothing rotation. Nothing in the proof binds the committed integer
+  model to any floating-point model a user would recognise.</li>
+</ul>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The throughput metric is not the metric the baselines are measured with.</strong> DeepProve counts
+every token in the certified sequence against the cost of one forward-pass proof. Its comparison
+table converts <a href="../papers/zkgpt.html">zkGPT</a> and <a href="../papers/zktorch.html">ZKTorch</a> to the same units by counting <em>one</em> token per proof —
+which is what those papers claim, but not what their provers <em>cost</em>. zkGPT's forward pass over
+its context would, under DeepProve's own certification argument, certify nearly all of those
+tokens too; the argument is a property of the GPT-2 architecture, not of DeepProve's prover. So
+the headline multiple is mostly the certification insight, and it is a <em>free</em> insight that any of
+these provers could adopt. The genuine prover-speed advantage is unmeasured, and is certainly far
+smaller.</p>
+<p><strong>The comparison table normalises the wrong variables.</strong> It lists CPU, thread count and RAM — and
+omits the two variables that actually decide the answer: sequence length (DeepProve's context is
+an order of magnitude longer than zkGPT's, and attention is quadratic in it) and bit width
+(12 vs 16). Both cut in DeepProve's favour once you see them.</p>
+<p><strong>The fastest prior system is excluded.</strong> "We exclude the comparison with zkLLM [SLZ24] since
+their performance numbers rely on GPU acceleration and are not replicable in CPU environments."
+The hardware objection is legitimate. But by <a href="../papers/zkgpt.html">zkGPT</a>'s own measurements, zkLLM's prover beats
+zkGPT's on GPT-2 — so the abstract's speedup over "the state of the art" is measured against a
+system that, on the evidence of the very paper it cites, is not the state of the art.</p>
+<p><strong>The Gemma 3 accuracy table is not a usable accuracy claim</strong>, and the reason is not the one the
+paper gives. Its floating-point Gemma 3 perplexity baseline is an order of magnitude worse than
+its floating-point GPT-2 baseline on the same dataset under the same protocol — for a model with
+more than twice the parameters. Either the 256-token non-overlapping evaluation window suits
+Gemma 3 badly, or the baseline is misconfigured. You cannot measure quantization damage against a
+broken baseline, which is why the quantized model <em>beats</em> it.</p>
+<div class="audit"><span class="audit-h">Internal inconsistencies, printed without comment</span><p>Three, and the repo owner should know all of them:</p>
+<ol>
+<li><strong>Peak throughput contradicts itself.</strong> §5 states the peak is 174 TPM "for GPT-2 at sequence
+   lengths 512 using BaseFold", then in the next paragraph: "Remarkably, the best TPM we achieved
+   in our experiments is 175, obtained for GPT-2 at sequence length <strong>256</strong> using the secondary
+   machine." The same section also asserts throughput <em>increases</em> with sequence length. Table 3
+   uses 175.08. The abstract uses 174. Three numbers, two sequence lengths, one claimed trend that
+   contradicts the claimed peak.</li>
+<li><strong>Verification time.</strong> The abstract says 1–3.7 s; §1.2 says ~1.2 s (GPT-2) and ~4 s (Gemma 3);
+   Table 1 prints 3.22 s and Table 2 prints 1.65 s for GPT-2 at the same sequence length on
+   different machines. There is no single verification figure in this paper.</li>
+<li><strong>Table 4's quantization curve is non-monotone in two places</strong> — GPT-2's cosine similarity is
+   <em>worse</em> at 12 bits (0.9966) than at 10 (0.9993), and Gemma 3's 12-bit perplexity (454.72) is
+   <em>better</em> than its own fp32 baseline (515.46). Neither is explained.</li>
+</ol></div>
+
+<p><strong>The memory criticism is self-inflicted.</strong> §1 dismisses <a href="../papers/zktorch.html">ZKTorch</a> because "the experimental
+evaluation of [CTK25] reports results for a machine with 4 TB RAM." §5 then concedes that
+DeepProve at its largest evaluated instance needs most of a workstation's memory, and that
+"proving models with more than 3 billion parameters, such as GPT-J, would likely require over a
+terabyte of RAM." That is the same objection, aimed at the same model class, arriving one
+paragraph too late.</p>
+<p><strong>Credit where it is due.</strong> The paper is unusually honest about its own overhead — it reports the
+plaintext CPU throughput of GPT-2 alongside its own, and concedes that for short-output queries
+the gap is close to three orders of magnitude. Most papers in this collection do not print the
+number that makes them look worst. This one does.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/ezkl.html">ezkl</a></li><li>GKR <span class="tag">external</span></li><li>Jolt (zkVM) <span class="tag">external</span></li><li>Lasso <span class="tag">external</span></li><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li><li><a href="../papers/zkgpt.html">zkGPT</a></li><li><a href="../papers/zkllm.html">zkLLM</a></li><li><a href="../papers/zkpytorch.html">zkPyTorch</a></li><li><a href="../papers/zktorch.html">ZKTorch</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/jolt-atlas.html">Jolt Atlas</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a><a href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare</a><a href="../private-inference/nonlinearities.html">The non-linearity problem, twice</a><a href="../properties/index.html">A claim about a model, not about a computation</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/quantization.html">Quantization, the hidden variable</a><a href="../zk-inference/what-is-proven.html">What is actually being proven</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>claim_kind: seq
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

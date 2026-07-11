@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LayerNorm — Operator atlas</title>
+<meta name="description" content="GPT-2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>LayerNorm</b></div><h2 class="ptitle">LayerNorm</h2><p class="psub">GPT-2</p><div class="math">$$Y[i,j] = \frac{X[i,j]-\mu_i}{\sqrt{\frac{1}{d}\sum_j (X[i,j]-\mu_i)^2 + \epsilon}}
+\\[12pt]
+\text{paper's identity:}\quad \mathrm{LayerNorm}(X[i,:]) = \mathrm{RMSNorm}\big(X[i,:] - \mu_i\big)\ \text{— but the code does }\textbf{not}\text{ reduce this way}$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>Centre each row, then rescale to unit variance.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>The same square root and reciprocal as RMSNorm, plus a mean that is itself a division by $d$. LayerNorm is also a documented source of the outlier activations that break quantization elsewhere in the model.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>A dedicated LayerNorm layer (not a reduction)</li><li>Committed mean + std-dev witnesses</li><li>Multiply by std, subtract mean, shift, clamping lookup</li><li>Keeps ε, unlike RMSNorm</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">The paper reduces LayerNorm to RMSNorm(X−μ); the code does not. LayerNorm is a fully separate layer with its own proof — it commits both mean and std-dev witnesses, keeps ε, and calls no RMSNorm code.</p><ul><li>Correction: our old page said "reduce to the RMSNorm protocol on X−μ." The implementation is a standalone <code>LayerNorm</code> layer with its own <code>LayerNormProvingData</code> and <code>LayerNormLookupVerifier</code>. It never invokes RMSNorm.</li><li>It commits <em>two</em> witnesses (the per-row mean and std-dev), and its <code>apply</code> multiplies by the std-dev, subtracts the committed mean, then shifts and looks up — a clamping table lookup, not a bare rescale.</li><li>Two things distinguish it from RMSNorm in code: it adds a sum/mean well-formedness check that RMSNorm lacks, and — unlike RMSNorm — it <strong>keeps ε</strong> (<code>.add_scalar(self.eps)</code>).</li></ul><figure class="code"><figcaption>zkml/src/layers/transformer/normalisation/layernorm/mod.rs · 307-319</figcaption><pre class="src">    fn apply(
+        &amp;self,
+        input: WrappedTensor&lt;Element&gt;,
+        table: &amp;Table,
+    ) -&gt; Result&lt;WrappedTensor&lt;Element&gt;&gt; {
+        let rescaled_input = input.mul(self.std_dev.clone())?;
+        let zero_mean_input = rescaled_input.sub(self.mean.clone())?;
+
+        let to_lookup = zero_mean_input
+            .add_scalar(self.rounding_constant())
+            .bitwise_right_shift_scalar(self.right_shift() as Element);
+        table.lookup_tensor(to_lookup)
+    }</pre><figcaption class="cap">LayerNorm&#x27;s own apply: multiply by std-dev, subtract the committed mean, shift, then a clamping table lookup — it does not call RMSNorm.</figcaption></figure></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">Assembled from ONNX primitives: ReduceMean is decomposed internally into ReduceSum + Div.</p><blockquote class="q"><p>Reduction Operations: ReduceSum along arbitrary axes; ReduceMean (decomposed internally into ReduceSum + Div). Math Functions: Rsqrt (reciprocal square root).</p><cite><b>Jolt Atlas</b> · §5.2</cite></blockquote><ul><li><code>ReduceMean</code> is explicitly "decomposed internally into <code>ReduceSum</code> + <code>Div</code>", and <code>ReduceSum</code> works along arbitrary axes.</li><li>The <code>Div</code> carries a non-deterministic advice value; the <code>Rsqrt</code> is a lookup. Composition gives LayerNorm with no bespoke protocol.</li><li>Elegant in the graph-compiler sense — you get LayerNorm for free once the primitives exist — but it inherits exactly the accuracy concern DeepProve raises about quantizing inverses and square roots.</li><li>In code it bottoms out in the same <a href="#/op/rmsnorm">fused <code>MeanOfSquares</code> + <code>Rsqrt</code></a> chain, so the same "honesty rests on the remainder range checks" caveat applies. Note the repo ships only GPT-2 / nanoGPT models, so the norm operators are proven-out by unit tests but not exercised by a real RMSNorm/LayerNorm LLM end-to-end.</li></ul></div></div><div class="scheme" data-p="hao-et-al"><div class="scheme-head"><span class="pname"><a href="../../papers/hao-et-al.html" style="color:inherit">Hao et al.</a></span></div><div class="scheme-body"><p class="tldr">Normalization is a named target, covering batch and layer norm together: $y_i = \gamma\,(x_i - \mu)/\sigma + \beta$, with the reciprocal square root discharged as a first-class lookup-based building block.</p><ul><li>The protocol is built from the reciprocal-square-root building block, which -- like division -- is a digit-decomposed table lookup refined by a fixed number of iterations ($I = 1$ by default, at a 6-bit lookup).</li><li><strong>This is the 'standard approach' DeepProve explicitly rejects</strong>: quantize the inverse square root and eat a rounding error per row, per layer. DeepProve's objection is that these errors accumulate through the variance sum and crater accuracy. Hao et al. take the rejected path and report no accuracy measurement, so the objection is neither confirmed nor answered.</li><li>It also directly attacks Mystique's worst operator: Batch Normalization consumed the majority of Mystique's ResNet-101 prover precisely because of the float/fixed conversions this paper deletes.</li><li>The reported shapes are small -- normalization over dimension 16, a CIFAR-class shape. An LLM's LayerNorm runs over the model dimension, and the digit-decomposition cost model is sensitive to input range, so these figures should not be extrapolated to a transformer.</li></ul></div></div><div class="pager"><a href="../../zk-inference/operators/rmsnorm.html">← previous<span>RMSNorm</span></a><a class="next" href="../../zk-inference/operators/gelu.html">next →<span>GeLU activation</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

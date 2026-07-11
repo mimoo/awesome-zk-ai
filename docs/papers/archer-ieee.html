@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Archer et al. (IEEE cost) — zkAI</title>
+<meta name="description" content="The Cost of IEEE Arithmetic in Secure Computation">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../numerics/index.html">Numerics</a> · <b>Archer et al. (IEEE cost)</b></div><h2 class="ptitle">Archer et al. (IEEE cost)</h2><p class="psub">The Cost of IEEE Arithmetic in Secure Computation</p><p class="authors">David W. Archer, Shahla Atapoor, Nigel P. Smart</p><div class="pmeta"><div><dt>Venue</dt><dd>LATINCRYPT 2021</dd></div><div><dt>Date</dt><dd>2021</dd></div><div><dt>Proof system</dt><dd>n/a -- MPC (Scale-Mamba, LSSS + binary circuits), not ZK</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2021/054">https://eprint.iacr.org/2021/054</a></dd></div></div><h3 class="head">Approach</h3><div class="prose"><p>exact-ieee754</p></div><h3 class="head">Notes</h3><div class="prose"><p>The origin of the double-precision gate counts that ZIP and ZKLP both quote, and which the zkML literature leans on when it calls floats "infeasible". MPC rather than ZK, but it is where the numbers come from, so it is worth pinning down. PRIMARY TABLE (Sec 3, IEEE-754-compliant FP64 circuits, compiled via CBMC-GC to Bristol Fashion, OR gates removed so only AND/XOR/INV remain):
+  add: 5,385 AND | 8,190 XOR | 2,062 INV | AND-depth 235
+  mul: 19,626 AND | 21,947 XOR | 3,326 INV | AND-depth 129
+  div: 82,269 AND | 84,151 XOR | 17,587 INV | AND-depth 3,619
+PROVENANCE NOTE, verified by us: the figures "15,637 add / 44,899 mul" quoted by ZIP and by ZKLP are the TOTAL gate counts, i.e. AND+XOR+INV summed from the rows above (5385+8190+2062 = 15,637; 19626+21947+3326 = 44,899). Both secondhand quotes are arithmetically correct. But the total is a generous way to state the cost: in most MPC/ZK settings the AND gates dominate (XOR is often free), so the AND-only cost is 5,385 / 19,626 -- roughly 3x and 2x smaller. Archer et al. go further and say that for their LSSS-based engine "the dominant cost is not the number of AND gates but the DEPTH of the AND gates". So when the zkML literature cites ~45k gates for an FP64 multiply as evidence that floats are hopeless, it is citing the largest of several defensible numbers, transplanted from MPC into a ZK argument. That does not make the conclusion wrong -- 19,626 AND gates is still enormous next to a field multiply -- but the figure deserves the asterisk.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>The first careful measurement of what <strong>IEEE-754 compliance actually costs in secure computation</strong>,
+set against the two real-number approximations the MPC world had settled on instead: Catrina–Saxena
+fixed point, and MPC "floating point" (which is not IEEE floating point). The authors compile
+IEEE-compliant double-precision addition, multiplication and division to Boolean circuits, run them
+under binary-circuit MPC, run the LSSS-based approximations under Scale-Mamba, and compare.</p>
+<p>The paper's importance to this SoK is entirely secondhand: <strong>it is where the double-precision gate
+counts come from.</strong> When <a href="../papers/zip.html">ZIP</a> argues that hardcoding IEEE-754 into a circuit is hopeless, and when
+<a href="../papers/zklp.html">ZKLP</a> tabulates the naive-emulation baseline it beats, both are quoting Archer. It is upstream of
+the numerics argument in the verifiability column, and almost nobody who cites it has read it.</p>
+<p>Its own conclusion is not the one it gets cited for:</p>
+<blockquote class="q"><p>We compare the relative performance, and conclude that the addition cost of IEEE compliance maybe too
+great for some applications. Thus in the secure domain standards bodies may wish to examine a
+different form of real number approximations.</p><cite><b>Archer et al.</b> · Abstract</cite></blockquote>
+
+<p>That is not "use fixed point." That is <em>"the secure-computing community should go and design a better
+real-number standard,"</em> which is a live research call and not a settled verdict.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p>Nothing — it is MPC, and it produces no proof. There is no prover, no verifier, no soundness
+argument; the string "zero-knowledge" does not appear anywhere in the paper.</p>
+<p>What it <em>measures</em> is gate counts and wall-clock for three IEEE-754 double-precision operations under
+<strong>binary-circuit MPC</strong> (garbled circuits, and Q2-access-structure LSSS modulo 2), against
+<strong>arithmetic-circuit MPC</strong> over <code>F_p</code> for the approximations. Its headline table gives AND, XOR and
+INV counts, plus AND-depth, for <code>add</code>, <code>mul</code> and <code>div</code>.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p>Not the paper. The paper is careful, honest and says exactly what it measured. What deserves
+suspicion is <strong>how the verifiability column quotes it</strong>, and there are two distinct problems.</p>
+<p><strong>One: the cost model does not transfer, and Archer says so.</strong> These are gate counts for <em>Boolean</em>
+circuits under <em>MPC</em>. In that setting XOR is often free and the real cost is depth, which the authors
+state outright:</p>
+<blockquote>
+<p>since when operating in the Q2-domain using an LSSS-based MPC engine modulo 2 the dominant cost is
+not the number of AND gates but the <strong>depth</strong> of the AND gates in the circuit.</p>
+</blockquote>
+<p>So even inside its own paper, the gate <em>count</em> is not the figure of merit. Transplanting a total gate
+count from garbled-circuit MPC into a claim about <em>SNARK constraint counts</em> — a completely different
+arithmetization, with a completely different cost model, over a large prime field rather than <code>F_2</code> —
+is a category error. The conclusion it is used to support (floats are expensive in a circuit) may well
+be right; this is simply not evidence for it in the form it is being used.</p>
+<p><strong>Two: the number that gets quoted is the largest of several defensible ones.</strong> The figures that
+<a href="../papers/zip.html">ZIP</a> and <a href="../papers/zklp.html">ZKLP</a> both reproduce for FP64 are the <strong>AND + XOR + INV totals</strong>, summed across the
+rows of Archer's table. Both secondhand quotes are arithmetically correct — we checked, and
+<code>papers.yml</code> records the derivation. But the AND-only cost, which is what most MPC and ZK settings
+actually pay for, is a few times smaller; and by Archer's own argument neither is the right metric
+for their engine.</p>
+<p>So when the zkML literature cites a five-figure gate count for a double-precision multiply as proof
+that floating point is hopeless, it is citing <strong>the largest of several defensible numbers, from a
+cost model that does not apply, in support of a conclusion the source paper does not draw.</strong> The
+conclusion may survive all of that — a few thousand AND gates is still enormous beside a field
+multiply, and nothing here threatens sum-check on integer matmuls. But the figure deserves its
+asterisk, and it has never been given one.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>What Archer actually asked for, nobody built</h5><p>Archer's closing recommendation is that standards bodies design a real-number approximation <em>tailored
+to the secure domain</em>, rather than importing IEEE-754 wholesale or falling back on ad-hoc fixed point.</p>
+<p>Read the numerics cluster as a set of uncoordinated answers to that call. <a href="../papers/garg-fp.html">Garg et al. (FP)</a> relaxes the
+semantics to a relative-error model. <a href="../papers/zklp.html">ZKLP</a> keeps IEEE and moves the hard parts into lookups.
+<a href="../papers/range-arithmetic.html">Range-Arithmetic</a> keeps fixed point and proves the rounding arithmetically. <a href="../papers/secfloat.html">SecFloat</a> rebuilds
+the operations from crypto-friendly integer primitives. Four incompatible proposals, in two
+literatures that do not cite each other, and no standard.</p></div></div></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li class="none">none recorded</li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/garg-fp.html">Garg et al. (FP)</a></li><li><a href="../papers/secfloat.html">SecFloat</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

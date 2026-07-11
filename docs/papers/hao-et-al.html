@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hao et al. — zkAI</title>
+<meta name="description" content="Scalable Zero-Knowledge Proofs for Non-Linear Functions in Machine Learning">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>Hao et al.</b></div><h2 class="ptitle">Hao et al.</h2><p class="psub">Scalable Zero-Knowledge Proofs for Non-Linear Functions in Machine Learning</p><p class="authors">Meng Hao, Hanxiao Chen, Hongwei Li, Chenkai Weng, Yuan Zhang, Haomiao Yang, Tianwei Zhang</p><div class="pmeta"><div><dt>Venue</dt><dd>USENIX Security 2024</dd></div><div><dt>Date</dt><dd>2024-08-01</dd></div><div><dt>Proof system</dt><dd>Interactive ZK / sVOLE-based (designated verifier), same substrate as Mystique. Non-linear functions by digit decomposition + table lookup, instantiated from ZK proofs of read-only memory (ZK-ROM) rather than a polynomial lookup argument</dd></div><div><dt>Hardware</dt><dd>AWS c5.9xlarge, Intel Xeon 8000 @ 3.6 GHz, single thread. Bandwidth simulated at 200 / 500 / 1000 Mbps and is a first-order cost.</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Uses ZK</dt><dd>yes</dd></div><div><dt>Open source</dt><dd>yes</dd></div><div><dt>Paper</dt><dd><a href="https://www.usenix.org/conference/usenixsecurity24/presentation/hao">https://www.usenix.org/conference/usenixsecurity24/presentation/hao</a></dd></div><div><dt>Code</dt><dd><a href="https://github.com/CryptMatrix/ZKMath">https://github.com/CryptMatrix/ZKMath</a></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>proving time s</th><th>communication mb</th></tr></thead><tbody><tr><td>ReLU (operator)</td><td>2.107</td><td>30.137</td></tr><tr><td>Softmax (operator, dim 10)</td><td>87.131</td><td>816.33</td></tr><tr><td>GELU (operator)</td><td>37.628</td><td>338.182</td></tr><tr><td>Normalization (operator, dim 16)</td><td>192.826</td><td><span class="na">—</span></td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>model_note:</b> Table 5, 200 Mbps, AMORTISED OVER A BATCH of 10^5 evaluations at fixed-point scale 12 -- this is not the cost of one ReLU. The batch is load-bearing: the paper&#x27;s O(1)-multiplication claim holds only for N &gt;&gt; T, where T is the lookup-table size (2^12 by default).</p><p style="font-size:13px;color:#6f7d86"><b>model_note:</b> Table 5, 200 Mbps, batch of 10^5 evaluations, vector dimension 10 -- a CIFAR-class shape, not an LLM&#x27;s sequence-length softmax. Softmax is where the improvement over Mystique is largest, because it is what most punished Mystique&#x27;s arithmetic-to-Boolean round trip (exponentiation AND division inside a Boolean circuit).</p><p style="font-size:13px;color:#6f7d86"><b>model_note:</b> Table 5, 200 Mbps, batch of 10^5. The one operator explicitly aimed at LLMs. GELU reduces to Tanh, Tanh to Sigmoid, Sigmoid to digit-decomposed exponential and division.</p><p style="font-size:13px;color:#6f7d86"><b>model_note:</b> Table 5, 200 Mbps, batch of 10^5, dimension 16. Built on the reciprocal-square-root building block -- exactly the &quot;standard approach&quot; DeepProve rejects on accuracy grounds. Whether the rejection is right is untested here, because no accuracy is reported.</p><h3 class="head">Notes</h3><div class="prose"><p>CORRECTION: the previous note here read "Not open-sourced (per zkGPT)". That was secondhand from zkGPT's related-work section and is WRONG -- §7.1 of the paper states "The source code is available at https://github.com/CryptMatrix/ZKMath". Proves individual non-linear OPERATORS, never an end-to-end model: there is no CNN or transformer benchmark, and consequently NO accuracy number for any model at any precision. This matters because the paper replaces Mystique's IEEE-754 float circuits (chosen precisely to protect accuracy through depth) with fixed-point digit tables at scale 12, running division with zero refinement iterations -- and never measures the cost of that swap. Inherits Mystique's proof object: interactive, designated-verifier, so the reported megabytes are COMMUNICATION, not a proof size.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>One substitution, applied systematically, on top of <a href="../papers/mystique.html">Mystique</a>'s substrate.</p>
+<p>Hao et al. diagnose that in <a href="../papers/mystique.html">Mystique</a> the non-linear layers dominate — not because non-linearity
+is inherently expensive, but because of <em>how</em> Mystique reaches it. Every non-linear function forces
+an arithmetic→Boolean conversion (<code>zk-edaBits</code>) followed by evaluation in a Boolean circuit, where
+exponentiation, division and reciprocal square root each cost thousands of multiplication gates.
+Their fix is to delete both steps: <strong>evaluate the non-linear function by table lookup, over
+arithmetic values, never leaving 𝔽ₚ.</strong></p>
+<p>The obvious objection is that a faithful table for <code>y = f(x)</code> over a 61-bit prime field has ≈2⁶¹
+entries. The answer is <strong>digit decomposition</strong>: split the input into a constant number of small
+digits (5–12 bits), look each digit up in its own small table, and rebuild the function from the
+pieces with purpose-built comparison, truncation and most-significant-non-zero-bit protocols. From
+those blocks they compose exponentiation, division and reciprocal square root, and from <em>those</em>,
+ReLU, sigmoid, GELU, softmax, maxpooling and normalization.</p>
+<p>Two details are worth the SoK's attention.</p>
+<p><strong>The lookup is instantiated from ZK-ROM, not from a polynomial lookup argument.</strong> For <code>N</code> lookups
+into a size-<code>T</code> public table the cost is <code>T + 2N</code> multiplications, so:</p>
+<blockquote class="q"><p>considering N ≫ T , the amortized computation complexity per lookup is 2 multiplications.</p><cite><b>Hao et al.</b> · §3.5, ZK proofs of table lookup from ZK-ROM</cite></blockquote>
+
+<p>They explicitly considered and rejected the lookup arguments the rest of this section is built on:
+they re-ran Caulk and found it far slower per amortized access at the same table size, and they
+argue Lasso's decomposability requirement does not fit their tables. This is one of very few places
+in the literature where someone benchmarks a folklore choice instead of inheriting it.</p>
+<p><strong>The convergent evolution is the real finding.</strong> Strip the cryptography and Hao et al.'s recipe is
+the same recipe as the sum-check lineage: decompose a wide value into narrow digits, put the digits
+in small tables, and reassemble. That is DeepProve's chunked requantization, zkLLM's base-<code>b</code> digit
+decomposition inside <code>zkAttn</code>, and Jolt Atlas's prefix-suffix decomposition — arrived at
+independently, from a VOLE starting point, with ZK-ROM standing in for LogUp. Their softmax even
+subtracts the row max before exponentiating, exactly as <a href="../papers/zkllm.html">zkLLM</a>'s shift-invariance trick does, and
+for the same reason: it bounds the input range so the table can be small. Four systems, four
+cryptographic substrates, one idea.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>That a large batch of evaluations of a single non-linear function was computed correctly — in
+isolation, with no model around it.</strong></p>
+<p>This is a <em>component supplier</em>, not a competitor, and the distinction is the whole point of the
+paper's evaluation and the whole risk in reading it.</p>
+<p><strong>There is no model.</strong> The evaluation tables are indexed by <em>function</em> — ReLU, sigmoid, GELU,
+softmax, maxpooling, normalization — not by network. No CNN is proven end to end, no transformer is
+proven end to end, and consequently <strong>no accuracy number appears anywhere in the paper</strong>, for any
+model, at any precision.</p>
+<p><strong>It inherits <a href="../papers/mystique.html">Mystique</a>'s proof object wholesale</strong>, and therefore all of its limits:</p>
+<blockquote class="q"><p>in our implementation, we use the recent VOLE-based interactive designated-verifier ZK proofs
+[56–59] due to their fast prover time and small memory footprint.</p><cite><b>Hao et al.</b> · §3.3, Zero-knowledge proofs</cite></blockquote>
+
+<p>Interactive, designated-verifier, one verifier at a time, communication rather than a proof.
+Everything the <a href="../papers/mystique.html">Mystique</a> note says about what that costs you applies here unchanged. A reader who
+sees the headline speedup and files this under "fast zkML" has mis-filed it: it is fast
+<em>designated-verifier</em> zkML, and it is not competing with <a href="../papers/deepprove.html">DeepProve</a> or <a href="../papers/jolt-atlas.html">Jolt Atlas</a> for the same
+job.</p>
+<p><strong>The figures are amortized over a batch, and the batch size is load-bearing.</strong> The default
+configuration is 10⁵ instances of the function at fixed-point scale 12. The <code>O(1)</code>-multiplications
+claim is explicitly an amortized claim requiring <code>N ≫ T</code> — with a 2¹²-entry table, the <code>T</code> term is
+only negligible because <code>N</code> is large. This is a fair assumption for ML (they note a single ResNet-50
+layer contains hundreds of thousands of ReLUs) but it is an assumption, and the per-operator rows in
+<code>papers.yml</code> are batch figures, not the cost of one ReLU.</p>
+<p><strong>So what does proving an operator in isolation tell you about proving a model?</strong> Two of the three
+things you need, and not the third.</p>
+<ul>
+<li><em>It does tell you the seam is gone.</em> The cost Hao et al. removes — arithmetic↔Boolean conversion —
+  is precisely the boundary between a model's linear and non-linear layers. That is the one component
+  whose isolated speedup you would expect to survive composition, because the seam is exactly what a
+  real model does over and over.</li>
+<li><em>It does not tell you the composed cost.</em> No end-to-end run means the linear layers, the
+  layer-to-layer plumbing, and the real shapes are unmeasured. The reported softmax is over a
+  10-element vector and the normalization over 16 — CIFAR-class shapes. An LLM's softmax is over a
+  sequence and its LayerNorm over the model dimension; the digit-decomposition cost model is
+  sensitive to input range, and those ranges are not the ones tested.</li>
+<li><em>It does not tell you the accuracy cost at all</em> — see below, because that is the one that matters.</li>
+</ul>
+<h2 id="what-to-distrust">What to distrust</h2>
+<div class="audit"><span class="audit-h">The paper undoes Mystique&#x27;s accuracy mechanism and never measures the damage</span><p>This is the central thing to distrust, and it is a gap rather than an error.</p>
+<p><a href="../papers/mystique.html">Mystique</a> evaluates non-linearities as <strong>IEEE-754 single-precision floating-point circuits</strong>, and
+says why — it was worried about error amplification through a deep network:</p>
+<blockquote>
+<p>This could particularly be a concern for deep neural networks with hundred of layers where the
+error could propagate and get amplified. <em>(Mystique, §7.2)</em></p>
+</blockquote>
+<p>It then backs the worry with the best accuracy evaluation in this cluster — the full CIFAR-10 test
+set, a reported accuracy delta, and the ℓ₂ distribution of the error.</p>
+<p>Hao et al. <strong>replaces those float circuits with fixed-point digit tables at scale 12</strong> — and reports
+no accuracy evaluation whatsoever. Not on CIFAR-10, not on a language model, not even a numerical
+error bound against the float reference.</p>
+<p>It is worse than a missing table, because the approximations are <em>tunable and set to the cheapest
+setting</em>: division runs with <code>I = 0</code> refinement iterations and reciprocal square root with <code>I = 1</code>,
+with lookup bitlengths of 5 and 6 bits, "following prior work". Division with zero refinement
+iterations is a table-initialised approximation and nothing more — and division and reciprocal square
+root are exactly what softmax and normalization are built from.</p>
+<p>So the speedup is real and the price is unmeasured. The correct summary of this paper is <em>"the same
+functions, far cheaper, at an accuracy cost nobody has reported"</em> — and given that the baseline chose
+its representation <strong>specifically to protect accuracy at depth</strong>, that is the first experiment
+anybody should ask for.</p></div>
+
+<p><strong>The baseline is single, and in-lineage.</strong> Every comparison in the paper is against <a href="../papers/mystique.html">Mystique</a>.
+The comparison itself is scrupulous — they re-ran Mystique's own EMP implementation under their own
+network and hardware conditions, which is more than most papers in this repo do — but "the
+state-of-the-art ZK proofs for ML" is doing a lot of work. By 2024, <a href="../papers/zkcnn.html">zkCNN</a> and <a href="../papers/zkllm.html">zkLLM</a> existed,
+and both prove non-linearities via lookup arguments in a sum-check system. Hao et al. dismiss
+<a href="../papers/zkcnn.html">zkCNN</a> in a sentence — "specialized and may not be readily extended to more complex functions" —
+and note it assumes a gap between the field size and the input size. That may well be right, but it
+is an argument, not a measurement. The headline improvement is over the state of the art <em>within the
+VOLE lineage</em>.</p>
+<div class="audit"><span class="audit-h">`papers.yml` says &quot;not open-sourced&quot;. The paper says otherwise.</span><p>The <code>hao-et-al</code> entry carries the note <em>"Not open-sourced (per zkGPT)"</em> — a claim inherited
+secondhand from <a href="../papers/zkgpt.html">zkGPT</a>'s related-work section, with <code>numbers_source: survey</code>. The primary source
+disagrees, in §7.1:</p>
+<blockquote>
+<p>The source code is available at https://github.com/CryptMatrix/ZKMath.</p>
+</blockquote>
+<p>A secondhand "not open-sourced" is exactly the kind of claim that ages into a quiet slander. It
+should be corrected, and the entry promoted to <code>primary</code> now that the PDF has been read.</p></div>
+
+<p><strong>Watch the <code>T + 2N</code> cost model when you leave the amortized regime.</strong> The lookup cost is not <code>O(1)</code>;
+it is <code>O(1)</code> <em>given</em> <code>N ≫ T</code>, and <code>T</code> grows exponentially in the digit width. The paper is completely
+upfront about this — it is why they observe a jump in runtime when the scale crosses 12 and a second
+lookup table is needed. It is not a criticism, but it is the number to recompute before assuming these
+results transfer to an operator that is evaluated a few thousand times rather than a few hundred
+thousand.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li>Cheetah <span class="tag">external</span></li><li>Lasso <span class="tag">external</span></li><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/safetynets.html">SafetyNets</a></li><li>SIRNN <span class="tag">external</span></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/range-arithmetic.html">Range-Arithmetic</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/vision-and-trees.html">Vision and trees</a><a href="../zk-inference/what-is-proven.html">What is actually being proven</a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

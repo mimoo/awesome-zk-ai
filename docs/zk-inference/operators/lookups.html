@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lookup arguments &amp; range checks — Operator atlas</title>
+<meta name="description" content="how non-linearity is discharged">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Lookup arguments &amp; range checks</b></div><h2 class="ptitle">Lookup arguments &amp; range checks</h2><p class="psub">how non-linearity is discharged</p><div class="math">$$\text{prove every looked-up row appears in table } T \iff \sum_{i}\frac{M_i}{\alpha + t_i} = \sum_{j}\frac{1}{\alpha + \ell_j}
+\\[8pt]
+\alpha\ \text{a verifier challenge},\quad M_i\ \text{the multiplicity of row } i
+\\[6pt]
+\text{a lookup into a table whose domain is exactly } [\min,\max]\ \textbf{is}\ \text{a range check}$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>The primitive that discharges everything a field cannot compute cheaply — exp, GeLU, right-shifts, sign, "is this zero," "is this in range." The prover shows the multiset of looked-up rows is contained in a fixed table $T$ by proving the <strong>LogUp fractional-sum identity</strong>. Range checks are not a separate mechanism: a lookup whose table is exactly the interval $[\min,\max]$ <em>is</em> a range check, which is why our old separate pages are merged here.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>DeepProve computes each side of the identity with a <strong>GKR fraction tree</strong>, not one big sumcheck: a binary tree of $a/b + c/d = (ad+bc)/(bd)$ nodes halving the width each layer until one fraction remains. Two subtleties the paper glosses: each denominator entry is a random linear combination of <em>all</em> columns of its row (tables are genuinely multi-column), and the two sides use different numerators — the table side carries multiplicities, the lookup side hard-codes every numerator to $-1$.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>LogUp fractional-sum identity</li><li>GKR fraction tree (Fraction add nodes)</li><li>Multi-column denominators via a column-separation challenge</li><li>Multiplicities Mᵢ = count(lookups)/count(table rows), by field inverse</li><li>Decomposable tables: split a wide value into k-bit chunks</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="zkllm"><div class="scheme-head"><span class="pname"><a href="../../papers/zkllm.html" style="color:inherit">zkLLM</a></span></div><div class="scheme-body"><p class="tldr">tlookup — the lookup argument DeepProve's descends from. Same LogUp identity, but run as one parallel sumcheck instead of a GKR tree, so it maps onto a GPU.</p><blockquote class="q"><p>tlookup, a parallelized lookup argument designed for non-arithmetic tensor operations in deep learning, offering a solution with no asymptotic overhead.</p><cite><b>zkLLM</b> · Abstract</cite></blockquote><ul><li>tlookup proves set inclusion $S \subseteq T$ via the LogUp identity $\sum_i 1/(\beta+S_i) = \sum_i m_i/(\beta+T_i)$, checked at a random $\beta$. Multiplicities $m$ come from counting, in $O(D)$.</li><li>The point is parallelism. Prior lookup arguments were sequential (univariate polynomials); tlookup runs the identity as one sumcheck over tensors, so it uses a GPU. No asymptotic overhead in time or memory.</li><li>It is the foundation for zkAttn (softmax) and every activation. DeepProve keeps the identity but computes it with a GKR fraction tree and batches many table sizes into one proof.</li></ul></div></div><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">LogUp-GKR with three shared 16-bit auxiliary tables and one op-specific value table. Exactly eight table types exist — and there is no 'clamp table' or 'argmax table'; clamping is a selector folded into the sumcheck.</p><ul><li>The acceptance condition is that the combined numerator over all instances is <strong>zero</strong> and the combined denominator non-zero. The lookup side sets every numerator to $-1$; the table side carries multiplicities $M_i=\mathrm{count(lookups)}/\mathrm{count(table\ rows)}$ computed by a field inverse, so non-power-of-two tables padded with repeated rows still satisfy the identity.</li><li>There are exactly eight <code>TableType</code>s — <code>Exp, GeLU, ReLU, SiLU, Requantise, ShiftCheck, SignedZeroCheck, ZeroCheck</code> — generated on demand as an input range, never materialised as a stored array. Three of them are <em>shared, fixed 16-bit</em> auxiliary tables (ShiftCheck = pure range, ZeroCheck = "is this chunk zero," SignedZeroCheck = sign), independent of the 12-bit quantization width.</li><li>A wide accumulator (~62 bits) is range-checked by <strong>decomposition</strong>: split into a low value chunk (hits the op table) plus 16-bit shifted chunks (the requant shift, range-checked) and 16-bit zeroing chunks (the high bits, forced to zero). Clamping is not a table at all — it is the <em>product of the zeroing-chunk outputs</em> acting as a selector, multiplied into the value inside the lookup expression.</li><li>Instances of one proof type at different sizes are batched into a single GKR, required in decreasing-<code>num_vars</code> order and rolled in at the round where their height matches.</li></ul><figure class="code"><figcaption>zkml/src/lookup/logup_gkr/structs.rs · 48-58</figcaption><pre class="src">impl&lt;F: PrimeField, T: Borrow&lt;Fraction&lt;F&gt;&gt;&gt; AddAssign&lt;T&gt; for Fraction&lt;F&gt; {
+    fn add_assign(&amp;mut self, rhs: T) {
+        let rhs: &amp;Fraction&lt;F&gt; = rhs.borrow();
+        let numerator = (self.numerator * rhs.denominator) + (self.denominator * rhs.numerator);
+        let denominator = self.denominator * rhs.denominator;
+        *self = Fraction { numerator, denominator };
+    }
+}</pre><figcaption class="cap">The GKR node operation: adding two fractions a/b + c/d = (ad+bc)/(bd). The whole lookup is a tree of these.</figcaption></figure><figure class="code"><figcaption>zkml/src/lookup/table/mod.rs · 19-23</figcaption><pre class="src">/// The bit size for the zero check table.
+pub const ZERO_CHECK_TABLE_BIT_SIZE: usize = 16;
+
+/// The bit size for the shift check table.
+pub const SHIFT_CHECK_TABLE_BIT_SIZE: usize = 16;</pre><figcaption class="cap">The shared chunk-range tables are hard-coded to 16 bits — decoupled from the (default 12-bit) quantization width.</figcaption></figure></div></div><div class="scheme" data-p="hao-et-al"><div class="scheme-head"><span class="pname"><a href="../../papers/hao-et-al.html" style="color:inherit">Hao et al.</a></span></div><div class="scheme-body"><p class="tldr">The heart of the paper, and a genuinely different instantiation: the lookup argument is built from <strong>ZK proofs of read-only memory</strong>, not from LogUp, Lasso or a polynomial commitment. Amortised cost is 2 multiplications per lookup.</p><blockquote class="q"><p>considering N ≫ T , the amortized computation complexity per lookup is 2 multiplications.</p><cite><b>Hao et al.</b> · §3.5</cite></blockquote><blockquote class="q"><p>We re-run the source code of Caulk [61], and the results show that the ZK lookup protocol of Caulk costs 177.451ms for each amortized access on a table of size 2¹², while our protocol from ZK-ROM only requires 0.069ms (about 2571× better) for the same setting.</p><cite><b>Hao et al.</b> · §2.1</cite></blockquote><ul><li>For $N$ lookups into a public size-$T$ table the cost is $T + 2N$ multiplications. Because the table is public, its $T$ tuples are appended to the ROM's write set <em>in plaintext</em>, saving the $T$ multiplications the generic ZK-ROM would spend committing them.</li><li><strong>Range checks are the degenerate case</strong>, exactly as in the sum-check systems: a range check is a table lookup whose output is empty. Same unification DeepProve arrives at with its ShiftCheck / ZeroCheck tables.</li><li><strong>They benchmarked the folklore choice instead of inheriting it.</strong> Caulk was re-run and found far slower per amortised access at the same table size; Lasso was rejected because it wants decomposable or structured tables. Almost nobody else in this literature justifies their lookup argument empirically.</li><li>The amortisation is load-bearing and honestly stated: the cost is $O(1)$ per lookup <em>given</em> $N \gg T$. With a $2^{12}$-entry table and the default batch of $10^5$ instances that holds comfortably -- and the paper defends the regime by noting a single ResNet-50 layer contains on the order of 800K ReLUs -- but it is an assumption, and $T$ grows exponentially in the digit width.</li></ul></div></div><div class="pager"><a href="../../zk-inference/operators/sumcheck.html">← previous<span>The sumcheck protocol</span></a><a class="next" href="../../zk-inference/operators/composition.html">next →<span>Claims &amp; the backward pass</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requantization — Operator atlas</title>
+<meta name="description" content="rescale · round · shift · clamp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Requantization</b></div><h2 class="ptitle">Requantization</h2><p class="psub">rescale · round · shift · clamp</p><div class="math">$$y[i] \;=\;
+\begin{cases}
+2^{q-1}, & x[i] \ge 2^{q'-1}\\[4pt]
+-2^{q-1}+1, & x[i] \le -2^{q'-1}+1\\[4pt]
+\left\lfloor \dfrac{2^{f}\!\cdot\!\epsilon\cdot x[i] + 2^{f+\delta-1}}{2^{f+\delta}} \right\rfloor - 2^{q-1}, & \text{otherwise}
+\end{cases}$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>After a matmul, values are $q'$-bit with $q' \gg q$. Requantization brings them back to $q$ bits so the next lookup table can address them and the field never overflows. It fires after essentially every multiplication.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>It is a <em>division</em> and a <em>range-dependent branch</em> — the two things field arithmetic cannot express. And it is lossy, so doing it more often costs accuracy while doing it less often risks overflow. Prior work handles only the easy case where the input is guaranteed in-range.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>Power-of-two divisor ⇒ right shift ⇒ chunk decomposition</li><li>Lookup arguments over decomposable tables (Lasso/Jolt-style)</li><li>Range-check tables + sign/overflow-detector tables</li><li>Operator fusion with the following non-linearity</li><li>Delayed requantization: skip it when the field still has headroom</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">The paper describes an explicit two-case (in-range/out-of-range) construction with an InRange product. The code has neither: clamping is folded into the Requantise table, and the in/out-of-range distinction is carried by how many high-order zeroing chunks the decomposition needs.</p><blockquote class="q"><p>More than 50% of the prover cost comes from activation functions, Softmax, and requantization, with the latter being the most expensive component overall, accounting for 27% of total prover time. Consequently, optimizing any of these components would yield substantial improvements in overall prover performance.</p><cite><b>DeepProve</b> · §5</cite></blockquote><blockquote class="q"><p>Requantizing incurs accuracy loss and thus avoiding it increases the accuracy. This strategy is even more effective when using a large field 𝔽 during proving.</p><cite><b>DeepProve</b> · Appendix C</cite></blockquote><ul><li><strong>The core op is four steps:</strong> multiply by the fixed-point multiplier, add the rounding constant, right-shift, then a <em>Requantise table lookup that clamps internally</em>. There is no separate clamp gadget and no InRange product — <code>input.clamp(min,max)</code> is baked into the table's definition.</li><li><strong>The paper's "two cases" appear only as a table-set choice.</strong> <code>RequantCtx::lookup_tables</code> picks by the number of high-order zeroing chunks: 0 → <code>[ShiftCheck, Requantise]</code>; 1 → add <code>SignedZeroCheck</code>; more → add <code>ZeroCheck</code> too. The out-of-range machinery is those extra 16-bit chunk tables, not a branch in the protocol.</li><li>The wide accumulator is decomposed into a shifted part (the right-shift bits, range-checked), the value chunk (hits the Requantise table), and zeroing chunks (high bits forced to zero). The verifier never gets an oracle for the pre-shift value.</li><li><strong>Delayed requantization.</strong> An $N\times M$ by $M\times P$ integer matmul produces at most $2q + \log_2 M + 1$ bits. If that still fits the field and the next lookup's domain, skip the requant. A bigger field buys accuracy, not just speed.</li></ul><figure class="code"><figcaption>zkml/src/lookup/operation/mod.rs · 51-57</figcaption><pre class="src">        // Apply the fixed point multiplication, rounding and right shift
+        let rescaled_input = input
+            .mul_scalar(self.fixed_point_multiplier())
+            .add_scalar(self.rounding_constant())
+            .bitwise_right_shift_scalar(self.right_shift() as Element);
+        // Perform the lookup, the table will handle clamping internally
+        table.lookup_tensor(rescaled_input)</pre><figcaption class="cap">The core requant arithmetic: multiply by the fixed-point multiplier, add rounding, right-shift, then a table lookup that clamps internally — no separate clamp, no InRange product.</figcaption></figure><figure class="code"><figcaption>zkml/src/layers/requant/mod.rs · 382-397</figcaption><pre class="src">        match chunking_info.number_of_zeroing_chunks() {
+            0 =&gt; vec![Table::new_shift_check(), Table::new_requantise()],
+            1 =&gt; vec![
+                Table::new_shift_check(),
+                Table::new_requantise(),
+                Table::new_signed_zero_check(),
+            ],
+            _ =&gt; vec![
+                Table::new_shift_check(),
+                Table::new_requantise(),
+                Table::new_zero_check(),
+                Table::new_signed_zero_check(),
+            ],
+        }</pre><figcaption class="cap">The paper&#x27;s in-range/out-of-range &#x27;cases&#x27; are realized as a table-set choice keyed on the number of zeroing chunks.</figcaption></figure><div class="cost"><strong>27.3%</strong> of PIOP time and <strong>27.5%</strong> of witness-commitment time — the largest single line item in the prover.</div></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">No requantization protocol. Division is an ONNX op proven with a non-deterministic advice value.</p><ul><li>The execution trace records, for non-deterministic operations such as division, an <em>advice value</em> — the prover supplies the quotient and the relation is checked. That is the entire mechanism.</li><li>Nothing is said about when rescaling must fire, how overflow is prevented across a deep transformer, how table domains stay addressable, or what the accumulated rounding error does to accuracy.</li><li>Because Jolt Atlas is lookup-native over a large field, the pressure is different: the binding constraint is <em>lookup table domain size</em>, which is attacked by prefix-suffix decomposition and teleportation rather than by shrinking values back down.</li><li><strong>The "advice value" is more structured than the paper lets on.</strong> The fused-rebase seam supplies <code>rescaled = acc &gt;&gt; S</code> (<code>ClampAcc</code>) and remainder <code>R</code> (<code>RescaleRemainder</code>) as advice, forces <code>R ∈ [0,2^S)</code> by an identity range check, and proves <code>acc = rescaled·2^S + R</code> inside the operator's own sumcheck — no separate Div node. It is the single most reused gadget in the codebase (Einsum / Mul / Square / Cube / MeanOfSquares).</li></ul><div class="audit"><span class="audit-h">Audit surface</span><p>Uniqueness of the <code>(rescaled, R)</code> split is <strong>load-bearing on the <code>R &lt; 2^S</code> range check being complete</strong> — without it a prover shifts value between quotient and remainder. Confirm the range-check <code>log_K</code> equals <code>bits</code> and that <code>rebase_bits</code> is correct per operator (Cube uses <code>2S</code>). Range checks themselves are prefix-suffix Read-RAF Shout lookups into <code>UnsignedLessThanTable</code> with the read-value fixed to 1 (asserting "remainder &lt; bound" is TRUE) — some are soundness gates (requant uniqueness, Div), others completeness gates; the code isn't uniformly commented on which.</p></div></div></div><div class="scheme" data-p="hao-et-al"><div class="scheme-head"><span class="pname"><a href="../../papers/hao-et-al.html" style="color:inherit">Hao et al.</a></span></div><div class="scheme-body"><p class="tldr">Requantization exists here, and it is a first-class building block: <code>PosTrunc</code> / <code>Trunc</code>, table-lookup truncation protocols that fire after every fixed-point multiplication.</p><ul><li>After each fixed-point multiply the scale doubles and must be shifted back down. Hao et al. give this its own protocol pair -- <code>PosTrunc</code> (positive inputs) and <code>Trunc</code> (signed) -- built from the same digit-decomposition-plus-lookup machinery as everything else.</li><li>It is used <em>inside</em> the higher functions rather than as a separate layer: the exponential protocol, for instance, multiplies the per-digit lookups together and calls <code>PosTrunc</code> after each product to hold the scale.</li><li><strong>Cost tracks the truncation bitlength, and nothing else.</strong> The paper isolates this cleanly: varying the scale changes the runtime of <code>PosTrunc</code> and <code>Trunc</code> and of essentially nothing else in the building-block table.</li><li>This is the same operator that costs DeepProve the largest single share of its prover, reached from a different substrate -- and, as there, it is discharged by decomposing a wide value into narrow chunks and looking the chunks up.</li></ul></div></div><div class="pager"><a href="../../zk-inference/operators/quant.html">← previous<span>Quantization</span></a><a class="next" href="../../zk-inference/operators/clamp.html">next →<span>Clamping</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The hardest claim in the table — zkAI</title>
+<meta name="description" content="Proving inference means proving one pass over a fixed function. Proving training means proving an iterative, stochastic, data-dependent search for that function -- and then proving that the function y">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec on" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../zk-training/index.html">Proving training</a> · <b>The hardest claim in the table</b></div><h2 class="ptitle">The hardest claim in the table</h2><p class="lede">Proving inference means proving one pass over a fixed function. Proving training means proving an iterative, stochastic, data-dependent search for that function -- and then proving that the function you ended up with is the one you are showing people. Every system in this cell survives by refusing to prove part of that.</p><div class="rail"><a href="../papers/kaizen.html">Kaizen</a><a href="../papers/zkdl.html">zkDL</a><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a><a href="../papers/optimum-vicinity.html">Optimum Vicinity</a><a href="../papers/verilora.html">VeriLoRA / zkLoRA</a><a href="../papers/zkboost.html">ZKBoost</a><a href="../papers/veriml.html">VeriML</a><a href="../papers/zkmlaas.html">zkMLaaS</a><a href="../papers/summer.html">SUMMER</a><a href="../papers/zkprov.html">ZKPROV</a><a href="../papers/artemis.html">Artemis / Apollo</a></div><div class="prose"><p>A proof of training (zkPoT) is supposed to discharge a sentence like this:</p>
+<blockquote>
+<p>These weights $w$ are the output of running <em>this</em> training procedure, with <em>these</em>
+hyperparameters, on a dataset I committed to before I started.</p>
+</blockquote>
+<p>Read that sentence carefully, because almost none of it is about arithmetic. It quantifies over
+a dataset the verifier never sees, over a procedure that is stochastic, and over a computation
+that ran for a long time. <a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a> is the paper that pinned the definition down and then
+demonstrated it on logistic regression — the contribution is the definition and the feasibility
+experiment, not the scale. Everything that came after is an attempt to make that sentence cost
+less by proving less of it.</p>
+<div class="scrollx"><table class="matrix"><thead><tr><th>System</th><th>Model</th><th>Params</th><th>Prove (s)</th><th>Proof (MB)</th><th>Verify (s)</th></tr></thead><tbody><tr><th><a href="../papers/kaizen.html">Kaizen</a> <span class="prov primary" title="read in the paper"></span></th><td>VGG-11</td><td>10M</td><td>900</td><td>1.63</td><td>0.13</td></tr><tr><th><a href="../papers/zkdl.html">zkDL</a> <span class="prov primary" title="read in the paper"></span></th><td>8-layer DNN</td><td>10M</td><td>0.86</td><td>3.3e-05</td><td>0.19</td></tr><tr><th><a href="../papers/veriml.html">VeriML</a> <span class="prov survey" title="secondhand, from a survey"></span></th><td>Neural network</td><td>—</td><td>12</td><td><span class="na">—</span></td><td>0.99</td></tr><tr><th><a href="../papers/zkmlaas.html">zkMLaaS</a> <span class="prov survey" title="secondhand, from a survey"></span></th><td>Logistic regression</td><td>—</td><td>2.2</td><td>24.1</td><td>0.005</td></tr><tr><th><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a> <span class="prov primary" title="read in the paper"></span></th><td>Logistic regression</td><td>—</td><td>4208</td><td>350</td><td>26.5</td></tr><tr><th><a href="../papers/optimum-vicinity.html">Optimum Vicinity</a> <span class="prov primary" title="read in the paper"></span></th><td><span class="na">—</span></td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr><tr><th><a href="../papers/verilora.html">VeriLoRA / zkLoRA</a> <span class="prov survey" title="secondhand, from a survey"></span></th><td>LLaMA-2 (&lt;=13B)</td><td>13B</td><td>600</td><td><span class="na">—</span></td><td>4</td></tr><tr><th><a href="../papers/zkboost.html">ZKBoost</a> <span class="prov primary" title="read in the paper"></span></th><td><span class="na">—</span></td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr><tr><th><a href="../papers/summer.html">SUMMER</a> </th><td><span class="na">—</span></td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr><tr><th><a href="../papers/zkprov.html">ZKPROV</a> </th><td><span class="na">—</span></td><td>—</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr></tbody></table></div><div class="prov-key"><span><i class="prov primary"></i> primary — read in the paper</span><span><i class="prov survey"></i> survey — secondhand</span><span><i class="prov blog"></i> vendor claim, or provenance unrecorded</span></div>
+<h2 id="why-this-is-not-inference-but-more-steps">Why this is not "inference, but more steps"</h2>
+<p>The reflexive framing is that training is a forward pass repeated with a backward pass attached,
+so proving it should cost some multiple of proving inference. That framing is wrong in four
+separate ways, and each of them is a distinct engineering problem.</p>
+<p><strong>The witness is the whole run, not the final state.</strong> An inference proof's witness is the
+activations of one pass. A training proof's witness is every activation, every gradient, and
+every weight delta of every minibatch of every epoch. The final weights are a rounding error in
+that object. This is why the interesting per-system trick is almost always about <em>composition</em> —
+<a href="../papers/kaizen.html">Kaizen</a> recursively composes a per-iteration proof so that proof size and verifier time stay
+independent of how many iterations there were, and <a href="../papers/zkdl.html">zkDL</a>'s <code>FAC4DNN</code> circuit design
+deliberately aggregates across layers <em>and across training steps</em> without being bound by their
+sequential order. Both are answers to the same question: how do you avoid materializing the
+entire run as one circuit?</p>
+<p><strong>The computation is inherently sequential, and the proof system wants it not to be.</strong> Step
+$t+1$ consumes the weights produced by step $t$. That is a dependency chain as long as the
+training run, and it fights every parallel prover. Recursion (Kaizen) and reordering (zkDL) are
+the two known escapes, and both are the load-bearing idea of their paper rather than an
+optimization detail.</p>
+<p><strong>The statement is about data the verifier cannot see.</strong> Inference proofs let the verifier hold
+the input. Training proofs cannot — the dataset is the asset. So the dataset has to be
+<em>committed</em>, and the proof must additionally establish that the same commitment was consumed at
+every step. This is where cost quietly relocates: <a href="../papers/artemis.html">Artemis / Apollo</a> exists because the consistency
+checks binding committed parameters and data to the circuit can dominate the proof, and that
+effect is strictly worse when the committed object is a training set rather than one image.</p>
+<p><strong>Randomness is part of the statement, and it is adversarially useful.</strong> Initialization,
+minibatch order, dropout, augmentation: a training run is a function of its random tape. If the
+prover chooses the tape freely, "I trained correctly" is a much weaker claim than it sounds,
+because the prover may search over tapes until the run lands somewhere it likes. The honest
+version of the claim requires the randomness to be bound — committed in advance, or derived from
+a public beacon — before the prover knows what it will produce.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Nobody in this cell tells us how the random tape is bound</h5><p>We have no PDF for any paper in the training table, so we are reading abstracts, the survey's
+tables, and the authors' own summaries. Across those, not one of <a href="../papers/kaizen.html">Kaizen</a>, <a href="../papers/zkdl.html">zkDL</a>,
+<a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a>, <a href="../papers/verilora.html">VeriLoRA / zkLoRA</a> or <a href="../papers/zkboost.html">ZKBoost</a> is described as committing the training randomness
+ahead of the run, and none of the summaries states what a prover who grinds the seed can achieve.
+That may well be handled in the papers. It is not visible from outside them, and it is the first
+thing we would ask for.</p></div></div>
+
+<h2 id="fixed-point-training-is-not-the-training-you-did">Fixed-point training is not the training you did</h2>
+<p>Finite fields have no floats. Every system here therefore proves a <em>quantized</em> training run, and
+training is far less forgiving of that than inference is: quantization error in a forward pass is
+absorbed once, whereas quantization error in a gradient is fed back into the weights and
+compounds across steps. <a href="../papers/zkboost.html">ZKBoost</a> is the system that makes this visible, because it cannot
+simply prove XGBoost — it has to define a fixed-point XGBoost and then argue that the fixed-point
+variant reaches the same accuracy as the standard one.</p>
+<p>The consequence is worth stating plainly, because papers in this cell tend not to: a zkPoT
+certifies <em>a</em> training run, in the prover's arithmetic, of <em>a</em> model. It does not certify the run
+you would have gotten from your GPU stack, and the weights it certifies are the fixed-point
+weights. If a deployment then serves the float model, the proof covers a different object than
+the one answering queries. Nothing in the literature we can see addresses that seam.</p>
+<div class="audit"><span class="audit-h">What an auditor should ask a zkPoT first</span><p>Not "how fast is the prover." Ask: (1) what exactly is committed — data, hyperparameters, random
+tape, architecture, initial weights? (2) is the final committed model the model that gets served,
+bit for bit? (3) how many iterations does the proven run actually cover, and is that the whole
+run or one iteration extrapolated? (4) what happens if the prover restarts the run and only
+proves the attempt it liked?</p></div>
+
+<h2 id="the-scale-gap-is-not-a-detail-it-is-the-field">The scale gap is not a detail, it is the field</h2>
+<p>Read the table with the model column in mind rather than the timing column. The systems that
+prove <em>every step</em> prove them for logistic regression, a small CNN, a modest DNN, or a
+gradient-boosted tree. The one system that reaches a genuinely large model, <a href="../papers/verilora.html">VeriLoRA / zkLoRA</a>, gets
+there by not proving a training run at all — it proves a LoRA fine-tune, with the base model
+frozen. And a real pretraining run is orders of magnitude more steps over orders of magnitude
+more data than anything in this table.</p>
+<p>So the honest one-line summary of this cell is: <strong>nobody has proven the training of a model
+anyone would want to use, and the systems that come closest do so by changing the claim.</strong> The
+next page groups them by which part of the claim they gave up; the page after that asks, for each
+relaxation, what an adversary can still do.</p></div><div class="pager"><a href="../zk-testing/index.html">← previous<span>Proving a score</span></a><a class="next" href="../zk-training/systems.html">next →<span>The systems, grouped by what they gave up</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

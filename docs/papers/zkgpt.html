@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zkGPT — zkAI</title>
+<meta name="description" content="zkGPT: An Efficient Non-interactive Zero-knowledge Proof Framework for LLM Inference">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>zkGPT</b></div><h2 class="ptitle">zkGPT</h2><p class="psub">zkGPT: An Efficient Non-interactive Zero-knowledge Proof Framework for LLM Inference</p><p class="authors">Wenjie Qu, Yijun Sun, Xuanming Liu, Tao Lu, Yanpei Guo, Kai Chen, Jiaheng Zhang</p><div class="pmeta"><div><dt>Venue</dt><dd>USENIX Security 2025</dd></div><div><dt>Date</dt><dd>2025-08-13</dd></div><div><dt>Affiliation</dt><dd>National University of Singapore / HKUST</dd></div><div><dt>Proof system</dt><dd>GKR + sum-check (non-interactive via Fiat-Shamir)</dd></div><div><dt>Commitment</dt><dd>Hyrax</dd></div><div><dt>Hardware</dt><dd>Intel Xeon 6126 2.60GHz 16-core CPU, 200 GB RAM, 32 threads</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2025/1184">https://eprint.iacr.org/2025/1184</a></dd></div><div><dt>PDF</dt><dd><a href="https://www.usenix.org/system/files/usenixsecurity25-qu-zkgpt.pdf">https://www.usenix.org/system/files/usenixsecurity25-qu-zkgpt.pdf</a></dd></div><div><dt>Quantization</dt><dd>16 bits</dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>params</th><th>context window</th><th>proving time s</th><th>tokens per minute</th><th>proof size mb</th><th>verification time s</th><th>baseline comparison</th></tr></thead><tbody><tr><td>GPT-2</td><td>124M</td><td>32</td><td>21.8</td><td>2.75</td><td>0.101</td><td>0.35</td><td>185x faster than ZKML (4026s); 5.1x faster than Lu et al. VOLE-based (112.3s) with 23000x less communication.</td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> 32 threads, all optimizations. Single thread, all opt: 319.6s.</p><p style="font-size:13px;color:#6f7d86"><b>tokens_per_minute_note:</b> 60 / 21.8s for one forward pass. Not an end-to-end multi-token decode number.</p><h3 class="head">Notes</h3><div class="prose"><p>Constraint fusion (merging rounding constraints across operators) and circuit squeeze (flattening the GKR circuit for parallelism). Result-as-witness paradigm for Softmax, LayerNorm and GeLU. Also demonstrates the exponential blowup directly: merging the length-32 vector of 16-bit values q_E into one lookup would need a table of 2^(16*32) = 2^512 entries, which is why aggressive constraint merging is rejected.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>16</pre></td></tr><tr><th>scheme</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Affine, x = S(q - z), inherited from zkCNN. All params and intermediates are Q-bit ints, q in [0, 65536]. Scale S and zero-point z shared per layer/tensor.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>metric: perplexity
+fp32:
+  wikitext2: 29.3
+  ptb: 41.3
+  lambada: 48.4
+quant:
+  wikitext2: 29.5
+  ptb: 41.7
+  lambada: 48.7
+summary: PPL increase &lt;0.5 on all three datasets</pre></td></tr><tr><th>note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>The clearest quantization accounting of any paper here: it states the bit width, the scheme, and the accuracy cost. Use zkGPT as the reference point when normalizing others. Its Q=16 is on the HIGH end -- a system at 8 bits would have a materially easier job on the lookup/range-check side.</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>Two ideas, and they are genuinely orthogonal to each other, which is why the paper works.</p>
+<p><strong>Constraint fusion</strong> is the better one. Every quantized operator ends in a rounding step, and
+every rounding step costs a range relation, and range relations — not the arithmetic — are what
+the prover actually pays for. zkGPT classifies constraints into four types (arithmetic, division,
+square root, exponentiation), builds a profitability table for merging adjacent pairs, and merges
+greedily. Merging LayerNorm's mean, variance and square-root constraints collapses three range
+relations into one. The error analysis is the part I did not expect to be sound and is: since
+rounding a composed function is at least as accurate as composing two roundings, <strong>fusion can only
+reduce quantization error, never increase it</strong>. That is a rare thing — an optimization that is
+free in both directions.</p>
+<p><strong>Circuit squeeze</strong> is the more surprising one. GKR forces layer-wise dependency, so the prover
+synchronizes threads at every small layer and wastes most of its parallelism on synchronization.
+zkGPT observes that because every rounding result is already committed as <em>advice</em> in the input
+layer, the subcircuits that check those roundings have <strong>no topological dependency on each other</strong>
+— so they can all be flattened into the same set of layers. The circuit becomes wide and shallow,
+and the threads have something to do. This is a Plonk idea imported into GKR, and it costs nothing
+because the commitments were already there.</p>
+<p>The rest — the bookkeeping-table grouping algorithm for Thaler's matmul protocol, the z-GeLU
+approximation — is careful constant-factor work.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>One forward pass, over a 32-token context, at 16 bits, without zero-knowledge.</strong></p>
+<p>Each clause is load-bearing:</p>
+<ul>
+<li><strong>One token.</strong> There is no autoregression, no KV cache, no decode loop, no sampling. <a href="../papers/deepprove.html">DeepProve</a>
+  is right about this, and zkGPT does not dispute it.</li>
+<li><strong>32 tokens of context.</strong> The evaluation section never says so, which is why <code>papers.yml</code> marked
+  the context window as <em>inferred</em> from a matmul shape. It should not be marked inferred any more:
+  §9.1 states it outright while explaining why one aggressive constraint merge is infeasible — the
+  softmax input is described there as a vector of length 32 whose elements are 16-bit, giving a
+  hypothetical merged lookup table of 2^512 entries. That is a stated sequence length, not an
+  inference. It is also the shortest context of any LLM system in this collection by an order of
+  magnitude, and the single most important variable when normalising zkGPT against
+  <a href="../papers/deepprove.html">DeepProve</a> or <a href="../papers/zkllm.html">zkLLM</a>.</li>
+<li><strong>Not zero-knowledge.</strong> This is the finding. The paper's <em>title</em> is "An Efficient Non-interactive
+  <strong>Zero-knowledge</strong> Proof Framework," and §4.4 ends with: "The zero-knowledge property can be
+  incorporated into the protocol by using masking polynomials." <em>Can be.</em> It is not. Every prover
+  time in the paper excludes the cost of the masking polynomials that would make the scheme
+  zero-knowledge. The model weights are committed with Hyrax (which is hiding), but the ZK
+  property of the <em>protocol</em> is future work. A paper whose stated motivation is that "the model
+  parameters are trade secrets" does not implement the property that protects them.</li>
+<li><strong>The embedding layer is outside the circuit.</strong> "our LLM circuit takes the input embedding matrix
+  as public input." The token-to-vector lookup is not proven; the verifier must already hold the
+  embedded input. Compare <a href="../papers/deepprove.html">DeepProve</a>, which proves embedding as a sparse one-hot matmul.</li>
+<li>BN254 at "around 100 bits of security" — the paper says so, honestly, and it is the weakest curve
+  of any system here.</li>
+</ul>
+<p>The quantization accounting is the best-documented of any zkML paper in this collection: the bit
+width is stated, the scheme is stated, and the perplexity delta is reported on three datasets. Use
+it as the reference point when normalising the others.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The headline end-to-end speedup silently folds in multi-threading.</strong> §7.3 says the constraint
+and circuit optimizations "accelerat[e] the end-to-end performance by 14.7×, unlocking great
+optimization opportunities aside from trivially accelerating everything by multi-thread
+parallelism." The sentence explicitly disclaims multi-threading — while the number does not.</p>
+<div class="audit"><span class="audit-h">The 14.7× is not the optimizations</span><p>Table 3, all on GPT-2:</p>
+<table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th>Prover time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single thread, no optimizations</td>
+<td>319.6 s</td>
+</tr>
+<tr>
+<td><strong>32 threads</strong>, no optimizations</td>
+<td>52.3 s</td>
+</tr>
+<tr>
+<td>32 threads, all optimizations</td>
+<td>21.8 s</td>
+</tr>
+</tbody>
+</table>
+<p>The 14.7× is <code>319.6 / 21.8</code> — one thread to thirty-two threads <em>and</em> both optimizations. The
+optimizations alone are <code>52.3 / 21.8</code> ≈ 2.4×. The paper's own Table 5 agrees: disabling constraint
+optimization costs 1.5×, disabling circuit optimization costs 1.7×. Neither the text nor the table
+supports 14.7× as an optimization result.</p></div>
+
+<p><strong>The zkLLM comparison is argued, not measured.</strong> zkGPT's prover is <em>slower</em> than <a href="../papers/zkllm.html">zkLLM</a>'s in its
+own Table 3. The paper's response is a TFLOPS ratio — the A100 has vastly more nominal compute than
+the Xeon, so being only slightly slower means zkGPT "utilizes computation power in a much more
+effective way" and is "very likely to outperform them under the same hardware."</p>
+<p>That is a hypothesis, not a result, and it rests on the wrong normalization. <strong>TFLOPS measures
+floating-point throughput, and a zk prover performs none.</strong> It does finite-field arithmetic and
+multi-scalar multiplications over a 254-bit curve, where a GPU's advantage over a CPU is a small
+fraction of its advertised FLOPs ratio. Nor are the two systems on the same curve: zkLLM runs over
+BLS12-381, a materially larger field than zkGPT's BN254, which cuts in zkLLM's favour and is never
+mentioned. Nobody has run these two provers on the same machine, and until someone does, the claim
+is unfalsified rather than supported.</p>
+<p><strong>The accuracy table and the timing table may not describe the same computation.</strong> The perplexity
+deltas are reported for the quantized model, but the evaluation never says at what sequence length
+perplexity was measured — and a perplexity computed over a 32-token window would be a strange
+thing to report. The accuracy claim also silently bundles two changes: the 16-bit quantization
+<em>and</em> z-GeLU, zkGPT's own bespoke GeLU approximation. Their contributions are not separated, so
+you cannot tell which one costs what.</p>
+<p><strong>The baselines are real, which is worth saying.</strong> Unlike most of this literature, zkGPT ran its
+competitors rather than copying their abstracts — it re-measured ZKML and Lu et al. on its own
+hardware and reports numbers that <em>disagree with those papers' own claims</em> (and with the
+<a href="../papers/zkml-survey.html">ZKP-VML Survey</a>). Both conflicts are recorded in <code>papers.yml</code>. A paper that publishes numbers
+making its baselines look <em>better</em> than the survey does is a paper doing its job.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li>GKR <span class="tag">external</span></li><li>Jolt (zkVM) <span class="tag">external</span></li><li>Lasso <span class="tag">external</span></li><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li><li><a href="../papers/zkllm.html">zkLLM</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/deepprove.html">DeepProve</a></li><li><a href="../papers/zkml-survey.html">ZKP-VML Survey</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a><a href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare</a><a href="../private-inference/nonlinearities.html">The non-linearity problem, twice</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/quantization.html">Quantization, the hidden variable</a><a href="../zk-inference/what-is-proven.html">What is actually being proven</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>claim_kind: pass
+curve: BN254 (~100-bit security)
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

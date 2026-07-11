@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SecFloat — zkAI</title>
+<meta name="description" content="SecFloat: Accurate Floating-Point meets Secure 2-Party Computation">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../numerics/index.html">Numerics</a> · <b>SecFloat</b></div><h2 class="ptitle">SecFloat</h2><p class="psub">SecFloat: Accurate Floating-Point meets Secure 2-Party Computation</p><p class="authors">Deevashwer Rathee, Anwesh Bhattacharya, Rahul Sharma, Divya Gupta, Nishanth Chandran, Aseem Rastogi</p><div class="pmeta"><div><dt>Venue</dt><dd>IEEE S&amp;P 2022</dd></div><div><dt>Date</dt><dd>2022-05-01</dd></div><div><dt>Affiliation</dt><dd>UC Berkeley / Microsoft Research</dd></div><div><dt>Proof system</dt><dd>n/a -- 2PC (secret sharing + OT), not ZK. Same caveat as archer-ieee.</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Open source</dt><dd>yes</dd></div><div><dt>Code</dt><dd><a href="https://github.com/mpc-msri/EzPC">https://github.com/mpc-msri/EzPC</a></dd></div></div><h3 class="head">Approach</h3><div class="prose"><p>exact-ieee754</p></div><h3 class="head">Notes</h3><div class="prose"><p>The MPC mirror of ZKLP, and the strongest EMPIRICAL statement in this file that fixed point is a choice with a failure mode -- not a free lunch. SecFloat builds crypto-friendly but PRECISE 2PC functionalities for 32-bit floats (add, mul, div, compare) and math functions (exp, log, trig), by decomposing each into integer 2PC building blocks rather than compiling an IEEE Boolean circuit. Reports up to six orders of magnitude more precision and up to two orders of magnitude more efficiency than prior cryptographic float libraries, and three orders of magnitude over a precise 2PC baseline. WHY IT MATTERS TO US, and it is one sentence in the abstract: "All prior works on secure inference of deep neural networks rely on ad hoc float-to-fixed converters. We evaluate a model where the fixed-point approximations used in privacy-preserving machine learning completely fail and floating-point is necessary." The case study (Sec. IX-C) is privacy-preserving advertising. So the claim "quantize, it is fine" has a published counterexample -- from the MPC column, which the zkML column does not cite. Note the direction of the argument differs from ZKLP's: ZKLP shows exact floats can be CHEAP in a circuit; SecFloat shows fixed point can be WRONG for a real model. Together they are the two halves of the case the zkML literature has never answered. NOT a ZK system and not a graph point. Filed here because it is where the float-vs-fixed evidence lives.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>The insight is a <em>refusal</em>. Everyone before SecFloat got floating point into a secure computation by
+one of two routes: compile an IEEE-754 Boolean circuit and run it under generic 2PC (ABY-F — and see
+<a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a> for what that costs), or hand-write imprecise custom functionalities (MP-SPDZ).
+SecFloat rejects both framings and builds each float operation — add, multiply, divide, compare — and
+each math function — <code>exp</code>, <code>log</code>, <code>sin</code>, <code>cos</code>, <code>tan</code> — out of <strong>integer 2PC building blocks chosen
+for their communication cost</strong>, rather than out of gates.</p>
+<p>The design constraint it names generalizes well beyond MPC, and is worth stealing: the standard math
+libraries are <em>precise but not crypto-friendly</em>, because they lean on operations that are cheap on a
+CPU and ruinous under 2PC (high-bitwidth intermediates, above all). The existing cryptographic
+libraries are <em>crypto-friendly but imprecise</em>. SecFloat's functionalities are built to be both, each
+with a proven precision guarantee, and the library is validated against a real math library rather
+than against itself.</p>
+<p>It is not a ZK system and not an ML system. It is here because of what it <em>measures</em>.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p>Nothing. <strong>SecFloat produces no proof.</strong> It is a semi-honest two-party library over secret shares; a
+malicious server can compute the wrong function and nobody will know. Malicious security is
+explicitly future work.</p>
+<p>What it <em>establishes</em> — and what earns it a place in this corpus — is a counterexample:</p>
+<blockquote class="q"><p>All prior works on secure inference of deep neural networks rely on ad hoc float-to-fixed converters.
+We evaluate a model where the fixed-point approximations used in privacy-preserving machine learning
+completely fail and floating-point is necessary.</p><cite><b>SecFloat</b> · Abstract</cite></blockquote>
+
+<p>The model is real: an industrial ad-relevance network, a fully-connected net taking an
+874-dimensional input through three hidden layers to a four-class softmax. Its weights span roughly
+eight orders of magnitude, and its intermediate activations span more. The authors ran it through
+CrypTFlow, which <strong>enumerates fixed-point models at every possible scale and picks the most accurate
+one</strong> — and <em>none</em> of them worked. The large values overflow the integers; the small ones underflow
+to zero; in the paper's words, "the fixed-point model output is garbage."</p>
+<p>That is an <strong>exhaustively searched</strong> negative result on a production model, and it is the strongest
+evidence in this corpus against the premise — universal in the zkML column — that a good quantization
+scale always exists if you look hard enough for it.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>It is an existence proof, and must not be read as a distributional one.</strong> SecFloat shows there
+<em>exists</em> a real deployed model on which every fixed-point scale fails. It does not show that fixed
+point generally fails, and this corpus contains a lot of evidence that it usually does not:
+<a href="../papers/zkgpt.html">zkGPT</a> holds GPT-2's perplexity to within half a point at 16 bits, <a href="../papers/deepprove.html">DeepProve</a> to within a
+fraction of a percent at 12, <a href="../papers/zkpytorch.html">zkPyTorch</a> loses almost nothing on CIFAR-10. The model SecFloat chose
+was chosen <em>because</em> it breaks — that is what a counterexample is for — and it breaks for a specific,
+diagnosable reason (extreme weight dynamic range) that transformers do not obviously share.</p>
+<p>The correct reading is narrower and still important: <strong>"quantize, it will be fine" is an empirical
+bet about the workload, not a theorem, and it has a published counterexample that the zkML literature
+has never cited or answered.</strong></p>
+<p><strong>"No good scale exists" is relative to CrypTFlow's quantizer, which is not the state of the art.</strong>
+CrypTFlow searches over <em>uniform, per-tensor</em> fixed-point scales. It does not do per-channel
+quantization, and it does not do outlier smoothing. Outlier smoothing by orthonormal rotation is
+precisely the technique <a href="../papers/deepprove.html">DeepProve</a> uses to rescue Gemma 3 — whose activations exhibit <em>the same
+pathology</em> that kills SecFloat's relevance model, a few enormous outlier channels swamping the
+quantization grid. A modern quantizer might well find a scale CrypTFlow's search could not. Nobody
+has tried, and SecFloat could not have: the technique postdates it.</p>
+<p><strong>The precision headline is measured against baselines that are imprecise by construction.</strong> The
+"six orders of magnitude more precise" figure is against ABY-F and MP-SPDZ, whose math functions are
+<em>known</em> to be imprecise — that is SecFloat's entire complaint about them. Against the one genuinely
+precise baseline the paper builds (Berkeley SoftFloat's primitives, reimplemented on SecFloat's own
+building blocks), the communication advantage collapses to a small single-digit factor. That is the
+honest apples-to-apples number, and the paper prints it in the body, unprompted. Credit for that.</p>
+<p><strong>Floats are affordable here only at toy scale.</strong> Secure inference of that relevance model — a few
+hundred thousand parameters, no attention, no convolution — costs communication measured in gigabytes
+for a single input, and hundreds of gigabytes at a small batch. SecFloat does not make float
+inference cheap. It makes it <em>possible</em>. The scaling wall is the same one that caps <a href="../papers/iron.html">Iron</a>,
+<a href="../papers/bolt.html">BOLT</a> and <a href="../papers/nimbus.html">Nimbus</a>.</p>
+<p><strong>And the cost model does not transfer to ZK.</strong> SecFloat's currency is communication and rounds; a
+zkML prover's is field operations and commitment openings. A 2PC communication figure is evidence
+about <em>arithmetic difficulty</em>, not about proving time. Nothing here belongs on a chart in this SoK.</p>
+<div class="debate"><h4>SecFloat is the paper ZIP needed and did not cite</h4><p><a href="../papers/zip.html">ZIP</a>'s case for abandoning fixed point rests on a fixed-point baseline it never specifies, which
+mysteriously fails to converge. SecFloat's rests on an exhaustive scale search over a real production
+model, with the failure mechanism diagnosed and named.</p>
+<p><strong>ZIP is in the ZK column. SecFloat is in the MPC column. ZIP does not cite it.</strong> That is not an
+oversight so much as a structural fact about this field, and it is the same fact the citation graph
+reports: when the verifiability column needs an argument about real numbers, it re-derives one rather
+than reading the column that has been arguing about real numbers for a decade.</p></div>
+
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>SecFloat is a bridge node, and it is the only kind we have</h5><p>SecFloat is cited by <a href="../papers/bolt.html">BOLT</a> (privacy column) <em>and</em> by <a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a> (verifiability column) — the
+citations are in both bibliographies; we checked. <a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a> is likewise cited by <a href="../papers/zip.html">ZIP</a>
+(verifiability) and by SecFloat itself (privacy).</p>
+<p>This does <strong>not</strong> break the corpus's headline finding. No edge runs <em>directly</em> between the
+proving-inference and the private-inference literatures. But both columns reach for the <em>same
+numerics primitives</em> when they have to reason about real numbers. They share a foundation and not a
+conversation.</p></div></div></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a></li><li>SIRNN <span class="tag">external</span></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/bolt.html">BOLT</a></li><li><a href="../papers/zklp.html">ZKLP</a></li><li><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>url_note: &#x27;The PDF we hold is the self-published &quot;Full Version&quot; and carries no DOI,
+  eprint number or canonical URL. Venue is confirmed INDEPENDENTLY from three PDFs
+  in references/ that cite it (bolt, zkpot-garg, zklp): IEEE S&amp;P 2022, pp. 576-595.
+  We do not guess the canonical link.&#x27;
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zkPoT (Garg et al.) — zkAI</title>
+<meta name="description" content="Experimenting with Zero-Knowledge Proofs of Training">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-training/index.html">Proving training</a> · <b>zkPoT (Garg et al.)</b></div><h2 class="ptitle">zkPoT (Garg et al.)</h2><p class="psub">Experimenting with Zero-Knowledge Proofs of Training</p><p class="authors">Sanjam Garg, Aarushi Goel, Somesh Jha, Saeed Mahloujifar, Mohammad Mahmoody, Guru-Vamsi Policharla, Mingyuan Wang</p><div class="pmeta"><div><dt>Venue</dt><dd>ACM CCS 2023</dd></div><div><dt>Date</dt><dd>2023-09-11</dd></div><div><dt>Affiliation</dt><dd>UC Berkeley / NTT Research / UW-Madison / Meta / UVA</dd></div><div><dt>Proof system</dt><dd>MPC-in-the-head + zkSNARKs, streaming-friendly</dd></div><div><dt>Hardware</dt><dd>N2 GCP instance, 512 GB RAM</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2023/1345">https://eprint.iacr.org/2023/1345</a></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>dataset</th><th>proving time s</th><th>proof size mb</th><th>verification time s</th></tr></thead><tbody><tr><td>Logistic regression</td><td>4 GB, 262144 records x 1024 features</td><td>4208</td><td>350</td><td>26.5</td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> total across phases; online phase &lt;10 min, data-dependent phase ~1 hour</p><p style="font-size:13px;color:#6f7d86"><b>proof_size_note:</b> &lt;10% of dataset size</p><h3 class="head">Notes</h3><div class="prose"><p>The paper that formalized the zkPoT security definition. Only instantiated for logistic regression -- the point is the definition and the feasibility experiment, not scale.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>Two things, and the definition is the more durable one.</p>
+<p><strong>The definition.</strong> This is the paper that says what a zero-knowledge proof of training <em>is</em>. The
+statement being proven is: <em>"the prover possesses a model M consistent with a commitment c_M, a
+dataset D consistent with a commitment c_D, and M is the result of running training algorithm L on
+D."</em> Both the model and the data stay hidden; the verifier holds only commitments and the training
+specification (architecture, step count, learning rate, batch size). Everything else in the
+zk-training cell — <a href="../papers/kaizen.html">Kaizen</a>, <a href="../papers/zkdl.html">zkDL</a>, <a href="../papers/optimum-vicinity.html">Optimum Vicinity</a>, <a href="../papers/zkboost.html">ZKBoost</a> — is proving some
+version of this statement, and this is where the statement got written down.</p>
+<p><strong>The construction.</strong> A hybrid, and the motivation for it is the sharpest paragraph in the paper.
+zkSNARKs give tiny proofs but need the entire training trace in RAM and impose a
+several-orders-of-magnitude prover overhead. MPC-in-the-head gives a nearly free prover but a proof
+as large as the circuit. So: use MPC-in-the-head for the bulk of the witness, and use a
+<strong>hash-based polynomial commitment (FRI, via Winterfell) to compress the expensive parts</strong> — no
+elliptic curves anywhere. The payoff that matters for ML is structural: <strong>proof size is linear in
+the number of records N and independent of the feature count D</strong>, and the design is
+<em>streaming-friendly</em>, so the prover never needs the whole trace resident.</p>
+<p>That last property is the real contribution. It is the one thing in this cell that could plausibly
+scale to a dataset that does not fit in memory.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>Correct mini-batch gradient descent training of a logistic regression model</strong> on a committed
+dataset, hiding both the data and the resulting model.</p>
+<p>Not a DNN. Not a transformer. Logistic regression. The paper is entirely upfront about this — the
+title is <em>"Experimenting with"</em> — and its defence is a good one: logistic regression is exactly the
+shape of a classifier fine-tuned on top of a frozen foundation-model feature extractor, so a zkPoT
+for it is already useful. Take that at face value, but do not let the definition's generality
+launder the instantiation's scope.</p>
+<p>Two more things the proof does not cover:</p>
+<ul>
+<li><strong>Security is 115 bits</strong>, not 128 — FRI with 95 queries plus 20 bits of grinding. Stated plainly,
+  which is more than most papers here manage.</li>
+<li><strong>The field is 128-bit, and the numerics chose it.</strong> The paper is explicit that the large field
+  "is required by the secure truncation protocol for fixed-point arithmetic," and that a 64-bit
+  field "would further speed up the protocol and reduce proof size." That is the <a href="../papers/prob-truncation.html">Probabilistic truncation in PPML</a>
+  problem, arriving from the other direction: the truncation step does not merely cost gates, it
+  sets the field size, which then taxes every other operation in the proof.</li>
+</ul>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>One of the three phases was never benchmarked, and the number people quote is the sum of the
+other two.</strong> The evaluation splits the protocol into an offline phase (data- and model-independent),
+a data-checks phase, and an online phase.</p>
+<div class="audit"><span class="audit-h">The paper does not state a total prover time</span><p>From §1.1, reproduced exactly — note the two dashes:</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Prover (s)</th>
+<th>Verifier (s)</th>
+<th>Size (MB)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Online</td>
+<td>518</td>
+<td>24</td>
+<td>196</td>
+</tr>
+<tr>
+<td>Data Checks</td>
+<td>3690</td>
+<td>2.5</td>
+<td>5.3</td>
+</tr>
+<tr>
+<td>Offline</td>
+<td><strong>–</strong></td>
+<td><strong>–</strong></td>
+<td>&lt; 140</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>–</strong></td>
+<td><strong>–</strong></td>
+<td>&lt; 350</td>
+</tr>
+</tbody>
+</table>
+<p>"The offline prover/verifier time have not been benchmarked, see Section 7 for details on how proof
+size was estimated."</p>
+<p>So the paper reports <strong>no total prover time and no total verifier time at all</strong> — both Total cells
+are dashes. The 4208 s currently in <code>papers.yml</code> is <code>518 + 3690</code>: the sum of the two <em>measured</em>
+phases, silently excluding an unmeasured third one that the paper itself calls "an expensive
+pre-processing phase." The offline proof size is estimated, not measured, too.</p></div>
+
+<p><strong>The property that makes the paper interesting is not the property that was measured.</strong> The
+headline architectural claim is streaming-friendliness — "there is no fundamental memory limit to
+how large a model and data set can be trained using our approach." The benchmark ran on a <strong>512 GB
+machine, single-threaded</strong>. The paper is honest about the gap ("the high RAM requirement is an
+artifact of our implementation and is not necessary... if our implementation is upgraded to a
+streaming-friendly version, we expect that it can be run on consumer-grade laptops") — but <em>expect</em>
+is the operative word. The streaming prover is a design argument, not an artifact. Nobody has run
+it.</p>
+<p><strong>Where this paper is a model for the rest of the repo.</strong> It reports <strong>two</strong> baselines for its
+cryptographic overhead — the time to train the model natively in <code>f64</code>, <em>and</em> the time to train it
+over the 128-bit field the protocol requires — and explains why both are meaningful: one gives the
+overhead over an optimized training algorithm, the other isolates the cost of the cryptography from
+the cost of merely leaving the CPU's native datatypes.</p>
+<p>That is precisely the disclosure <a href="../papers/safetynets.html">SafetyNets</a> does not make. SafetyNets reports its prover
+overhead only against field-arithmetic execution, which flatters it enormously, and the README has
+been reading that figure as a floor on the cost of verifiable inference. zkPoT prints both numbers
+and lets you compute either ratio. Every paper in this repo that reports a "cryptographic overhead"
+should be held to this standard.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/secfloat.html">SecFloat</a></li><li>SIRNN <span class="tag">external</span></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/range-arithmetic.html">Range-Arithmetic</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../zk-training/index.html">The hardest claim in the table</a><a href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do</a><a href="../zk-training/systems.html">The systems, grouped by what they gave up</a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

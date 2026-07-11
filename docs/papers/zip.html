@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZIP — zkAI</title>
+<meta name="description" content="Zero-Knowledge AI Inference with High Precision">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>ZIP</b></div><h2 class="ptitle">ZIP</h2><p class="psub">Zero-Knowledge AI Inference with High Precision</p><p class="authors">Arman Riasi, Haodi Wang, Rouzbeh Behnia, Viet Vo, Thang Hoang</p><div class="pmeta"><div><dt>Venue</dt><dd>ACM CCS 2025</dd></div><div><dt>Date</dt><dd>2025</dd></div><div><dt>Affiliation</dt><dd>Virginia Tech / CityU Hong Kong / South Florida / Swinburne</dd></div><div><dt>Proof system</dt><dd>Commit-and-prove zk-SNARK (model-private, zero-knowledge)</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2025/1732">https://eprint.iacr.org/2025/1732</a></dd></div><div><dt>PDF</dt><dd><a href="https://eprint.iacr.org/2025/1732.pdf">https://eprint.iacr.org/2025/1732.pdf</a></dd></div><div><dt>Quantization</dt><dd><span class=na>not stated</span></dd></div></div><h3 class="head">Notes</h3><div class="prose"><p>The counter-philosophy to everyone else here, on the accuracy axis: rather than quantizing the model to fit the prover, ZIP makes the prover handle native floating-point. NOT an LLM prover and NOT a graph point -- evaluated on small models (MNIST, UTKFace faces, SST-2 sentiment); SST-2 is text but a tiny classifier, not a generative LLM. Zero-knowledge / model-private like zkLLM. Most useful to this collection as the concrete example that quantization is a choice, not a necessity -- see the "bend the model vs bend the prover" theme (SafetyNets origin; zkGPT relaxations and Jolt teleportation bend the model; DeepProve and ZIP bend the prover). But read soundness_caveat before citing it as a clean win: its precision is a property of the honest prover, not of the proof. See content/zk-inference/numerics.md.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>None</pre></td></tr><tr><th>scheme</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>NO quantization. The distinguishing contribution: native IEEE-754 double-precision floating-point inference. Non-linear activations are proven by piecewise-polynomial approximations stored in a lookup table, with a relative-error-driven technique and extra arithmetic constraints hardening the lookup/range proofs against a malicious prover. GeLU needs ~70 table entries; claims 1-3 orders of magnitude smaller activation circuits than prior work, at full precision.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>The HONEST PROVER computes in full IEEE-754 double precision, so there is no fixed-point precision loss in an honest execution. But see soundness_caveat: this is a property of what the honest server computes, NOT of what the proof enforces.</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><p><em>(The PDF lives at <code>references/proving-inference/high-precision.pdf</code>; the <code>papers.yml</code> id is <code>zip</code>.)</em></p>
+<h2 id="what-is-new">What is new</h2>
+<p>ZIP is the counter-philosophy of this whole collection, and it is worth having in the SoK for that
+reason alone. Every other prover here <strong>bends the model to fit the prover</strong> — quantize to 4, 8, 12 or
+16 bits, approximate GeLU with a spline or a quadratic, replace softmax with a lookup table. ZIP
+<strong>bends the prover to fit the model</strong>: it proves inference in native IEEE-754 double precision,
+with the actual activation functions, and eats the cost.</p>
+<p>The technique that makes that affordable is a <em>relative-error-driven</em> argument. Rather than
+hardcoding a floating-point activation into a circuit (which costs millions of constraints in
+IEEE-754 semantics), ZIP has the prover supply the activation's output, proves it against a
+piecewise-polynomial approximation stored in a lookup table, and then constrains the <em>relative
+error</em> between the true value and the approximation to lie within a bound δ. It also hardens the
+underlying lookup and range proofs with additional arithmetic constraints against a malicious
+prover — an audit-minded touch that is rare in this literature.</p>
+<p>The resulting constraint count per double-precision activation is a genuine multiple-orders-of-
+magnitude reduction over hardcoding IEEE-754 semantics into a circuit, and I believe it.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>One forward pass of a small model, in full double precision, with a hidden model, on a
+proof-of-concept prototype whose verifier is not succinct in any useful sense.</strong></p>
+<ul>
+<li>The models are LeNet-5 (MNIST, ~60K params) and mini-BERT (SST-2, ~11M params, 4 layers, hidden
+  size 256), plus a ~250K-param CNN on UTKFace for the precision study. <strong>This is not an LLM prover
+  and it is not a graph point.</strong> mini-BERT is a text classifier, not a generative model — no decode,
+  no sampling, no autoregression.</li>
+<li>It is genuinely zero-knowledge and model-private: commit-and-prove over PlonK, with the model
+  weights as the committed witness. On that axis it is in the same class as <a href="../papers/zkllm.html">zkLLM</a> and ahead of
+  <a href="../papers/zkgpt.html">zkGPT</a> and <a href="../papers/deepprove.html">DeepProve</a>.</li>
+<li>The precision claim is real and is the point. There is no quantization, so there is no calibration
+  set, no scale factor, no zero-point, no bit width — and therefore none of the audit surface that
+  the rest of this repo worries about. That is a real security argument, not just an accuracy one.</li>
+</ul>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>ZIP optimizes the component that is not the bottleneck in its own largest experiment.</strong> The
+paper's entire contribution is reducing the cost of <em>non-linear</em> layers. On mini-BERT, its own
+Table 7 shows the <strong>linear</strong> layers consuming 34.53 of 37.06 prover-hours — 93% of the total — and
+they are not ZIP's work at all; they are delegated wholesale to a prior scheme. The non-linear
+layers ZIP exists to accelerate account for the remaining 7%.</p>
+<p>The story inverts with model size, and that is the finding. On LeNet-5, the non-linears dominate and
+ZIP's contribution is decisive. On an 11M-parameter transformer, the linears dominate fourteen to
+one. Extrapolate to anything the rest of this repo calls an LLM and ZIP's contribution becomes
+rounding error on the total. The paper never remarks on this inversion, and it is visible in its own
+tables.</p>
+<p><strong>The verifier is not succinct.</strong> LeNet-5 verifies in minutes. mini-BERT verifies in <strong>most of an
+hour</strong>. For an 11M-parameter model, a client could run the plaintext inference itself millions of
+times over in that window. The cause is structural, not incidental — ZIP "employs two multi-lookup
+arguments per activation with four pairing[s] per lookup proof during verification," so verifier
+work is <strong>linear in the activation count</strong>. A commit-and-prove zkSNARK whose verifier scales with
+the circuit has given up the property that makes a SNARK worth having. Compare <a href="../papers/zkgpt.html">zkGPT</a> (sub-second
+on GPT-2) or <a href="../papers/deepprove.html">DeepProve</a> (a few seconds). Nobody in the paper mentions it.</p>
+<p><strong>The motivating baseline is a straw baseline, and it is doing all the rhetorical work.</strong> ZIP's case
+for abandoning fixed-point rests on two comparisons:</p>
+<blockquote class="q"><p>Moreover, Table 3 shows that quantizing all weights and inputs to fixed-point representation while
+retaining the actual ELU activation function (i.e., Baseline (w/FP)), the MAE increases
+significantly, demonstrating that fixed-point arithmetic severely degrades accuracy and prevents
+convergence.</p><cite><b>ZIP</b> · §7, Impact of Precision</cite></blockquote>
+
+<p><strong>"No convergence"</strong>, on a 250K-parameter CNN. And an 8.5-point accuracy collapse on mini-BERT under
+fixed point. The paper states <strong>no bit width, no scale factor, no calibration procedure, and no
+quantization scheme</strong> for either fixed-point baseline. Meanwhile, in this same collection,
+<a href="../papers/zkgpt.html">zkGPT</a> keeps perplexity within half a point on GPT-2 at 16 bits, <a href="../papers/deepprove.html">DeepProve</a> keeps GPT-2 within
+a fraction of a percent of its fp32 baseline at 12 bits, and <a href="../papers/zkpytorch.html">zkPyTorch</a> loses under 0.03% on
+CIFAR-10. A fixed-point baseline that fails to converge is a <em>badly configured</em> baseline, not
+evidence that fixed-point is unworkable. The paper's central premise is supported by the worst
+fixed-point result in the literature, produced by the authors, with its configuration unstated.</p>
+<div class="audit"><span class="audit-h">Table 5&#x27;s prover totals do not add up</span><p>Two of the three prover columns in Table 5 (LeNet-5) disagree with the components printed directly
+above them, each by exactly 0.10 min:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Sum of printed rows</th>
+<th>Printed total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GeLU</td>
+<td>13.89 + 5.23 + 0.37 + 0.29 + 0.89 = <strong>20.67</strong></td>
+<td>20.67 ✓</td>
+</tr>
+<tr>
+<td>SeLU</td>
+<td>11.19 + 3.49 + 0.25 + 0.19 + 0.89 = <strong>16.01</strong></td>
+<td><strong>15.91</strong> ✗</td>
+</tr>
+<tr>
+<td>ELU</td>
+<td>9.30 + 3.42 + 0.24 + 0.19 + 0.89 = <strong>14.04</strong></td>
+<td><strong>13.94</strong> ✗</td>
+</tr>
+</tbody>
+</table>
+<p>All three <em>verifier</em> columns sum correctly, which rules out a transcription artifact in my reading.
+Separately, the body text gives ZIP's UTKFace MAE as 6.15 where Table 3 prints 6.16. Small, but this
+is a CCS paper.</p></div>
+
+<p><strong>Credit where due, and it is substantial:</strong> ZIP prints the number that makes it look worst.
+Table 4 shows a single double-precision GeLU costing hundreds of times more prover time than the
+fixed-point schemes it is arguing against, and the paper puts that table in the body rather than an
+appendix, calls the comparison "conservative," and concedes in the Discussion that "our prototype is
+just a proof of concept to demonstrate correctness and feasibility, not performance optimization."
+That is exactly the right disclosure. The problem is not that ZIP is dishonest about its costs — it
+is that the <em>benefit</em> those costs buy is established only against a baseline the paper declines to
+specify.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/safetynets.html">SafetyNets</a></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li><li><a href="../papers/zkllm.html">zkLLM</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/range-arithmetic.html">Range-Arithmetic</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/quantization.html">Quantization, the hidden variable</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>mechanism: &#x27;PRIMARY, Sec 4.2-4.3. Three-part trick. (1) OFFLINE: approximate the activation
+  by a piecewise polynomial (GeLU: m=8 pieces of degree k=10) and store the coefficients
+  in a lookup table of just 70 entries. (2) ONLINE: the prover evaluates the activation
+  EXACTLY in IEEE-754 double and feeds that exact value y downstream -- the polynomial
+  approximation is never used for subsequent layers, which is what stops approximation
+  error compounding across depth. (3) PROVE: an extended Caulk lookup (forcing an
+  ordered, contiguous block of coefficients) + a private-interval range proof (the
+  correct piece was selected without revealing which), plus an &quot;approximation-soundness&quot;
+  relation binding y to the polynomial: |y - f(y&#x27;&#x27;)| &lt;= delta * |f(y&#x27;&#x27;)|. That inequality
+  is enforced division-free via witnesses l1 = y - f(y&#x27;&#x27;), l2 = delta*f(y&#x27;&#x27;), z3 =
+  (l1+l2)(l2-l1), proving z3 &gt;= 0 (i.e. l1^2 &lt;= l2^2); float non-negativity is just
+  &quot;sign bit 0 OR mantissa 0&quot;. Horner&#x27;&#x27;s method keeps the polynomial to k float mults
+  + k float adds.&#x27;
+soundness_caveat: &#x27;IMPORTANT, and not stated as a limitation by the paper. ZIP does
+  NOT prove that y is the correct IEEE-754 activation of y&#x27;&#x27;. y is a WITNESS, and
+  the only constraint binding it is the relative-error inequality above. So the proof
+  establishes that y lies within a DELTA-RELATIVE BALL around a certified piecewise-polynomial
+  approximation -- not that y is the true activation. An honest prover puts the exact
+  double in that ball; a malicious prover may put anything in it. The ball is not
+  tight. ZIP&#x27;&#x27;s own experimental parameters (Sec 5.2): delta = 9e-4 for SeLU and ELU,
+  but delta = 9e-2 for GeLU -- a 9% per-activation relative-error budget available
+  to an adversary. For scale: bfloat16&#x27;&#x27;s machine epsilon is ~7.8e-3, an order of
+  magnitude TIGHTER than the slack ZIP&#x27;&#x27;s flagship GeLU proof permits. A paper headlined
+  &quot;double precision&quot; has, on its flagship activation, a soundness guarantee looser
+  than bf16. AND IT IS NOT ONLY THE ACTIVATIONS. ZIP&#x27;&#x27;s LINEAR layers are not exactly
+  bound either in the configuration whose timings it advertises: Sec 5.4 checks them
+  with a randomized (Freivalds-style) linear combination &quot;with a small relative tolerance
+  to handle IEEE-754 rounding&quot;. The paper states that &quot;without RLC and thus preserving
+  full numerical precision&quot; end-to-end proving takes 40/42/47 min versus the advertised
+  20.67/15.91/13.94 -- i.e. the headline numbers are for the TOLERANCE-BOUNDED configuration,
+  roughly 2-3x faster than the exact one. So the advertised system is approximate
+  end to end: approximate activations AND approximate linear layers. To be fair: this
+  is not a bug and is not hidden. ZIP&#x27;&#x27;s soundness theorem is stated w.r.t. F-hat
+  (the APPROXIMATED network) and is honestly proved. The gap is between what the paper
+  claims colloquially (&quot;IEEE-754-compliant inference&quot;) and what the constraint system
+  enforces. Whether the delta-slack is EXPLOITABLE -- whether an adversary can steer
+  a classification by nudging each activation within its ball, and whether the error
+  compounds or cancels across layers -- is NOT analyzed in the paper. Open question.&#x27;
+ieee754_baseline_costs: &#x27;PRIMARY, Sec 4.1. The price of naive IEEE-754 in a circuit,
+  which ZIP compiles from prior work and which is the best published costing of &quot;why
+  not just use floats&quot;: per-operation Boolean gate counts -- single precision 2,456
+  gates/add and 8,854 gates/mul (from Mystique, USENIX Sec &#x27;&#x27;21); double precision
+  15,637 gates/add and 44,899 gates/mul (from Archer-Atapoor-Smart, &quot;The cost of IEEE
+  arithmetic in secure computation&quot;, LATINCRYPT &#x27;&#x27;21). Composed up with gadgets for
+  sqrt and tanh, ZIP estimates a SINGLE GeLU activation costs ~1,302,142 R1CS constraints
+  in single precision and ~6,808,760 in double. ZIP itself: 5,830 R1CS constraints
+  per GeLU (a ~1,172x reduction vs the 6.8M baseline), falling to 4,599 at 2^14 activations
+  via shared subexpressions; 17,112 PlonK constraints per GeLU. SeLU/ELU see 545x-791x
+  reductions. Backend: gnark PlonK over BN254.&#x27;
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

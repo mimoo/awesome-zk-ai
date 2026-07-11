@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEEs — the assumption that is actually deployed — zkAI</title>
+<meta name="description" content="Confidential-computing GPUs run real models in production today at a throughput penalty ZK cannot approach. The side-channel literature against TEEs is also extensive. Both facts are load-bearing, and">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub on" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../alternatives/index.html">Alternatives to ZK</a> · <b>TEEs — the assumption that is actually deployed</b></div><h2 class="ptitle">TEEs — the assumption that is actually deployed</h2><p class="lede">Confidential-computing GPUs run real models in production today at a throughput penalty ZK cannot approach. The side-channel literature against TEEs is also extensive. Both facts are load-bearing, and the honest position is uncomfortable.</p><div class="rail"><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a><a href="../papers/optimistic-tee-rollups.html">Optimistic TEE-Rollups (OTR)</a><a href="../papers/opml.html">opML</a></div><div class="prose"><p>A trusted execution environment runs the model on hardware that attests, cryptographically,
+to what it ran. The verifier checks a signature chain rooted in a manufacturer's key and
+concludes: this binary, on genuine hardware, produced this output.</p>
+<p>It is worth being blunt about the position TEEs occupy in this SoK, because the ZK
+literature has a habit of dismissing them in a subordinate clause and moving on. Of every
+approach catalogued on this site, <strong>TEEs are the one being used, right now, by people
+paying money for verifiable and confidential inference.</strong> <a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a>
+benchmarks confidential LLM inference across CPU and GPU TEEs; the overhead figure is in
+<a href="../alternatives/index.html">the alternatives table</a>, and it is close enough to free that the
+engineering conversation is basically over. Phala's GPU TEEs serve inference on OpenRouter
+today. There is no zkML deployment of comparable scale, and there will not be one soon.</p>
+<p>So the case for zkML cannot be that TEEs are impractical. They are the practical option.
+The case has to be made on the assumption, and it has to be made honestly.</p>
+<h2 id="what-you-are-assuming">What you are assuming</h2>
+<p>Trusting a TEE means trusting, at minimum:</p>
+<ol>
+<li><strong>The hardware vendor's key infrastructure.</strong> The attestation is a signature. Someone
+   holds that signing key, and that someone can attest to anything.</li>
+<li><strong>The silicon's isolation guarantees</strong>, as implemented — not as specified.</li>
+<li><strong>The attestation chain and its revocation infrastructure</strong>, including the vendor's
+   ability and willingness to revoke a compromised part.</li>
+<li><strong>The measured binary being the thing you think it is</strong> — attestation proves <em>what</em>
+   ran, not that what ran was correct or honest. A TEE will faithfully attest to a
+   backdoored model.</li>
+</ol>
+<p>Point 4 is routinely elided and it is the important one for this SoK's purposes. A TEE
+tells you the provider ran <em>the binary whose hash is X</em>. Whether the weights inside that
+binary are the weights they advertised is a question about what got measured, and it is
+exactly the model-substitution question that verifiable inference exists to answer. A TEE
+can answer it — if the attestation covers the weights. Many deployments attest the
+container and not the model artefact.</p>
+<h2 id="the-side-channel-literature-is-not-a-talking-point">The side-channel literature is not a talking point</h2>
+<p>It is also not a refutation, and both overstatements are common.</p>
+<p>The academic record against production TEEs is long and it is real: a decade of
+microarchitectural, speculative-execution, power, and interface attacks have repeatedly
+extracted secrets from enclaves that were specified to protect them. Any security engineer
+who tells you a TEE is a black box has not been reading. The pattern is that TEEs get
+broken, get patched, and get broken again, and the assumption you are making is not "this
+hardware is secure" but "<strong>this hardware is secure enough, for now, against the adversary
+I have, and I will get told when it isn't.</strong>"</p>
+<p>That is a defensible assumption for a great many threat models. It is a completely
+untenable one for a few:</p>
+<ul>
+<li><strong>An adversary with physical access to the machine.</strong> In decentralised inference — the
+  setting most of this literature is written for — the node operator <em>is</em> the adversary
+  and <em>does</em> have physical access. This is close to the worst case for a TEE and it is
+  precisely the deployment being proposed.</li>
+<li><strong>A verifier who must not trust a single US corporation.</strong> A regulator, a foreign
+  government, a competitor.</li>
+<li><strong>A guarantee that must survive the hardware.</strong> An attestation is worth what the signing
+  key is worth on the day you check it. A ZK proof verified today is still verified in ten
+  years; an attestation from a vendor whose key has since leaked is worth nothing,
+  retroactively.</li>
+</ul>
+<p>That last one is, to us, the sharpest distinction and the least discussed. <strong>ZK proofs are
+durable and attestations are perishable.</strong> For an on-chain settlement or a compliance
+artefact that must hold up in a dispute years later, that difference is the entire ball
+game — and it has nothing to do with throughput.</p>
+<div class="debate"><h4>Does the side-channel record actually change the deployment decision?</h4><p>The ZK partisan's argument: TEEs are broken on a schedule, and building a trust
+infrastructure on them is building on sand. The TEE partisan's reply: every TEE break has
+been patched, none has produced a mass compromise of confidential-computing workloads in
+the wild, and meanwhile zkML has produced no deployments at all — a perfect security record
+that nobody is relying on is not a security record. Both are right. The disagreement is not
+really about side channels; it is about whether a probabilistic, patchable, vendor-mediated
+guarantee is <em>the same kind of thing</em> as a cryptographic one. It is not, and that is the
+whole point — but "not the same kind of thing" does not automatically mean "worse for your
+threat model."</p></div>
+
+<h2 id="the-synthesis-is-where-the-interesting-work-is">The synthesis is where the interesting work is</h2>
+<p><a href="../papers/optimistic-tee-rollups.html">Optimistic TEE-Rollups (OTR)</a> is the most thoughtful construction in this section precisely
+because it does not treat the question as a binary. It uses H100 confidential computing
+for throughput, optimistic fraud proofs for finality, and — the good idea — <strong>stochastic ZK
+spot-checks</strong> whose sole purpose is to bound the risk that the hardware was compromised.</p>
+<p>Read that as a design pattern rather than a paper: ZK is used <em>not</em> as the verification
+mechanism but as an <strong>auditor of the verification mechanism</strong>, sampled at a rate you can
+afford. You are no longer paying ZK's overhead on every inference; you are paying it on a
+random few, and what you buy is a probabilistic guarantee that the TEE is not lying to
+you. That converts an unbounded hardware-trust assumption into a quantified one.</p>
+<p>It is the same structural move as <a href="../alternatives/sampling.html">sampling-based verification</a>,
+one level up: <strong>you do not need to prove everything to make cheating irrational.</strong></p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Nobody has stated the composed guarantee</h5><p><a href="../papers/optimistic-tee-rollups.html">Optimistic TEE-Rollups (OTR)</a> combines hardware attestation, an economic challenge game, and
+a sampled cryptographic check. What is the resulting soundness statement? What must an
+adversary corrupt, and with what probability do they succeed? The paper describes the
+architecture; it does not state the theorem. Neither does any other hybrid in this SoK.</p></div></div>
+
+<h2 id="the-honest-summary">The honest summary</h2>
+<p>If your verifier will accept an NVIDIA attestation, zero knowledge is an extraordinarily
+expensive way to buy a confidence you already had — and the overhead column in
+<a href="../alternatives/index.html">the table</a> is not close. The reason to reach for ZK is not that TEEs
+don't work. It is that <strong>some verifiers cannot make that assumption</strong>, and no amount of
+engineering will make them able to. That is a small set of deployments. It is not an empty
+one, and it contains most of the ones people write papers about.</p></div><div class="pager"><a href="../alternatives/optimistic.html">← previous<span>Optimistic verification — fraud proofs and challenge windows</span></a><a class="next" href="../alternatives/sampling.html">next →<span>Sampling — trading soundness for milliseconds, on purpose</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

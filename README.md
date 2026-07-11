@@ -37,7 +37,6 @@ not about a *computation*, and they don't fit the other three.
 
 Cross-cutting context:
 
-- **[Soundness & attacks](#soundness--attacks)** — what breaks, what's merely unanalyzed. Start here if you're auditing.
 - **[Alternatives to ZK](#alternatives-to-zero-knowledge)** — opML, TEEs, and when 1000× overhead isn't worth paying.
 - **[Sampling-based verification](#sampling-based--statistical-verification)** — commit the trace, open a random sample; trade soundness for milliseconds.
 
@@ -53,6 +52,44 @@ same table.
 
 Structured benchmark data lives in [`papers.yml`](./papers.yml) so it can be plotted. The
 tables below are a human-readable view of the same data.
+
+## The site
+
+The full SoK is a generated static site in [`docs/`](./docs/) — many more pages than this
+README, one per approach and one per paper.
+
+```
+papers.yml                    structured data. SOURCE OF TRUTH for every number.
+operators.yml                 every operator in an LLM forward pass × how each scheme proves it.
+references/citation-graph.yml edge A → B = "A's text cites B".
+content/**/*.md               the prose. This is what you write.
+site/build.py                 joins them → docs/
+site/validate.py              fails the build when they drift apart.
+docs/                         GENERATED. Never hand-edit.
+
+make site     # build
+make check    # integrity checks
+make serve    # build + http://localhost:8000
+```
+
+Read [`site/CONTENT.md`](./site/CONTENT.md) before adding anything. The two rules that
+matter:
+
+**Numbers live in `papers.yml`, never in prose.** Every figure on the site is rendered from
+the YAML at build time and carries a provenance dot. Markdown that hardcodes a benchmark is
+rejected by `make check` — a number typed into a sentence is a number that will silently
+contradict the dataset the first time the dataset is corrected. (Quoting a paper's *own*
+claim in order to dispute it is exempt; that is the job.)
+
+**`null` is an answer.** A paper that does not state its bit width gets `bits: null` and a
+note. Never guess a null.
+
+**Adding a paper touches four files, or the build fails:** the PDF into `references/<cell>/`,
+the entry into `papers.yml` (with `numbers_source`, `authors_verified`, `quantization.bits`,
+and `claim_kind` — is it proving one forward pass, one token, or a whole sequence?), the
+edges into `references/citation-graph.yml`, and a `content/papers/<id>.md` note saying what
+is new, what it *actually* proves, and **what to distrust**. `make check` also flags every
+PDF we hold that nobody has written up, so fetched-but-unread cannot quietly accumulate.
 
 > **Provenance matters here.** Every number is tagged in the YAML with `numbers_source:
 > primary` (read from the paper) or `numbers_source: survey` (taken secondhand from the
@@ -425,86 +462,11 @@ and 343 s where inference-based fairness proofs stall — a 3.1×–1789× prove
 Two phases, and the first one **cross-lists into [Training](#training)**: `ZKAudit-T` proves
 the model was trained by SGD on a committed dataset (a zkPoT), then `ZKAudit-I` audits
 arbitrary user-defined properties over the hidden data and weights — copyright, censorship
-detection, counterfactuals. Weights stay secret but **the architecture is public**, which is
-exactly the mitigation the [Fiat–Shamir open question](#soundness--attacks) below turns on.
+detection, counterfactuals. Weights stay secret but **the architecture is public**.
 
 The author graph is small and worth noticing: FairProof is Yadav, **Roy Chowdhury** (EIFFeL),
 **Boneh** (Prio), Chaudhuri. FairZK includes **Yupeng Zhang** (zkCNN, DeepProve). The people
 building verifiable FL, zkPoT and fairness proofs are largely the same people.
-
----
-
-## Soundness & attacks
-
-Every result in this repo is downstream of an argument system, and argument systems break.
-Nothing below is a demonstrated break of a deployed zkML system — but the distance between
-"no known break" and "actually analyzed" is exactly where audit work lives. Entries are tagged
-by status so that distinction stays sharp.
-
-| Finding | Status | What it touches |
-|---|---|---|
-| [Fiat–Shamir attacks on GKR](https://eprint.iacr.org/2025/118) (CRYPTO '25) | ⚠️ **Proven attack** *(on adversarially-chosen circuits)* | zkGPT, DeepProve, zkPyTorch, zkCNN, zkLLM, SpaGKR, Kaizen — **but not SafetyNets**, which is interactive |
-| [Halo2 query collision](https://blog.zksecurity.xyz/posts/halo2-query-collision/) | 🐛 **Implementation bug**, fixed | ezkl, ZKML |
-| [ZKBoost](https://eprint.iacr.org/2026/202) fixing prior zkPoT | ⚠️ Claimed vuln in prior work | unidentified zkPoT protocol |
-| [SoK: SNARK vulnerabilities](https://arxiv.org/abs/2402.15293) | 📊 Taxonomy of 141 real bugs | every circuit here |
-| Quantization / result-as-witness | ❓ **Open question** — our observation, not a bug | zkGPT-style designs |
-
-### The Fiat–Shamir result, stated precisely
-
-[**How to Prove False Statements: Practical Attacks on Fiat–Shamir**](https://eprint.iacr.org/2025/118)
-— Khovratovich, Rothblum, Soukhanov. CRYPTO 2025. It attacks **GKR compiled to a
-non-interactive argument via Fiat–Shamir**, which is the construction underneath nearly every
-system in the inference table. Two attacks: an *adaptive* one that produces accepting proofs
-of false statements for a specific circuit, and a *functional-equivalence* one that, given any
-circuit `C` and any output `y`, constructs a functionally equivalent `C*` admitting an
-accepting proof that `C*` outputs `y`.
-
-**The caveat is load-bearing and must not be dropped.** The attack requires the *attacker* to
-choose or modify the circuit. The paper explicitly says security depends on "the specific
-implementation of the circuit `C`, rather than just its functionality," and that the attack
-does **not** apply to fixed, honestly-chosen circuits in standard deployments. Non-adaptive
-variants need either very large depth or extra assumptions. **This is not a break of any
-deployed zkML system.**
-
-What makes it worth a section anyway: **in MLaaS, the prover is the model owner, and the model
-is the circuit.** If a deployment commits to *weights* but never independently pins the
-*architecture*, then "construct a functionally equivalent circuit that proves the output I
-want" is structurally close to the model-substitution attack that NANOZK and DeepProve exist to
-prevent. Whether any specific system here satisfies the attack's preconditions **has not been
-analyzed**. That analysis is the highest-value open item in this repo. Note that zkAudit
-already makes the architecture public while hiding only the weights — which is precisely the
-shape of the mitigation.
-
-**The one system in this family the attack cannot reach is the oldest one.**
-[SafetyNets](https://arxiv.org/abs/1706.10268) (2017) is the ancestor of every system in that
-"what it touches" list, and it is *genuinely interactive* — the verifier sends live random
-challenges, so there is no Fiat–Shamir transform to attack. The vulnerability was introduced by
-the very step that made the lineage practical: compiling the interaction away. Worth stating
-plainly, because it sharpens what the attack actually is — not a flaw in sum-check or GKR, but
-a flaw in *removing the verifier*.
-
-### The rest
-
-**[Halo2 query collision](https://blog.zksecurity.xyz/posts/halo2-query-collision/)** (Suneal
-Gong, July 2025) — in Halo2's multipoint opening argument, querying the same polynomial at the
-same point twice causes one evaluation to be **silently ignored**, letting a malicious prover
-forge evaluations and pass verification. The root cause is domain wrapping: with `2^k` rows,
-`Rotation(0)` and `Rotation(2^k)` are the same point but the frontend doesn't deduplicate them.
-Disclosed to Zcash, PSE, Axiom and **ezkl**; fixed; no production deployments compromised. Two
-systems in our inference tables sit on halo2, so zkML inherits this class of bug wholesale.
-
-**[SoK: What don't we know?](https://arxiv.org/abs/2402.15293)** — Chaliasos, Ernstberger,
-Theodore, Wong, Jahanara, Livshits. A taxonomy built from **141 real SNARK vulnerabilities**.
-The lesson that transfers: what is proven correct on paper routinely fails in implementation,
-and **under-constrained circuits are the most common and most severe class**. Every zkML system
-here is a circuit.
-
-**Quantization as an audit surface** — ❓ *our own observation; no paper, no known bug.*
-Quantized zkML pushes correctness onto range checks. zkGPT's *result-as-witness* paradigm has
-the prover supply the output of Softmax/LayerNorm/GeLU as a witness and then prove it lies in
-range — so soundness rests entirely on those range constraints being complete. An
-under-constrained range check in a result-as-witness design would let a prover assert an
-arbitrary non-linear output. Given the SoK finding above, this is where we'd look first.
 
 ---
 

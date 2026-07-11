@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When verifiability is not worth the price — zkAI</title>
+<meta name="description" content="Verifiability is not a synonym for zero knowledge. ZK buys a succinct, non-interactive, cryptographic guarantee. The alternatives buy a weaker but crisply stateable one, for a small fraction of the co">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec on" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../alternatives/index.html">Alternatives to ZK</a> · <b>When verifiability is not worth the price</b></div><h2 class="ptitle">When verifiability is not worth the price</h2><p class="lede">Verifiability is not a synonym for zero knowledge. ZK buys a succinct, non-interactive, cryptographic guarantee. The alternatives buy a weaker but crisply stateable one, for a small fraction of the cost — and for most deployments that is the better trade.</p><div class="rail"><a href="../papers/opml.html">opML</a><a href="../papers/opp-ai.html">opp/ai</a><a href="../papers/zk-opml.html">zk-OPML</a><a href="../papers/optimistic-tee-rollups.html">Optimistic TEE-Rollups (OTR)</a><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a><a href="../papers/proof-of-sampling.html">Proof of Sampling</a><a href="../papers/lightweight-sampling-inference.html">Lightweight Sampling Proofs of Inference</a></div><div class="prose"><p>This section exists so that the rest of the site cannot quietly assume its own premise.</p>
+<p>A zkML prover is orders of magnitude slower than the inference it proves — the overhead
+column in the table below carries the figures. That is a very large bill, and it buys
+something specific: a proof that <em>anyone</em> can check, that reveals nothing, that requires
+trusting no hardware and no counterparty, and that stays valid forever without anyone
+staying online. Some deployments need exactly that. Most do not.</p>
+<p>The right way to compare the rows below is <strong>not on speed.</strong> It is on the trust
+assumption — what, precisely, must be true for the guarantee to hold, and who is in a
+position to make it false.</p>
+<div class="scrollx"><table class="matrix"><thead><tr><th>System</th><th>Model</th></tr></thead><tbody><tr><th><a href="../papers/opml.html">opML</a> <span class="prov primary" title="read in the paper"></span></th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/opp-ai.html">opp/ai</a> </th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/zk-opml.html">zk-OPML</a> </th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/optimistic-tee-rollups.html">Optimistic TEE-Rollups (OTR)</a> </th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a> <span class="prov primary" title="read in the paper"></span></th><td>Llama2 7B</td></tr><tr><th><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a> <span class="prov primary" title="read in the paper"></span></th><td>Llama2 7B/13B/70B</td></tr><tr><th><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a> <span class="prov primary" title="read in the paper"></span></th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a> <span class="prov primary" title="read in the paper"></span></th><td><span class="na">—</span></td></tr><tr><th><a href="../papers/proof-of-sampling.html">Proof of Sampling</a> </th><td><span class="na">—</span></td></tr></tbody></table></div><div class="prov-key"><span><i class="prov primary"></i> primary — read in the paper</span><span><i class="prov survey"></i> survey — secondhand</span><span><i class="prov blog"></i> vendor claim, or provenance unrecorded</span></div>
+<h2 id="what-each-row-is-actually-assuming">What each row is actually assuming</h2>
+<p><strong>Zero knowledge assumes mathematics.</strong> The verifier needs to believe a hardness
+assumption and a correct implementation. Nobody has to be honest; nobody has to be
+watching; no vendor has to be trustworthy. This is the strongest assumption set available
+and it is why ZK is the answer when the verifier is adversarial, anonymous, or a
+blockchain. It is also an assumption about the
+<em>implementation</em> as much as the mathematics, and the implementations are young.</p>
+<p><strong>Optimistic systems assume someone will bother.</strong> <a href="../papers/opml.html">opML</a> and its relatives are secure
+under <em>AnyTrust</em>: any single honest challenger can force correct behaviour. That is a
+genuinely weak requirement and it is why the overhead is roughly nothing. It is also
+three requirements dressed as one — an honest party must <strong>exist</strong>, must be <strong>watching</strong>,
+and must find it <strong>worth paying</strong> to challenge — and it buys a guarantee that only holds
+<em>after a challenge window elapses</em>. <a href="../alternatives/optimistic.html">The optimistic page</a> takes
+that apart.</p>
+<p><strong>TEEs assume a hardware vendor.</strong> <a href="../papers/tee-confidential-llm.html">TEE confidential LLM inference</a> is the row that frames the
+entire field, because its overhead is a rounding error next to ZK's. If your verifier will
+accept an attestation signed by NVIDIA, then ZK is an extremely expensive way to buy a
+confidence you could have had for free. ZK's answer is not that TEEs are bad — they are
+what is actually in production — but that <em>some verifiers cannot make that assumption</em>.
+<a href="../alternatives/tees.html">The TEE page</a> states the trade without sneering at it.</p>
+<p><strong>Sampling assumes a rational adversary.</strong> <a href="../papers/proof-of-sampling.html">Proof of Sampling</a> and
+<a href="../papers/lightweight-sampling-inference.html">Lightweight Sampling Proofs of Inference</a> do not try to make cheating impossible. They make it
+<em>detectable with some probability</em> and <em>expensive when detected</em>, and then rely on the
+prover being economically rational. This is the only family with a <strong>tunable, quantifiable</strong>
+guarantee — you can dial the soundness error — which makes it the most intellectually
+honest of the alternatives and the one we spend the most time on, on
+<a href="../alternatives/sampling.html">the sampling page</a>.</p>
+<p><strong>The hybrids assume you can partition the problem.</strong> <a href="../papers/opp-ai.html">opp/ai</a> runs the
+privacy-sensitive submodel in ZK and the rest optimistically. <a href="../papers/zk-opml.html">zk-OPML</a> decomposes
+inference to the ONNX operator level and generates proofs only where they are needed.
+<a href="../papers/optimistic-tee-rollups.html">Optimistic TEE-Rollups (OTR)</a> is the most interesting synthesis on the page: TEEs for
+throughput, fraud proofs for finality, and <strong>stochastic ZK spot-checks</strong> used purely to
+bound the risk that the hardware itself was compromised. ZK applied where it is cheap
+rather than everywhere.</p>
+<div class="debate"><h4>Is the hybrid the honest answer, or the one that inherits every assumption?</h4><p>The optimist's reading: use each tool where its cost curve is favourable, and you get
+most of ZK's guarantee for a small fraction of ZK's bill. The pessimist's reading: a
+system whose security rests on hardware attestation <em>and</em> an honest challenger <em>and</em> a
+sampling argument has three ways to fail, not one third of a failure. Nobody has written
+down the composed security statement for any of these hybrids. Until someone does, the
+optimist is asserting rather than proving.</p></div>
+
+<h2 id="the-inversion-worth-internalising">The inversion worth internalising</h2>
+<p>The naive framing is "ZK is slow, therefore ZK loses on latency." That is not quite what
+happens at scale, and <a href="../papers/opml.html">opML</a>'s own framing makes the sharper point: an optimistic system
+reaches finality after a <strong>fixed</strong> challenge window, while a ZK system reaches finality
+after a proving time that <strong>grows with model size</strong>. Past some model size, the proof takes
+longer than the challenge period — and the optimistic system, the one with the weaker
+guarantee, is also <em>the faster one to finality</em>.</p>
+<p>So the trade is not "pay more, wait longer, get a better guarantee." Above a certain
+scale it is "pay more, wait longer, get a better guarantee <strong>and</strong> worse latency." That is
+a much harder sale, and it is why the honest case for zkML is not performance. It is the
+trust assumption, and nothing else.</p>
+<h2 id="so-when-is-zk-actually-the-right-tool">So when is ZK actually the right tool?</h2>
+<p>Four situations, and they are narrower than the literature's enthusiasm suggests:</p>
+<ol>
+<li><strong>The verifier is adversarial or anonymous.</strong> No challenger will show up on your
+   behalf. Nobody will trust your attestation.</li>
+<li><strong>The model or the input must stay private</strong>, and the proof must still convince a
+   third party. This is the combination no alternative on the table offers — optimistic
+   verification requires re-execution, which requires the weights.</li>
+<li><strong>Verification must be non-interactive and permanent.</strong> A proof settled on-chain is
+   checked by parties who were not present, years later. A challenge window that has
+   closed is not a proof.</li>
+<li><strong>No hardware root of trust is acceptable</strong> — a regulator, a competing counterparty, a
+   public chain.</li>
+</ol>
+<p>Outside those four, one of the rows above is probably cheaper by a margin that no protocol
+improvement is going to close.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Nobody has published the composed security statement</h5><p>Every hybrid on this page combines two or three trust models, and not one paper states
+the resulting guarantee as a single theorem — what an adversary must corrupt, and with
+what probability they succeed. The security models are described in prose and composed by
+vibes. For a field that prides itself on proofs, that is a conspicuous hole.</p></div></div></div><div class="pager"><a href="../properties/index.html">← previous<span>A claim about a model, not about a computation</span></a><a class="next" href="../alternatives/optimistic.html">next →<span>Optimistic verification — fraud proofs and challenge windows</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

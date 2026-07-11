@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZEN — zkAI</title>
+<meta name="description" content="ZEN: An Optimizing Compiler for Verifiable, Zero-Knowledge Neural Network Inferences">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>ZEN</b></div><h2 class="ptitle">ZEN</h2><p class="psub">ZEN: An Optimizing Compiler for Verifiable, Zero-Knowledge Neural Network Inferences</p><p class="authors">Boyuan Feng, Lianke Qin, Zhenfei Zhang, Yufei Ding, Shumo Chu</p><div class="pmeta"><div><dt>Date</dt><dd>2021-05-01</dd></div><div><dt>Proof system</dt><dd>R1CS / Groth16 (arkworks) over BLS12-381, with proof-friendly quantization and stranded encoding</dd></div><div><dt>Hardware</dt><dd>Azure M32ls -- 32-core Intel Xeon Platinum 8280M @ 2.70GHz, 256 GiB DRAM</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2021/087">https://eprint.iacr.org/2021/087</a></dd></div><div><dt>Quantization</dt><dd>8 bits</dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>proving time s</th><th>verification time s</th><th>proof size mb</th></tr></thead><tbody><tr><td>ShallowNet / LeNet</td><td>147–4710</td><td>0.023–0.47</td><td>0.000192</td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> ZENinfer, MEASURED rows only. The largest model (LeNet-Face-large) carries an asterisk in Tables 1 and 2 -- &quot;indicates an estimated value&quot; -- and is excluded. Separately, ZENacc&#x27;s reported runtime covers model commitment + inference on ONE image (footnote 6) while the constraint count in the same table is priced for 100 images: the two columns of Table 2 describe different circuits.</p><h3 class="head">Notes</h3><div class="prose"><p>One of the first optimizing compilers for verifiable NNs, and the first to argue that the NETWORK, not the prover, is the thing to optimize -- its backend is off-the-shelf Groth16. Ships ZENacc (prove accuracy on a verifier-supplied test set) and ZENinfer (prove one inference). Its remainder-based verification is the ancestor of zkPyTorch's auxiliary witnesses and zkGPT's result-as-witness. Its Table 3 is also the earliest measurement of the in-circuit commitment bottleneck Artemis later attacks -- ZEN does not notice it.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>8</pre></td></tr><tr><th>bits_note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>uint8 weights/activations packed into a ~254-bit BLS12-381 field element -- that packing IS stranded encoding, so 8 bits is structural, not incidental. The paper never writes &quot;we use 8 bits&quot; in a single sentence, which is presumably why this was recorded as null.</pre></td></tr><tr><th>scheme</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Full integer quantization (Jacob et al.) + sign-bit grouping + remainder-based verification + stranded encoding</pre></td></tr><tr><th>speedup_from_quantization</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>- 5.43
+- 22.19</pre></td></tr><tr><th>speedup_note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>5.43x-22.19x fewer R1CS constraints (avg 15.35x) vs ZEN-vanilla. CAVEAT: that ratio is Table 3&#x27;s `vanilla / ZEN-infer` column, which counts the NEURAL-NETWORK constraints only and excludes the in-circuit model commitment sitting in the column beside it -- even though Commitment + ZEN-infer reproduces Table 1&#x27;s total proved-circuit size on every row. Recomputed over the whole proved circuit, the end-to-end saving is a low single-digit factor, and on ShallowNet it rounds to nothing. See content/papers/zen.md.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Table 7 gives FP vs quantized accuracy for all six models; deltas are small but non-zero, and non-monotone (the largest model&#x27;s quantized accuracy comes out ABOVE its FP accuracy). Note the abstract&#x27;s &quot;no accuracy loss&quot; is relative to ZEN-vanilla, not to floating point.</pre></td></tr><tr><th>note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>The other direct measurement of what quantization buys, independent of SpaGKR.</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>ZEN is the first paper in this collection to argue that <strong>the network, not the prover, is the
+thing to optimize</strong>. Everything in the <a href="../papers/safetynets.html">SafetyNets</a> → <a href="../papers/zkcnn.html">zkCNN</a> → <a href="../papers/zkllm.html">zkLLM</a> lineage attacks the
+argument system; ZEN leaves the argument system alone (arkworks Groth16 over BLS12-381, entirely
+off the shelf) and instead compiles a floating-point PyTorch model into an R1CS circuit that is
+<em>cheap to prove because of how it was quantized</em>. The paper is explicit that this is the bet:
+"the selection of underlying zero-knowledge proof systems is largely orthogonal to our ZEN
+design."</p>
+<p>Three techniques, and the first two are the ones worth carrying forward.</p>
+<p><strong>Sign-bit grouping.</strong> Affine quantization gives you $Q_Y = z_Y + M(Q_W - z_W)(Q_X - z_X)/2^k$,
+where the two bracketed factors can go negative — and a negative intermediate in a prime field
+means a bit-decomposition to recover the sign, which is where the constraints go. ZEN rewrites the
+matrix product by <em>grouping operands of the same sign</em>, using associativity, so that both sides of
+the equation are guaranteed non-negative and the element-wise zero-comparisons disappear
+altogether. No approximation is involved: it is an algebraic identity.</p>
+<p><strong>Remainder-based verification.</strong> The <code>/2^k</code> rescale is an integer division, which R1CS cannot do
+natively. Rather than bit-decompose the dividend, ZEN has the prover supply the remainder as a
+witness and constrain <code>dividend = quotient·divisor + remainder</code> with <code>remainder &lt; divisor</code>. This
+is the same auxiliary-witness trick <a href="../papers/zkpytorch.html">zkPyTorch</a> would rediscover four years later for division
+and softmax, and it is the ancestor of the <em>result-as-witness</em> paradigm <a href="../papers/zkgpt.html">zkGPT</a> builds on.</p>
+<p><strong>Stranded encoding.</strong> A SIMD trick: a BLS12-381 field element is ~254 bits and the activations
+are 8 bits, so pack several dot products into one pair of field elements,
+$x_i = \sum_j a_{j,i}\delta^{\phi(j)}$, chosen so that $\sum_i x_i y_i$ has the $s$ separate dot
+products sitting in non-overlapping digit ranges of the result. The real contribution here is
+negative and honest: naive stacking loses, because extraction costs more than the packing saves.
+ZEN formulates the packing as a discrete optimization problem, derives a cost model, and lets the
+compiler pick the batch size per kernel. It is the smallest of the three wins.</p>
+<p>The framing that has aged best is the last line of §1.2: co-design the domain algorithm and the
+constraint compilation, rather than improving the backend. That sentence is the <a href="../papers/zkpytorch.html">zkPyTorch</a> and
+<a href="../papers/jolt-atlas.html">Jolt Atlas</a> research programme, written in 2021.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p>Two schemes, and they are genuinely different claims — this is one of the few systems that
+straddles the <em>inference</em> and <em>testing</em> objectives, and the only one in that pair that defines
+both formally.</p>
+<p><strong>ZEN-infer</strong> proves: <em>this committed model, on this committed input, produced this output.</em> The
+weights stay hidden (Pedersen commitment, statistically hiding), the input stays hidden, the result
+is revealed. One image, one forward pass. No batching, no sequence, no autoregression — these are
+CNNs.</p>
+<p><strong>ZEN-acc</strong> proves: <em>this committed model achieves this accuracy on the testing set you just sent
+me.</em> It is an interactive setup protocol — the prover commits first, the verifier then supplies the
+dataset and labels as a challenge, and the accuracy is the public output. That challenge structure
+is the right shape for the claim, and it is a better-specified testing protocol than most of what
+followed.</p>
+<p><strong>The accuracy claim is measured, not asserted — but it is measured against the wrong baseline in
+the abstract.</strong> Table 7 gives floating-point accuracy, quantized accuracy, and the delta, for all
+six models. That is exactly what this SoK asks of a quantization paper, and ZEN is one of the few
+that supplies it. However, the abstract's headline — savings "without any accuracy loss" — is <em>not</em>
+a claim about floating point. It is a claim relative to ZEN-vanilla, i.e. relative to the
+Jacob et al. quantization scheme ZEN reimplements as its baseline. The paper says so in §4.2, in a
+sentence that never makes it to the abstract:</p>
+<blockquote class="q"><p>As a result, our techniques incur similar accuracy loss as [JKC+18]. Nonetheless, we note that
+[JKC+18] itself introduces accuracy loss.</p><cite><b>ZEN</b> · §4.2, R1CS Friendly quantizations</cite></blockquote>
+
+<p>So the correct reading is: ZEN's <em>own optimizations</em> are semantics-preserving (true, and provably
+so — they are algebraic identities), and the residual accuracy cost is whatever int8 quantization
+costs, which Table 7 measures and which is small on these models. Both halves are honest. Only the
+composition, as compressed into the abstract, is not.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<div class="audit"><span class="audit-h">The headline constraint saving excludes the largest term in the circuit</span><p>Table 3 has four columns: <strong>Commitment</strong>, <strong>ZEN-vanilla</strong>, <strong>ZEN-infer</strong>, and <strong>Saving</strong>. The
+saving column is <code>vanilla / ZEN-infer</code> — it divides the <em>neural-network</em> constraints only. The
+commitment column sits right next to it and is not in the ratio.</p>
+<p>But the commitment circuit <em>is inside the proved circuit</em>. You can verify this from the paper's own
+tables without any outside information: for every one of the six models, Table 3's
+<code>Commitment + ZEN-infer</code> reproduces Table 1's total constraint count, to the rounding.</p>
+<p>And for the smaller models the commitment <strong>dominates</strong>. On ShallowNet-MNIST the commitment
+constraints exceed the optimized network constraints by more than an order of magnitude, so
+dividing the <em>whole</em> circuit before by the whole circuit after leaves a saving that rounds to
+nothing. Recomputing end-to-end across all six rows, the real range is a low single-digit factor —
+against a headline of 5.43–22.19×.</p>
+<p>None of the arithmetic is hidden; the paper prints every number needed to do it and simply does not
+do it. But <code>papers.yml</code> and the README both carry the 5.43–22.19× figure as ZEN's contribution, and
+it is a per-kernel figure, not an end-to-end one.</p>
+<p>The finding also has a forward pointer. The reason the commitment is so expensive is that ZEN
+proves the Pedersen commitment <em>in-circuit</em>, and that is precisely the bottleneck <a href="../papers/artemis.html">Artemis / Apollo</a> would
+attack three years later, cutting commitment-verification overhead on VGG by an order of magnitude.
+ZEN's Table 3 is the earliest measurement of the problem Artemis exists to solve, and ZEN does not
+notice it.</p></div>
+
+<p><strong>The largest model's numbers are estimates, and the paper marks them with an asterisk.</strong> In both
+Table 1 and Table 2, LeNet-Face-large's setup time, prove time, verify time and CRS size carry a
+<code>*</code> — "indicates an estimated value." The proving time and CRS size in particular are round numbers.
+<code>papers.yml</code> correctly quotes only the measured range, and it should stay that way; anyone citing
+ZEN's largest-model cost is citing an extrapolation.</p>
+<p><strong>ZEN-acc's reported time is not the time to prove ZEN-acc's reported circuit.</strong> The constraint
+counts in Table 2 "consist of the commitment to the neural network model, the inferences on 100
+images, and a commit to the final accuracy." The runtimes in the same rows do not. Footnote 6:</p>
+<blockquote class="q"><p>We record the time spent on model commitment, inference on one image plus the final accuracy
+commitment check circuit as the ZENacc execution time.</p><cite><b>ZEN</b> · §6.4, footnote 6</cite></blockquote>
+
+<p>One image, in a table whose constraint column is priced for a hundred. The two columns of Table 2
+are measuring different circuits, and the paper does not flag it in the body. Any <em>testing</em>-objective
+comparison that uses ZEN's proving time against, say, <a href="../papers/zkdt.html">zkDT</a> or <a href="../papers/pvcnn.html">pvCNN</a> — both of which prove
+over a real test set — is comparing a hundred-sample claim to a one-sample cost.</p>
+<p><strong>The models are too weak for the accuracy claim to transfer.</strong> ZEN's CIFAR-10 networks are LeNets,
+and Table 7's floating-point column has them scoring closer to a coin toss than to a usable
+classifier — this is nowhere near a model anyone would deploy. Quantization damage generally grows
+with model capability, so a scheme shown to preserve the accuracy of a weak model has not been shown
+to preserve the accuracy of a strong one. The delta column in Table 7 is also non-monotone — the
+<em>largest</em> model's quantized accuracy comes out <strong>above</strong> its floating-point accuracy — which is the
+signature of a curve sampled inside its own noise, exactly as in <a href="../papers/deepprove.html">DeepProve</a>'s and
+<a href="../papers/safetynets.html">SafetyNets</a>'s quantization tables.</p>
+<p><strong>A spec-level bug in ZEN-infer's definition.</strong> §3.2 declares
+<code>ZENinfer.Prove(pk, a, r, s, Q)</code> with two openings <code>r</code> and <code>s</code>, then commits with
+<code>cm_a ← COMM(r, a)</code> and <code>cm ← COMM(r, Q)</code> — the <em>same</em> randomness for both Pedersen commitments,
+with <code>s</code> never used. Almost certainly a typo, and the open-source implementation is where you would
+settle it, but as printed the scheme reuses an opening across two commitments, which is not a thing
+a hiding argument gets to do casually. The same section also calls <code>a</code> a "public input" one
+paragraph before committing to it and claiming input privacy.</p>
+<p><strong>Bit width was recoverable and the repo had it as unknown.</strong> ZEN is an <strong>8-bit</strong> system —
+uint8 activations and weights, packed into a ~254-bit BLS12-381 field element, which is the entire
+premise of stranded encoding. The README's quantization table listed ZEN's bit width as <code>?</code>. It is
+not stated in a "we use 8 bits" sentence, which is presumably why it was missed, but it is
+unambiguous from §1.2 and §5. Fixed in <code>papers.yml</code>.</p>
+<p><strong>And the price of the smallest proof in the table.</strong> Groth16 gives ZEN a constant-size proof — the
+smallest of any system in the inference table, by a wide margin — and it is bought with a per-circuit
+trusted setup whose common reference string runs to gigabytes on the mid-size models and, by the
+paper's own estimate, to hundreds of gigabytes on the largest. The proof is tiny; the ceremony is
+not, it is model-specific, and it must be redone whenever the weights change. That is the trade the
+proof size is hiding, and it is why nothing after 2021 in this table uses Groth16.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/safetynets.html">SafetyNets</a></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkdt.html">zkDT</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li class="none">none recorded</li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/quantization.html">Quantization, the hidden variable</a><a href="../zk-inference/vision-and-trees.html">Vision and trees</a><a href="../zk-testing/index.html">Proving a score</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>pdf_available: true
+objectives:
+- inference
+- testing
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

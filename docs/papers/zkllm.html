@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zkLLM — zkAI</title>
+<meta name="description" content="zkLLM: Zero Knowledge Proofs for Large Language Models">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>zkLLM</b></div><h2 class="ptitle">zkLLM</h2><p class="psub">zkLLM: Zero Knowledge Proofs for Large Language Models</p><p class="authors">Haochen Sun, Jason Li, Hongyang Zhang</p><div class="pmeta"><div><dt>Venue</dt><dd>ACM CCS 2024</dd></div><div><dt>Date</dt><dd>2024-04-24</dd></div><div><dt>Affiliation</dt><dd>University of Waterloo</dd></div><div><dt>Proof system</dt><dd>Sum-check + tlookup (parallelized lookup argument) + zkAttn</dd></div><div><dt>Hardware</dt><dd>NVIDIA A100 (40GB), 124GB RAM; fully parallelized CUDA</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Open source</dt><dd>yes</dd></div><div><dt>Paper</dt><dd><a href="https://arxiv.org/abs/2404.16109">https://arxiv.org/abs/2404.16109</a></dd></div><div><dt>PDF</dt><dd><a href="https://arxiv.org/pdf/2404.16109">https://arxiv.org/pdf/2404.16109</a></dd></div><div><dt>Code</dt><dd><a href="https://github.com/jvhs0706/zkllm-ccs2024">https://github.com/jvhs0706/zkllm-ccs2024</a></dd></div><div><dt>Quantization</dt><dd><span class=na>not stated</span></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>params</th><th>proving time s</th><th>proof size mb</th><th>verification time s</th></tr></thead><tbody><tr><td>LLaMA-2 13B</td><td>13B</td><td>900</td><td>0.2</td><td>3</td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> under 15 minutes for the entire inference process</p><p style="font-size:13px;color:#6f7d86"><b>proof_size_note:</b> paper: &lt;200 kB. Survey Table VI claims &lt;10 kB -- discrepancy unresolved.</p><p style="font-size:13px;color:#6f7d86"><b>verification_time_note:</b> survey: &lt;3s</p><h3 class="head">Notes</h3><div class="prose"><p>The GPU baseline everyone compares against. tlookup handles non-arithmetic tensor ops without asymptotic overhead; zkAttn is a bespoke argument for attention. CONFLICT: the paper states proof size &lt;200 kB; the ZKP-VML survey's Table VI reports &lt;10 kB for the same system. Trust the paper.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>None</pre></td></tr><tr><th>scheme</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Fixed-point. zkAttn explicitly avoids bit-decomposition and polynomial approximation of softmax.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>None</pre></td></tr><tr><th>note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>zkLLM&#x27;s own framing is the cleanest statement of the tradeoff: to match float accuracy, fixed-point methods need LARGE bit widths, which force operations over LARGE finite fields. zkAttn exists precisely to dodge the accuracy degradation that bit-decomposition approaches suffer. Bit width is the hidden variable behind the field choice.</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p><strong><code>tlookup</code></strong> replaces the sequential, univariate-polynomial lookup arguments of the plookup
+lineage with a sum-check over multilinear extensions of <em>tensors</em>. The logarithmic-derivative
+identity it rests on is standard; the contribution is noticing that once you phrase it over
+tensors, every step parallelizes onto a GPU, which the univariate constructions cannot. That is
+why zkLLM was the fastest LLM prover of its generation, and it is a systems insight dressed as a
+protocol.</p>
+<p><strong><code>zkAttn</code></strong> is the sharper idea. A lookup table for Softmax is impossible — the function is
+multivariate, so you would have to tabulate every input <em>vector</em>. zkAttn escapes by exploiting two
+properties of the exponential: shift-invariance lets you normalize each row so the outputs sum to
+one, and <em>homomorphism</em> lets you decompose the shifted input into base-<code>b</code> digits and take the
+<strong>product of per-digit exponentials</strong>, each of which is a univariate table. The normalizer <code>ẑ</code>,
+which is the genuinely un-provable part, is never proven directly — instead the prover is forced to
+show that the row sums of the output land in a narrow tolerance band. It is a lovely piece of
+protocol design: an intractable equality replaced by a tractable range check that pins it just as
+tightly.</p>
+<p>The optimization on top is the part worth stealing. Segments at the extremes of the digit
+decomposition are set to <em>constant</em> tables — the most-significant digits become an indicator
+(saturation region: the exponential is already zero), the least-significant become the constant 1
+(the exponential is already one). Only the middle segments need real tables. The error bound in
+Theorem 7.1 falls out of that split and is what sets the tolerance band.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>One forward pass, over a 2048-token sequence, with hidden weights, against a semi-honest
+verifier — interactively.</strong></p>
+<ul>
+<li><strong>The sequence length is the headline nobody quotes.</strong> "applying samples with the default
+  sequence length of 2048 from the C4 dataset." zkLLM's proof covers a context two orders of
+  magnitude longer than <a href="../papers/zkgpt.html">zkGPT</a>'s and four times longer than <a href="../papers/deepprove.html">DeepProve</a>'s. <code>papers.yml</code> records
+  it as <code>null</code>. It should not. Any cross-system throughput comparison that ignores this is
+  meaningless — attention is quadratic in sequence length, and zkLLM is paying the most.</li>
+<li><strong>It is still one forward pass.</strong> "the entire inference process" means the whole model over the
+  whole prompt, not a multi-token generation. <a href="../papers/deepprove.html">DeepProve</a>'s criticism — that zkLLM does not handle
+  autoregression — is correct, though DeepProve's own answer also costs exactly one forward pass.</li>
+<li><strong>It is genuinely zero-knowledge</strong>, and it is the only LLM prover here that both claims and
+  proves it (Theorem 7.4, with hiding Pedersen/Hyrax commitments and ZK sum-check). <a href="../papers/zkgpt.html">zkGPT</a>
+  defers ZK to future work; <a href="../papers/deepprove.html">DeepProve</a> never claims it. On the property that the whole MLaaS
+  motivation depends on, zkLLM is the honest one.</li>
+<li><strong>But the ZK holds only against a semi-honest verifier.</strong> "A semi-honest assumption is applied to
+  the verifier." A verifier who deviates — who chooses its challenges adversarially rather than at
+  random — is outside the model. That is a real weakening, and it is stated once and never
+  revisited.</li>
+<li><strong>And there is no Fiat–Shamir.</strong> The string does not appear in the paper. Protocol 1 has the
+  verifier sending live random challenges. As written, zkLLM is an <em>interactive</em> protocol, like
+  <a href="../papers/safetynets.html">SafetyNets</a> and unlike everything else in this table. See the flag below.</li>
+<li><strong>The accuracy accounting is complete and clean.</strong> C4 perplexity, floating-point baseline and
+  quantized, for eight models across two families, with the delta shrinking monotonically as the
+  model grows. <code>papers.yml</code> records zkLLM's <code>accuracy_retention</code> as <code>null</code>. That is wrong, and the
+  correction matters: zkLLM's accuracy reporting is arguably better than <a href="../papers/zkgpt.html">zkGPT</a>'s, which covers
+  one model.</li>
+</ul>
+<h2 id="what-to-distrust">What to distrust</h2>
+<div class="audit"><span class="audit-h">The abstract contradicts Table 1 on verification time</span><p>The abstract and §1 both promise proofs "verified within 1-3 seconds." Table 1 prints verifier
+times of <strong>3.71 s</strong> (OPT-13B) and <strong>3.95 s</strong> (LLaMA-2-13B). The two largest models — the ones the
+paper's headline claim is about — both fall outside the range the paper states for them.</p>
+<p>This one propagates. The <a href="../papers/zkml-survey.html">ZKP-VML Survey</a>'s Table VI records zkLLM's verification as "&lt; 3s,"
+faithfully copying the abstract rather than the table. <code>papers.yml</code> currently carries 3.0 s from
+the survey. The correct figure, from the paper's own table, is 3.95 s.</p>
+<p>The survey's proof size for zkLLM ("&lt; 10KB") matches neither the abstract's "less than 200 kB" nor
+Table 1's 141–188 kB. That number appears to be simply wrong, and it is the clearest evidence in
+this collection that survey Table VI cannot be used as a source.</p></div>
+
+<p><strong>The headline speedup over ZKML is partly extrapolated.</strong> "Beyond the size of GPT-2 (1.5B
+parameters), where zkML results in an out-of-memory (OOM) error, we provide an estimation of the
+required proving time." Every comparison point in Figure 4 above that size is an <em>estimate</em>, marked
+in red, of a baseline that <strong>could not run</strong>. The claim of extending verifiability to an order of
+magnitude larger models is real and important — zkML exhausts memory and zkLLM does not, which is
+itself the result. The claim of a specific <em>speedup</em> at those sizes is a projection against a
+system that was never executed there.</p>
+<p><strong>Watch the model names.</strong> zkLLM's "GPT-2" is GPT-2 XL, 1.5B parameters. Every other paper in this
+collection means GPT-2 small, 124M. When <a href="../papers/zkgpt.html">zkGPT</a> reports zkLLM's time on "GPT-2," it means the
+124M model it re-ran itself. Two papers, one name, an order of magnitude apart.</p>
+<p><strong>The bit width is not stated, and this is the paper that best explains why it matters.</strong> zkLLM's
+own framing — that fixed-point methods need large bit widths, which force large fields — is the
+cleanest statement of the tradeoff in the literature. It then does not tell you its own bit width.
+What it does tell you: the scaling factor for embeddings and parameters is 2^16, each <code>tlookup</code>
+table holds 2^16 entries, and the field is BLS12-381 at roughly 2^255. So the <em>field</em> is the
+largest of any system here, which is the cost zkLLM's own introduction warns about, and which
+partly explains why a GPU is needed at all.</p>
+<div class="debate"><h4>Is zkLLM actually exposed to the Fiat–Shamir attack?</h4><p><code>papers.yml</code> lists <code>zkllm</code> in the <code>affects_in_this_repo</code> set for the Fiat–Shamir/GKR attack. But
+the paper never applies the Fiat–Shamir transform — it describes an interactive protocol with a
+semi-honest verifier, and the string "Fiat-Shamir" appears nowhere in the text. On the paper's own
+terms, zkLLM sits with <a href="../papers/safetynets.html">SafetyNets</a> on the <em>interactive</em> side of that line, and the attack cannot
+reach it.</p>
+<p>The catch is that an interactive, designated-verifier proof is not what anyone wants to deploy, and
+the open-source implementation may well compile the interaction away. So the honest status is:
+<strong>unresolved, and worth resolving</strong> — either zkLLM is non-interactive in practice (and inherits the
+attack surface, and the paper omits its own compilation step), or it is genuinely interactive (and
+its "publicly verifiable proof" framing is doing work the protocol does not support). It cannot be
+both.</p></div></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li>GKR <span class="tag">external</span></li><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/safetynets.html">SafetyNets</a></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/deepprove.html">DeepProve</a></li><li><a href="../papers/zip.html">ZIP</a></li><li><a href="../papers/zkgpt.html">zkGPT</a></li><li><a href="../papers/zkml-survey.html">ZKP-VML Survey</a></li><li><a href="../papers/zkpytorch.html">zkPyTorch</a></li><li><a href="../papers/zktorch.html">ZKTorch</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a><a href="../private-inference/nonlinearities.html">The non-linearity problem, twice</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/quantization.html">Quantization, the hidden variable</a><a href="../zk-inference/what-is-proven.html">What is actually being proven</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>claim_kind: full
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

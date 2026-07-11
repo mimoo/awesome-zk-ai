@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZKTorch — zkAI</title>
+<meta name="description" content="ZKTorch: Compiling ML Inference to Zero-Knowledge Proofs via Parallel Proof Accumulation">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>ZKTorch</b></div><h2 class="ptitle">ZKTorch</h2><p class="psub">ZKTorch: Compiling ML Inference to Zero-Knowledge Proofs via Parallel Proof Accumulation</p><p class="authors">Bing-Jyue Chen, Lilia Tang, Daniel Kang</p><div class="pmeta"><div><dt>Venue</dt><dd>arXiv:2507.07031</dd></div><div><dt>Date</dt><dd>2025-07-09</dd></div><div><dt>Proof system</dt><dd>Basic blocks + parallel extension of the Mira accumulation scheme</dd></div><div><dt>Hardware</dt><dd>Intel Xeon Platinum 8358 @ 2.6 GHz; BN254</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://arxiv.org/abs/2507.07031">https://arxiv.org/abs/2507.07031</a></dd></div><div><dt>PDF</dt><dd><a href="https://arxiv.org/pdf/2507.07031">https://arxiv.org/pdf/2507.07031</a></dd></div><div><dt>Quantization</dt><dd>10 bits</dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>params</th><th>context window</th><th>claim kind</th><th>proving time s</th><th>verification time s</th><th>proof size mb</th></tr></thead><tbody><tr><td>GPT-J</td><td>6B</td><td>2</td><td>pass</td><td>1397.52</td><td>62.64</td><td>6.54</td></tr><tr><td>BERT</td><td>340M</td><td>1</td><td>pass</td><td>880.42</td><td>26.67</td><td>4.88</td></tr><tr><td>LLaMA-2-7B</td><td>7B</td><td>1</td><td>pass</td><td>2645.5</td><td>100.14</td><td>22.85</td></tr><tr><td>GPT-2</td><td>124M</td><td><span class="na">—</span></td><td>pass</td><td>599</td><td>12</td><td><span class="na">—</span></td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> Table 4, end-to-end. Supersedes the two secondhand figures we used to carry (DeepProve&#x27;s 0.09 TPM =&gt; 667 s, and the ICME blog&#x27;s &quot;20 minutes&quot;). DeepProve&#x27;s number is derived from exactly this row, by dividing it by the two prompt tokens.</p><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> Sec. 6.3, the one like-for-like comparison in the paper: ZKTorch 599 s prove / 12 s verify vs ZKML 3601 s / 19 s, same model, same hardware. NOTE: our `zkml-kang` entry carries 3652 s for that same ZKML GPT-2 run, taken from the survey -- a new survey-vs-primary conflict; both values are recorded here in papers.yml.</p><h3 class="head">Notes</h3><div class="prose"><p>Successor to ZKML from the same group, and NOT an improved ZKML -- it discards the single halo2-circuit architecture for a DAG of ~20 "basic blocks", each proved by a specialized protocol and then accumulated (a parallel extension of Mira). First ZK system to prove every model in MLPerf Inference: Edge v4.1. That breadth is the real contribution, and the headline speedup buries it.
+CRITICAL, and invisible from the abstract: every LLM benchmark here is a SINGLE FORWARD PASS over a 1- or 2-token input (Table 3 lists the input dimensions explicitly). DeepProve's comparison table converts the GPT-J result into 0.09 tokens/minute, which is arithmetically right -- 2 tokens / (1397.52 s / 60) = 0.086 -- but is a category error: those two tokens are one prompt processed in a single pass, not two decode steps. The paper never discusses autoregression or KV caching anywhere. We previously carried that derived throughput figure and tagged the row <code>claim_kind: token</code>; both were wrong and are now removed.
+Structurally, the decode step is precisely what does NOT fold: ArgMax and TopK are built from OneToOne, Ordered and CopyConstraint -- three of the seven basic blocks with no accumulation support. The compiler is written to avoid the non-foldable set, and it can, because none of its benchmarks ever sample a token.
+The proof-size claim ("&gt;=3x smaller than specialized protocols") rests on a single ResNet-50 row whose own caption concedes that zkCNN and pvCNN never implemented ResNet-50 -- so their cells hold those systems' proof sizes for SMALLER models (VGG-16 and LeNet-5). The substitution is conservative, but the claim is an inference from three cells, two of which are for different models. The proving-time claim against ZKML, by contrast, IS like-for-like: same model, same hardware, and the paper says so.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>10</pre></td></tr><tr><th>bits_note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>&quot;For all models we use 10 bits of quantization except for GPT-j, where we used 12 bits&quot; (Sec. 6.1). ZKTorch is one of the few systems in this corpus that states a bit width at all.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>metric:
+- ROUGE
+- F1
+- WER
+- mAP
+note: &#x27;Table 5 compares ROUGE (GPT-J), F1 (BERT), WER (RNN-T) and mAP (RetinaNet)
+  under ZKTorch&#x27;&#x27;s scaling against MLPerf reference values. This is a PLAINTEXT quantization
+  study, NOT a proven claim -- a one-token BERT input cannot produce a SQuAD F1 score.
+  The paper labels it honestly, but it must not be read as ZKTorch proving a benchmark
+  result: that would be the testing objective, and no proof of it exists here.&#x27;</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>ZKTorch is the same group's successor to <a href="../papers/zkml-kang.html">ZKML</a>, and the first thing to say is that it is not
+an improved ZKML. <strong>It throws the ZKML architecture away.</strong> ZKML compiled a model into one large
+Plonkish circuit and proved it with halo2. ZKTorch compiles an ONNX model into a DAG of twenty
+<strong>basic blocks</strong> — <code>CQ</code>, <code>CQ2</code>, <code>CQLin</code>, <code>MatMul</code>, <code>Permute</code>, <code>Add</code>/<code>Sub</code>/<code>Mul</code>, <code>MaxProof</code>,
+<code>OneToOne</code>, <code>Ordered</code>, and friends — each proved by its own KZG-based protocol, and then <strong>folds the
+per-block proofs together</strong> with an accumulation scheme. Same compiler philosophy, entirely different
+cryptography underneath.</p>
+<p><strong>The cryptographic contribution is parallel accumulation.</strong> ZKTorch builds on Mira, a pairing-based
+folding scheme that accumulates a NARK proof into a running accumulator via a random linear
+combination. Mira's formulation is inherently <em>sequential</em> — one fold per proof, <code>O(N)</code> deep — which
+is a problem when a model compiles to on the order of a hundred thousand nodes. ZKTorch's fix is
+clean and is the single idea to take from the paper: observe that a NARK proof <strong>is</strong> an accumulator
+instance, the special case with <code>μ = 1</code> and <code>e = 0</code>, tag it with a bit, and generalize the folding
+prover so it accumulates <em>any two</em> accumulator instances. Folding then becomes a Merkle-tree
+reduction that parallelizes, rather than a chain. Mira itself only supplied accumulation for three of
+the blocks; ZKTorch relaxes the algebraic tests of ten more so they fold too.</p>
+<p><strong>The engineering contribution is coverage, and it is the more impressive half.</strong> A transpiler covers
+61 ONNX layers — the paper's key empirical observation is that the entire MLPerf Edge suite uses only
+61 distinct operations — plus a rule-based graph compiler with seven rewrite rules (fuse the eight-node
+ONNX GeLU subgraph into one table lookup; fuse multi-head matmul and RoPE to eliminate copy
+constraints; a <code>CustomCNN</code> rule that views a <code>[B,I,H,W]</code> tensor as <code>[BHW, I]</code> so that convolution
+becomes a stack of <code>CQLin</code>s plus additions that are <em>free</em> by KZG homomorphism, with no shape
+operations at all). The result is the first ZK system to prove <strong>every model in MLPerf Inference:
+Edge v4.1</strong> — including SDXL, 3D-UNet, RetinaNet and an RNN-T — on a single server. Nothing else in
+this repo has that breadth, and breadth is a real contribution that the headline speedup buries.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>A single forward pass, on an input of one or two tokens.</strong></p>
+<p>That sentence is the whole review, and it is not visible from the abstract. The evaluation's model
+table lists the input dimensions alongside the parameter counts: BERT is proven on a <strong>one-token</strong>
+input, GPT-J on a <strong>two-token</strong> input, LLaMA-2-7B on a <strong>one-token</strong> input, the RNN-T at sequence
+length one, SDXL's text encoders on one token each. The proving times in the results table are the
+cost of pushing that through the network once. They are not the cost of a sequence, they are not the
+cost of a generation, and they are not comparable to <a href="../papers/deepprove.html">DeepProve</a>'s multi-token decode throughput or
+<a href="../papers/zkgpt.html">zkGPT</a>'s 32-token context without saying so.</p>
+<p>This has a direct consequence for our own data. <a href="../papers/deepprove.html">DeepProve</a>'s comparison table records ZKTorch's
+GPT-J result as a tokens-per-minute figure, which can only have been obtained by dividing the GPT-J
+proving time by its two tokens. But those two tokens are a <strong>prompt processed in one pass</strong>, not two
+decode steps — the paper never discusses autoregression or KV caching. The arithmetic is right and the
+interpretation is a category error, and it is the reason <code>papers.yml</code> should carry ZKTorch's GPT-J row
+as a forward pass over a two-token input rather than as a per-token cost.</p>
+<p>Weights and activations are committed with KZG and stay private; the <strong>architecture is public</strong>, since
+the DAG is compiled from the ONNX file the verifier also holds. Everything runs over BN254. Quantization
+is fixed-point at a single low bit width for every model except GPT-J, which needs a slightly wider one
+— making ZKTorch one of the few systems in this repo that states its bit width at all.</p>
+<p><strong>The accuracy table is not a proven claim, and cannot be one.</strong> It reports ROUGE for GPT-J, F1 for
+BERT, WER for the RNN-T and mAP for RetinaNet under ZKTorch's scaling, against MLPerf reference values,
+to show that fixed-point conversion does not degrade the model. That is a <em>plaintext</em> quantization
+study: a one-token BERT input cannot produce a SQuAD F1 score. It is the right experiment to run and it
+is honestly labelled ("accuracy numbers with ZKTorch scaling"), but nobody should read it as ZKTorch
+proving a benchmark result — that would be the testing objective, and no proof of it exists here.</p>
+<p><strong>One structural gap worth naming: the decode step is exactly what does not fold.</strong> <code>ArgMax</code> and <code>TopK</code>
+are built from <code>OneToOne</code>, <code>Ordered</code> and <code>CopyConstraint</code> — three of the seven basic blocks that have
+<strong>no accumulation support</strong>. The paper's compiler is explicitly written to avoid the non-foldable
+blocks where it can, and it can, because none of its benchmarks sample a token. A system that actually
+generated text would hit the unfoldable set on every step.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The two headline numbers are not measured the same way, and only one of them is a like-for-like
+comparison.</strong> The proving-time claim — a speedup over a general-purpose ZKML framework — is honest: it
+is ZKTorch against <a href="../papers/zkml-kang.html">ZKML</a> on GPT-2, on identical hardware, and the paper says so. The
+<strong>proof-size claim is not a measurement.</strong> It rests on a single ResNet-50 row against <a href="../papers/zkcnn.html">zkCNN</a>,
+<a href="../papers/mystique.html">Mystique</a> and <a href="../papers/pvcnn.html">pvCNN</a>, and the table's own caption admits that zkCNN and pvCNN <em>never implemented
+ResNet-50</em>, so their entries are the proof sizes those systems reported <strong>for much smaller models</strong>
+(VGG-16 and LeNet-5 respectively). The substitution happens to be conservative — a bigger model would
+only grow the baselines' proofs — but "at least 3× smaller than specialized protocols" is an inference
+from three cells, two of which are for different models, and one of which (<a href="../papers/mystique.html">Mystique</a>) is a VOLE
+system whose gigabyte proofs make any pairing-based scheme look good.</p>
+<div class="audit"><span class="audit-h">ZKTorch&#x27;s proofs are large — and the paper never compares them to ZKML&#x27;s</span><p>The proof-size story the abstract tells is "at least 3× smaller than specialized protocols", measured
+on a CNN. Now read the transformer rows of the end-to-end table: BERT at 4.88 MB, GPT-J at 6.54 MB,
+LLaMA-2-7B at 22.85 MB. Then read <a href="../papers/zkml-kang.html">ZKML</a>'s own table: its distilled GPT-2 proof is 28,128 bytes
+under the KZG backend, 16,512 under IPA.</p>
+<p>The successor's transformer proofs are three orders of magnitude larger than its predecessor's. That is
+not hidden — both numbers are printed — but the two are never put side by side, and the proof size for
+the one model they <em>do</em> run head-to-head (GPT-2) is the one number §6.3 omits. Accumulation buys you a
+<em>single</em> proof; it does not buy you a <em>small</em> one, and the move off halo2/KZG-Plonkish to folded
+per-block NARKs cost roughly everything ZKML had on succinctness. A reader who takes "3× smaller
+proofs" as the summary of ZKTorch will be badly wrong about what lands on the verifier.</p></div>
+
+<p><strong>Section 6.3 contradicts itself in a single paragraph.</strong> In the course of explaining why they do not
+benchmark against ezkl, the authors write:</p>
+<blockquote class="q"><p>Concretely, ezkl on nanoGPT small (1-million parameters, 26M flops) needs 966s to prove, while zkml on
+a larger LLM GPT-2 (117-million parameters, 189M flops) requires only 159s to prove per token.</p><cite><b>ZKTorch</b> · §6.3, Comparisons with Prior Work</cite></blockquote>
+
+<p>Three problems. First, the same paragraph states that ZKML proves GPT-2 in 3601 s on their hardware —
+so "159 s per token" contradicts the number their own speedup is computed against, and nothing in the
+paper reconciles them. Second, ZKML's GPT-2 is a <strong>distilled</strong> GPT-2 whose parameter count in ZKML's
+own table is nowhere near 117M (the FLOP count matches; the parameter count does not). Third, the ezkl
+figure is imported from elsewhere, on other hardware, as in <a href="../papers/jolt-atlas.html">Jolt Atlas</a>. The comparison that carries
+the paper's headline is fine; this sentence, sitting next to it, is not, and it is the sentence a
+reader is most likely to quote.</p>
+<p><strong>The ablations do not line up.</strong> Two tables report GPT-J proving time with a component disabled — one
+for sequential-vs-parallel Mira, one for compiler-off — and they give <strong>different</strong> baselines while
+landing on the same enabled value, so the two speedups (6.2× and 3.7×) are not additive, not
+independent, and not explained. The prose describing the compiler ablation also cites the wrong table
+number. None of this is dishonest; it does mean the attribution of the end-to-end gain between "better
+folding" (cryptography) and "better graph rewriting" (engineering) is <em>not</em> actually established by the
+experiments, and the honest answer to "was the improvement cryptographic or engineering?" is <strong>both, in
+proportions the paper does not pin down.</strong></p>
+<p><strong>Composed soundness is asserted, not derived.</strong> The security argument for the DAG is a union bound
+over the per-node soundness errors, with the observation that a model compiles to at most ~100,000
+nodes and that the resulting error is negligible "due to our field size". Knowledge soundness of the
+generalized folding is deferred to an appendix. This is standard practice and we flag no bug — but the
+system's soundness now rests on twenty hand-written pairing-based protocols, a Fiat–Shamir-compiled
+folding scheme, and a rule-based graph rewriter, and the number of places an under-constraint could hide
+went <strong>up</strong> relative to ZKML, not down. the SNARK-vulnerability SoK is the relevant prior.</p>
+<p><strong>The lookup tables are fixed at compile time.</strong> <code>CQ</code> and <code>CQ2</code> require the set and the table to be known
+at compile time, which is what makes their proving cost independent of table size — and which means the
+admissible range of every non-linearity is a preprocessing decision. An activation outside the calibrated
+range is not inaccurate; it is unprovable. Same audit surface as every lookup-based system here, and
+worth stating because ZKTorch leans on <code>CQ2</code> for <em>all</em> non-linearities and scale corrections.</p>
+<p><strong>Credit where due.</strong> The generalized-Mira construction is a genuinely good idea, cleanly stated, and it
+is the reason a 7B model appears in a CPU-only table at all. Proving every model in MLPerf Edge —
+diffusion, 3D segmentation, detection, RNN — is a coverage result nobody else in this repo comes close to.
+The problems are in how the results are <em>framed</em>: a proof-size headline measured on the wrong models, a
+speedup whose attribution the ablations do not support, and LLM results whose one- and two-token inputs
+are disclosed only in a table of input dimensions that the downstream literature has already
+misread.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/ezkl.html">ezkl</a></li><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/vcnn.html">vCNN</a></li><li><a href="../papers/zkcnn.html">zkCNN</a></li><li><a href="../papers/zkllm.html">zkLLM</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/deepprove.html">DeepProve</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../surveys/index.html">The prior surveys, and where we disagree with them</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/quantization.html">Quantization, the hidden variable</a><a href="../zk-inference/what-is-proven.html">What is actually being proven</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>claim_kind: pass
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

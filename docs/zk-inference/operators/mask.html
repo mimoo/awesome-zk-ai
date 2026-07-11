@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Causal masking — Operator atlas</title>
+<meta name="description" content="the −∞ upper triangle">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Causal masking</b></div><h2 class="ptitle">Causal masking</h2><p class="psub">the −∞ upper triangle</p><div class="math">$$\mathrm{Mask}(T) = T \circ D_1 + D_2
+\\[6pt]
+D_1 = \text{lower-triangular ones},\qquad D_2 = \text{upper-triangular } -\infty
+\\[10pt]
+\tilde f_{D_1}(r_1,r_2) = \sum_i \beta(i,r_1)\,\tilde f^{(i)}_{D_1}(r_2),
+\qquad
+\tilde f^{(i)}_{D_1}(r_2) = \tilde f^{(i-1)}_{D_1}(r_2) + \beta(i,r_2)$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>Zero out attention to future tokens. This is the operator that makes the certification trick sound: the prediction at position $t$ provably cannot see token $t{+}1$.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>Naively the verifier evaluates two $s\times s$ structured matrices' MLEs — $O(s^2)$ work, which would destroy succinct verification.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>Hadamard sumcheck with an additive correction</li><li>Closed-form lower-triangular MLE ⇒ O(log s) verifier (causal)</li><li>An extra sumcheck only for the local sliding-window mask</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">A single Hadamard-style sumcheck — but the causal-mask verifier is O(log s), not O(s). The lower-triangular mask MLE is evaluated in closed form (eval_zeroifier_mle); only the local sliding-window mask needs an extra sumcheck.</p><ul><li>Correction: our old page said the verifier sweeps the triangular MLE in $O(s)$ via a prefix sum. The code evaluates the lower-triangular (zeroifier) MLE and the row/column less-than polynomials in <strong>closed form</strong> — the full causal-mask verifier is $O(\log s)$.</li><li>The verifier negates $D_2$'s $-\infty$ contribution first, reducing to a plain Hadamard check against the triangular $D_1$. It slots into single-head attention between the score matmul and the softmax.</li><li>The $O(s)$ cost only appears for the <em>local</em> sliding-window mask (Gemma-style), which needs an extra sumcheck plus an $O(s)$ shift-matrix evaluation. The plain causal mask does not.</li><li>zkGPT's evaluated model has no attention mask at all.</li></ul><div class="cost">Attention mask: 3.96% (GPT-2) / 0.97% (Gemma 3) of PIOP time.</div></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">There is no masking PIOP because the mask is a baked constant: future positions carry a large-negative quantized sentinel that flows through the softmax as ≈0. Nothing separate is proven.</p><ul><li>In the traced model the causal mask is applied <em>before</em> quantization (<code>att.masked_fill(bias==0, -10)</code> in <code>models/transformer/gen.py</code>), so by the time the score matrix reaches the prover the upper triangle is already a constant.</li><li>The softmax test layout documents the exact sentinel: upper-triangular entries use <code>-(11 &lt;&lt; 12) = -45056</code> (a $-\infty$ proxy at scale 12). It is just a very small input to the exp lookup, which returns ≈0 — no triangular-MLE argument, no Hadamard correction.</li><li>So Jolt Atlas needs neither DeepProve's prefix-sum triangular trick nor a masking cost line: masking is absorbed into the <a href="#/op/softmax">softmax</a> it already proves.</li></ul><div class="audit"><span class="audit-h">Audit surface</span><p>Because masking is a <strong>trace-time constant</strong>, its correctness is <em>not proven</em> — it is trusted as part of the committed input graph. That is sound for a fixed causal mask compiled into the model, but an auditor should confirm the mask constants in the committed graph actually match the claimed causal pattern (nothing in the proof forces the upper triangle to be the sentinel rather than a real score).</p></div></div></div><div class="pager"><a href="../../zk-inference/operators/scores.html">← previous<span>Attention scores</span></a><a class="next" href="../../zk-inference/operators/softmax.html">next →<span>Softmax</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

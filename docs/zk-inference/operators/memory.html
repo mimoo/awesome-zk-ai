@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory &amp; read consistency — Operator atlas</title>
+<meta name="description" content="KV cache, tensor reads — what a read owes you">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Memory &amp; read consistency</b></div><h2 class="ptitle">Memory &amp; read consistency</h2><p class="psub">KV cache, tensor reads — what a read owes you</p><div class="math">$$\widetilde{\mathrm{Val}}(r_{\mathrm{addr}}, r_{\mathrm{cycle}}) \;=\; \sum_{j} \mathrm{Inc}(j)\cdot \mathrm{Wa}(j)\cdot \mathrm{Lt}(j, r_{\mathrm{cycle}})
+\\[8pt]
+\mathrm{Wa}(j) = \widetilde{\mathrm{eq}}(r_{\mathrm{addr}},\, \mathrm{td}(j)) \quad\text{(does cycle } j \text{ write this address?)}
+\\[4pt]
+\mathrm{Lt}(j, r_{\mathrm{cycle}}) \quad\text{(the "less-than" MLE: only writes before the queried cycle)}$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>If your computational model has tensor buffers that get written and later read — <code>Gather</code>, <code>Select</code>, any data-dependent index — you must prove every read returned the value most recently written to that address.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>This is the classical offline memory-checking problem, and it is expensive: naive approaches commit to auxiliary bookkeeping linear in the number of accesses. Whether you owe it at all depends on whether your model of computation has mutable state.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>Twist and Shout: one-hot addressing, structured increments</li><li>Read/write consistency as a sumcheck DAG</li><li>Booleanity + Hamming-weight checks on one-hot address polynomials</li><li>Or: choose a computational model with no mutable state</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">Sidesteps the obligation entirely. There is no RAM, so there is nothing to check.</p><blockquote class="q"><p>To realize KV-caching, the prover has to emulate read/write RAM operations within the SNARK circuit. This complicates the prover&#x27;s logic and leads to large concrete overheads even when using state-of-the-art protocols for emulating RAM (e.g., via lookup arguments) as they require the prover to commit to additional auxiliary data that scales linearly to the number of reads/writes.</p><cite><b>DeepProve</b> · §1.1</cite></blockquote><ul><li>Proving proceeds layer-by-layer, backwards, GKR-style. Each operator converts a claim about its output into a claim about its input. No addresses, no cycles, no mutable buffers.</li><li>This is exactly why the certification trick matters: emulating a KV cache would <em>introduce</em> RAM into a model that otherwise has none, "requiring the prover to commit to additional auxiliary data that scales linearly to the number of reads/writes."</li><li>Embedding — the one genuinely data-dependent read — is reformulated as a sparse one-hot matmul the verifier checks locally, so it needs no memory argument.</li></ul></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">Inherited from Jolt's Twist and Shout, adapted from CPU RAM to ONNX tensor buffers. It is Stages 4 and 5 of the proof.</p><blockquote class="q"><p>Although ONNX computation removes general-purpose registers and arbitrary RAM access, we still need a notion of consistency of reads and writes over tensor buffers; the lesson from Twist and Shout is that domain-specific access patterns admit much cheaper consistency proofs than prior offline memory checking arguments.</p><cite><b>Jolt Atlas</b> · §1.1</cite></blockquote><ul><li>ONNX removes general-purpose registers and arbitrary RAM, but reads and writes over tensor buffers still need consistency. The lesson taken from Twist and Shout is that <em>domain-specific access patterns admit much cheaper consistency proofs</em> than generic offline memory checking.</li><li><strong>Stage 4</strong> batches <code>RASumCheck</code> (virtualising $D=8$ per-chunk one-hot address polynomials into groups) with <code>MemoryDag</code> (read-write consistency).</li><li><strong>Stage 5</strong> evaluates the memory-value polynomial: $\mathrm{Inc}$ is the committed increment, $\mathrm{Wa}$ the write-allocation indicator, and $\mathrm{Lt}$ the less-than MLE selecting only writes before the queried cycle.</li><li>Supporting checks: <code>BooleanitySumcheck</code> forces $ra_i(k)^2 = ra_i(k)$, and <code>HammingWeightSumcheck</code> forces $\sum_k ra_i(k) = 1$ — together, each address polynomial is genuinely one-hot.</li><li><strong>This is the substrate under everything.</strong> The same Shout read-checking + RAF sumcheck (with the booleanity / hamming-weight / ra-virtualization trio) proves <em>every</em> table lookup in the system — <code>exp</code>, <code>SatClamp</code>, <code>UnsignedLessThan</code>, ReLU, the activation tables. Large tables never materialize: their MLE is prefix-suffix decomposed.</li></ul><figure class="code"><figcaption>joltworks/src/subprotocols/shout.rs · 308-320</figcaption><pre class="src">// val (public table MLE) and int (identity / read-back index) are
+// recomputed by the verifier; only ra_claim is prover-supplied and
+// is constrained by the booleanity + hamming-weight + ra-virtual sumchecks.
+let expected = rv_claim + gamma * raf_claim;</pre><figcaption class="cap">The verifier recomputes the public table value and the identity (address) MLE itself; only ra_claim comes from the prover, gated by the one-hot sumchecks.</figcaption></figure><div class="audit"><span class="audit-h">Audit surface</span><p>The one-hot address <code>ra</code> is the only prover-committed object in most lookups; its honesty is <em>entirely</em> the booleanity + hamming-weight + ra-virtualization trio. Those three sumchecks are soundness-critical, not completeness — a gap in any one lets a prover forge a non-one-hot address and read an arbitrary table value. When auditing any operator above, the question reduces to: is its lookup's one-hot trio present and complete?</p></div></div></div><div class="pager"><a href="../../zk-inference/operators/certify.html">← previous<span>Autoregression &amp; certification</span></a><a class="next" href="../../zk-inference/operators/zk.html">next →<span>Zero-knowledge</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TEE confidential LLM inference — zkAI</title>
+<meta name="description" content="Confidential LLM Inference: Performance and Cost Across CPU and GPU TEEs">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../alternatives/index.html">Alternatives to ZK</a> · <b>TEE confidential LLM inference</b></div><h2 class="ptitle">TEE confidential LLM inference</h2><p class="psub">Confidential LLM Inference: Performance and Cost Across CPU and GPU TEEs</p><p class="authors">Marcin Chrapek, Marcin Copik, Etienne Mettaz, Torsten Hoefler</p><div class="pmeta"><div><dt>Venue</dt><dd>arXiv:2509.18886 [cs.PF]</dd></div><div><dt>Date</dt><dd>2025-09-23</dd></div><div><dt>Affiliation</dt><dd>ETH Zurich</dd></div><div><dt>Hardware</dt><dd>GPU: H100 NVL, 94 GB, rented from Azure -- confidential NCCads_H100_v5 vs non-confidential NCads_H100_v5, on a 40-vCPU AMD EPYC 9V84 host with 320 GiB. Ubuntu 24.04, vLLM 0.8.5. CPU: Intel TDX and SGX with AMX, Llama2 7B/13B/70B.</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://arxiv.org/abs/2509.18886">https://arxiv.org/abs/2509.18886</a></dd></div><div><dt>PDF</dt><dd><a href="https://arxiv.org/pdf/2509.18886">https://arxiv.org/pdf/2509.18886</a></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>platform</th><th>model</th><th>overhead percent</th><th>overhead metric</th><th>gpus</th><th>note</th><th>latency overhead percent</th><th>workload</th></tr></thead><tbody><tr><td>H100 cGPU (GPU TEE)</td><td>Llama2 7B</td><td>4–8</td><td>throughput</td><td>1</td><td>&quot;throughput penalties of 4-8% that diminish as batch and input sizes grow&quot; (Abstract); reproduced as the &quot;Single resource&quot; row of the summary table. Insight 10: &quot;GPU TEEs achieve less than 10% overheads, which decreases with larger batch and input sizes.&quot;</td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr><tr><td>Intel TDX (VM TEE)</td><td>Llama2 7B/13B/70B</td><td>5–10</td><td>throughput</td><td><span class="na">—</span></td><td>Summary table: ~5-10% single-resource. Latency overhead is 2x the throughput overhead and is never quoted downstream.</td><td>20</td><td><span class="na">—</span></td></tr><tr><td>Intel SGX (process TEE)</td><td><span class="na">—</span></td><td>4–5</td><td>throughput</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td><td><span class="na">—</span></td></tr><tr><td>Intel TDX (VM TEE)</td><td><span class="na">—</span></td><td>6–7</td><td><span class="na">—</span></td><td><span class="na">—</span></td><td>Insight 12 -- entire RAG pipeline inside TDX lands at the same overhead as plain inference.</td><td><span class="na">—</span></td><td>RAG pipeline (BM25 / reranked BM25 / SBERT, Elasticsearch, BEIR)</td></tr></tbody></table></div><h3 class="head">Approach</h3><div class="prose"><p>Hardware TEE (NVIDIA H100 confidential computing; Intel TDX and SGX CPU TEEs)</p></div><h3 class="head">Notes</h3><div class="prose"><p>The number that frames the alternatives argument, now read from the source and standing up -- with conditions. 4-8% is real, primary, and stated in the abstract. It is also: ONE H100, ONE model that fits on it (Llama2 7B), measured against a non-confidential CLOUD VM rather than bare metal, with GPU memory LEFT UNENCRYPTED, and excluding network protection that the paper says is required and costs up to 90%. Multi-GPU serving falls off a cliff (3GB/s vs 40GB/s interconnect). So the honest form of the claim is narrower than "TEEs cost 4-8%": it is "a single-GPU, 7B-class confidential deployment with unencrypted HBM costs 4-8%". That is still three orders of magnitude cheaper than ZK, so the strategic conclusion survives intact -- if the verifier will trust NVIDIA's attestation, ZK is a very expensive way to buy similar confidence. But the headline figure is not a general constant, it is the best corner of a cost surface, and the paper's own authors expect it to rise as the hardware gets more secure. Deployed in production (e.g. Phala GPU TEEs on OpenRouter).</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>The first systematic measurement of what it costs to run a <em>whole</em> LLM inference pipeline inside a
+trusted execution environment — on both sides of the hardware, and end to end rather than in
+fragments. Prior TEE-for-ML work offloaded only pieces of the model; this runs full Llama2 (7B,
+13B, 70B) entirely inside Intel TDX and SGX, accelerated by AMX, and then runs the same workload on
+an NVIDIA H100 with confidential computing enabled, so the two can be put side by side.</p>
+<p>The paper is a benchmarking study and does not pretend otherwise. Its output is twelve numbered
+"insights" and a comparison table grading each TEE on hardware, software, overhead and cost. The
+useful ones for us:</p>
+<ul>
+<li><strong>GPU TEEs cost single-digit percentages</strong>, and the overhead <em>shrinks</em> as batch size and input
+  length grow, because the fixed costs (kernel launches, PCIe bounce-buffer transfers) amortize
+  against rising arithmetic intensity.</li>
+<li><strong>CPU TEEs are not obviously worse</strong>, and are sometimes <em>better</em> — on small models with small
+  batches, an H100 sits unsaturated, and a TDX CPU can be more cost-effective <em>and</em> strictly more
+  secure.</li>
+<li><strong>An entire RAG pipeline</strong> — Elasticsearch and all — runs inside TDX at essentially the same
+  overhead as bare inference.</li>
+</ul>
+<p>The last one is the most under-appreciated. The confidentiality boundary can enclose the <em>retrieval
+database</em>, not just the model, and that is where the sensitive documents actually live.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>That a single-GPU, 7B-class confidential deployment with unencrypted GPU memory costs a few
+percent of throughput, measured against a non-confidential cloud VM.</strong></p>
+<p>Every clause there is load-bearing, and the repo has been quoting the headline without them.</p>
+<ul>
+<li><strong>It is a confidentiality result, not a verifiability one.</strong> The paper never mentions
+  zero-knowledge proofs, zkML, or SNARKs — the strings appear <strong>zero times</strong>. It measures the cost
+  of <em>hiding</em> the model and the prompt from the cloud operator. The TEE-versus-ZK comparison this
+  repo builds on top of it is <strong>ours</strong>. The overhead figure transfers cleanly (it is simply the cost
+  of running the model in the enclave, whatever you want the enclave for), and hardware attestation
+  does buy a form of integrity. But the paper draws no comparison to proof systems and must not be
+  cited as though it did.</li>
+<li><strong>The baseline is not bare metal</strong>, and the authors say so plainly: "As our machine is rented, we
+  do not have access to bare metal and present the results for raw and Confidential GPUs (cGPU)."
+  The GPU comparison is confidential-Azure-VM against non-confidential-Azure-VM. For a <em>deployment</em>
+  decision that is arguably the right baseline. It is not "overhead versus the hardware's ceiling."</li>
+<li><strong>The CPU latency overhead is double the throughput overhead</strong>, and only the throughput number
+  ever gets quoted. The abstract gives both.</li>
+</ul>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p>Nothing about the measurement — this is a careful, honest paper that grades its own subject harshly
+and publishes the numbers that undercut it. What deserves suspicion is <strong>how the figure is used</strong>,
+including by us. Two conditions gut the general reading.</p>
+<div class="audit"><span class="audit-h">The headline is a single-GPU number, and multi-GPU falls off a cliff</span><p>The 4–8% is the "Single resource" row of the summary table. The moment a model does not fit on one
+H100 — which is every model anyone would actually want to protect — you need tensor or pipeline
+parallelism, and the paper reports what that costs:</p>
+<blockquote>
+<p>As the cGPU instances do not support RDMA and GPUdirect, all data is transferred through the CPU,
+<strong>capping throughput at 3GB/s (considerably lower than the non-confidential 40GB/s)</strong>.</p>
+</blockquote>
+<p>That is better than a <strong>13× interconnect penalty</strong>, hitting exactly the communication pattern
+multi-GPU serving depends on. The same table grades the H100 cGPU <strong>"D (NVLINK unprotected)"</strong> on
+scale-up — the worst grade it assigns anything.</p>
+<p>And the paper notes that a network protection scheme such as IPsec "is required on top of both CPUs
+and GPUs, which also introduces an overhead of up to 90%." That is not in the 4–8% either.</p></div>
+
+<div class="audit"><span class="audit-h">And the 4–8% buys a TEE that does not encrypt GPU memory</span><blockquote>
+<p><strong>H100s do not encrypt their HBM memory [31], compared to CPUs that do.</strong></p>
+</blockquote>
+<p>The summary table grades the H100 cGPU <strong>"B (HBM unencrypted)"</strong> on memory — <em>weaker than the Intel
+CPU TEEs it is being benchmarked against</em>, which score C. So the cheap TEE is also the leakier one,
+and the comparison flatters it twice.</p>
+<p>The authors then say what closing the gap will cost:</p>
+<blockquote>
+<p>While B100s address these issues, <strong>we expect that they will add a non-negligible overhead to
+H100s' results, since we identified memory encryption as a significant cost in CPUs.</strong></p>
+</blockquote>
+<p>The people who produced the number expect the number to get worse as the hardware gets more secure.</p></div>
+
+<p><strong>Does the strategic claim survive?</strong> Yes — and this is worth stating clearly, because the honest
+reading is still bad news for zkML. Even if you triple the overhead to absorb the memory encryption
+the H100 is currently skipping, and even if you take the multi-GPU penalty seriously, TEE-protected
+inference remains <strong>three orders of magnitude</strong> cheaper than proving the same forward pass. The
+argument in <a href="../alternatives/index.html">alternatives</a> does not depend on the difference between 4% and
+40%; it depends on the difference between <em>tens of percent</em> and <em>a thousand times</em>, and that gap is
+not in doubt.</p>
+<p>What changes is the <em>rhetoric</em>. "TEEs cost 4–8%" is not a constant of nature — it is the best corner
+of a cost surface, measured on the smallest interesting model, on one GPU, with a security hole
+open. The defensible sentence is the conditional one, and the SoK should use it.</p>
+<p><strong>The one thing the paper cannot tell you</strong> is the thing the whole argument actually turns on:
+whether the verifier is willing to trust NVIDIA's attestation chain. That is not a performance
+question, and no benchmark will settle it. ZK's entire claim to relevance is that some verifiers —
+an adversarial counterparty, a regulator, a public chain — structurally cannot make that assumption.
+This paper prices the alternative; it does not price the trust.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li class="none">none recorded</li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li class="none">none recorded</li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../alternatives/index.html">When verifiability is not worth the price</a><a href="../alternatives/tees.html">TEEs — the assumption that is actually deployed</a><a href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>trust_assumption: Trust the hardware vendor and the attestation chain. Vulnerable
+  to side channels; no public verifiability of the computation itself.
+mentions_zk: false
+baseline_note: &#x27;NOT bare metal, and the paper says so: &quot;As our machine is rented,
+  we do not have access to bare metal and present the results for raw and Confidential
+  GPUs (cGPU).&quot; The GPU baseline is a NON-CONFIDENTIAL AZURE VM. That is arguably
+  the right comparison for a deployment decision, but it is not &quot;overhead versus raw
+  hardware&quot;.&#x27;
+scale_up_note: &#x27;THE CAVEAT THAT REFRAMES THE HEADLINE, and it is the paper&#x27;&#x27;s own.
+  The 4-8% is a SINGLE-GPU number on a model that fits on one H100. Multi-GPU confidential
+  inference is not 4-8%: &quot;As the cGPU instances do not support RDMA and GPUdirect,
+  all data is transferred through the CPU, capping throughput at 3GB/s (considerably
+  lower than the non-confidential 40GB/s).&quot; That is a &gt;13x interconnect penalty, and
+  it hits exactly the tensor- and pipeline-parallel patterns any production-scale
+  serving stack uses. The summary table grades the H100 cGPU &quot;D (NVLINK unprotected)&quot;
+  on scale-up.&#x27;
+security_gap_note: &#x27;AND THE 4-8% BUYS AN INCOMPLETE TEE. &quot;H100s do not encrypt their
+  HBM memory [31], compared to CPUs that do.&quot; The summary table grades the H100 cGPU
+  &quot;B (HBM unencrypted)&quot; on memory -- WEAKER than the CPU TEEs it is being compared
+  against. The authors expect closing that gap to cost more: &quot;While B100s address
+  these issues, we expect that they will add a non-negligible overhead to H100s&#x27;&#x27;
+  results, since we identified memory encryption as a significant cost in CPUs.&quot; Separately,
+  network protection (IPsec) is &quot;required on top of both CPUs and GPUs, which also
+  introduces an overhead of up to 90%&quot;.&#x27;
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOLT — zkAI</title>
+<meta name="description" content="BOLT: Privacy-Preserving, Accurate and Efficient Inference for Transformers">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../private-inference/index.html">Private inference</a> · <b>BOLT</b></div><h2 class="ptitle">BOLT</h2><p class="psub">BOLT: Privacy-Preserving, Accurate and Efficient Inference for Transformers</p><p class="authors">Qi Pang, Jinhao Zhu, Helen Möllering, Wenting Zheng, Thomas Schneider</p><div class="pmeta"><div><dt>Venue</dt><dd>IEEE S&amp;P 2024</dd></div><div><dt>Date</dt><dd>2024-05</dd></div><div><dt>Affiliation</dt><dd>CMU / UC Berkeley / TU Darmstadt</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Uses ZK</dt><dd>no</dd></div><div><dt>Verifiable</dt><dd>no</dd></div><div><dt>Open source</dt><dd>yes</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2023/1893">https://eprint.iacr.org/2023/1893</a></dd></div><div><dt>PDF</dt><dd><a href="https://encrypto.de/papers/PZMZS24.pdf">https://encrypto.de/papers/PZMZS24.pdf</a></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>models</th><th>vs iron</th><th>accuracy</th></tr></thead><tbody><tr><td>BERT-base</td><td>10.91x less communication; 4.8-9.5x faster inference across network settings</td><td>comparable to floating-point</td></tr></tbody></table></div><h3 class="head">Approach</h3><div class="prose"><p>Efficient matmul + non-linear protocols with ML-level optimizations. Improves on Iron.</p></div><h3 class="head">Notes</h3><div class="prose"><p>States the concrete Iron anchor: 280.99 GB communication and 216 minutes for one BERT-base (110M) inference under a WAN setting.</p></div><h3 class="head">Security model</h3><div class="prose"><p>semi-honest 2PC (MPC + HE)</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>BOLT attacks <a href="../papers/iron.html">Iron</a> on four fronts at once, and the honest summary is that two of them are
+cryptography and two of them are machine learning.</p>
+<p><strong>The cryptography.</strong> A better ciphertext packing for matrix-matrix multiplication that stops wasting
+SIMD slots, plus a baby-step giant-step rotation schedule that cuts the ciphertext rotations the new
+packing would otherwise require. And a <strong>polynomial pre-processing technique</strong> that reduces the
+multiplication count when evaluating a fixed polynomial on secret-shared input — a generic MPC
+result the authors correctly flag as independently useful. Where Iron used HE for matmul and OT for
+everything else, BOLT pushes more of the computation into HE specifically to trade communication for
+computation, on the bet that compute is what gets cheaper.</p>
+<p><strong>The machine learning.</strong> <em>Oblivious word elimination</em>: rank tokens by their attention scores,
+compute the median obliviously via a bitonic sort, and <strong>discard every token below it</strong>. And
+<em>secure-computation-aware fine-tuning</em>: retrain the model so it tolerates the fixed-point scales and
+polynomial approximations BOLT wants to use.</p>
+<p>Both halves work. It matters enormously which half you credit for the headline.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p>Nothing — no proof. Privacy against a semi-honest counterparty, on BERT-base, across four GLUE
+tasks, with the parameters stated (37-bit ring, scale 12, and the HE parameters given explicitly).
+The reporting discipline here is better than the zkML column's: bit widths, ring, scale, HE modulus,
+network settings, and an ablation table all appear.</p>
+<p>The claim to hold onto is that BOLT is the paper that <em>pins</em> <a href="../papers/iron.html">Iron</a>'s cost, since Iron itself
+publishes only ratios and log-scale plots. But note exactly what that means:</p>
+<blockquote class="q"><p>Because Iron [28] is not open-sourced, we implement Iron's end-to-end system following the protocols
+described in their paper.</p><cite><b>BOLT</b> · §7.1.4, Iron&#x27;s System</cite></blockquote>
+
+<p>The Iron anchor figure everyone quotes is <strong>BOLT's reimplementation of Iron, under a narrow WAN
+setting BOLT chose</strong>. Iron's own paper benchmarked on a LAN and, as it happens, publishes no absolute
+figures at all. So: the <em>communication volume</em> half of that anchor is bandwidth-independent and fair,
+while the <em>wall-clock</em> half is a direct function of the pipe BOLT picked. Both halves are routinely
+quoted as though they were Iron's own measurements.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The headline communication reduction is not a cryptographic result.</strong> It requires throwing away
+half the input tokens.</p>
+<div class="audit"><span class="audit-h">Word elimination is worth as much as all the cryptography</span><p>BOLT's own Table 3, end-to-end communication for one BERT-base inference:</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Communication</th>
+<th>vs. Iron</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Iron (BOLT's reimplementation)</td>
+<td>280.99 GB</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>BOLT, no word elimination</strong></td>
+<td><strong>59.61 GB</strong></td>
+<td><strong>4.71×</strong></td>
+</tr>
+<tr>
+<td>BOLT, with word elimination</td>
+<td>25.74 GB</td>
+<td>10.91×</td>
+</tr>
+</tbody>
+</table>
+<p>The purely cryptographic contribution — the packing, the BSGS rotations, the polynomial
+pre-processing, the low-degree GELU and Softmax — is <strong>4.71×</strong>. The other 2.3× comes from
+[eliminating] "tokens scoring below the median." BOLT processes roughly half the sequence that Iron
+processes.</p>
+<p>The headline number in the abstract, in <code>papers.yml</code>, and in the README is 10.91×. The number that
+compares protocol against protocol on the same workload is 4.71×.</p></div>
+
+<p><strong>And the model itself is different.</strong> BOLT does not merely quantize BERT — it <strong>fine-tunes</strong> it, with
+word elimination active in the forward pass, so the network learns to cope both with the fixed-point
+arithmetic and with having half its tokens deleted. "Matches the accuracy of plaintext models" is
+therefore comparing a <em>retrained</em> model against a <em>non-retrained</em> floating-point baseline. This is
+the "bend the model" move, executed twice, and <a href="../papers/ciphergpt.html">CipherGPT</a> criticizes exactly this class of
+approach: "all such solutions require retraining the model, which is less desirable to machine
+learning practitioners." BOLT's own defence — fine-tuning is a one-time cost amortized over
+inferences — is reasonable, but it does not make the accuracy comparison apples-to-apples.</p>
+<p>The paper does state the mechanism plainly ("word elimination introduces negligible accuracy drops,
+and can significantly improve the performance of BOLT") and it does publish the ablation. The
+criticism is not that BOLT hid this. It is that everyone downstream quotes the number that includes
+it as if it were a protocol result.</p>
+<p><strong>The reported runtime speedup is a range because it is a bandwidth sweep, not a protocol range.</strong>
+BOLT cuts communication by an order of magnitude but cuts the <em>round count</em> by only about a quarter.
+On a fast link, rounds and compute dominate and BOLT's advantage sits at the bottom of its range; on
+a slow link, bytes dominate and it sits at the top. The spread is a property of the network, not of
+the system, and the number people quote is the one achieved against the narrowest pipe.</p>
+<p><strong>Accuracy beats plaintext again.</strong> BOLT with word elimination scores <em>above</em> the floating-point
+baseline on SST-2, and Iron scores above it on two tasks. These are within the reported standard
+deviation of the plaintext baseline, which is the right explanation — but it also means that the
+sub-1% accuracy deltas this entire cluster reports are inside the noise floor, and "comparable
+accuracy to floating-point" is not a claim any of these papers has the statistical power to
+distinguish from its negation. More curiously, BOLT reports that dropping half the tokens <em>improves</em>
+accuracy over not dropping them, attributing it to a ring-to-field conversion approximation. That is
+an odd thing to leave at one sentence.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li>Cheetah <span class="tag">external</span></li><li><a href="../papers/iron.html">Iron</a></li><li><a href="../papers/secfloat.html">SecFloat</a></li><li>SIRNN <span class="tag">external</span></li><li>THE-X <span class="tag">external</span></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/bootstrapping-fhe.html">Bootstrapping is All You Need</a></li><li><a href="../papers/ciphergpt.html">CipherGPT</a></li><li><a href="../papers/nimbus.html">Nimbus</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare</a><a href="../private-inference/index.html">What private inference actually buys you</a><a href="../private-inference/nonlinearities.html">The non-linearity problem, twice</a><a href="../private-inference/systems.html">What each system actually built</a><a href="../private-inference/threat-models.html">Threat models -- who learns what</a><a href="../private-training/index.html">Confidentiality without a proof</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>pdf_available: true
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

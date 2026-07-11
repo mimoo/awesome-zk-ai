@@ -23,6 +23,20 @@
 #     `accuracy_retention` records what the quantization cost in model quality; a throughput
 #     number with no accuracy claim attached is not a meaningful data point.
 #
+#   - `claim_kind` is THE most important field in this file, and the one the literature
+#     is sloppiest about. Two systems both reporting "tokens/minute" may be proving
+#     completely different things. Set it per paper, or per benchmark row when a paper's
+#     rows differ. Vocabulary:
+#       pass  -- a single forward pass. The commonest claim, and the weakest.
+#       token -- cost of proving one generated token, in isolation.
+#       seq   -- amortised over a full multi-token generation, with the sequence
+#                certified end to end. The strongest claim; only DeepProve makes it.
+#       full  -- "the whole inference", token count NOT stated by the paper. This is
+#                not a claim, it is an ambiguity, and it is recorded as one.
+#     A throughput number without a claim_kind beside it is not comparable to anything.
+#     Curation ported from the SCALE table of the hand-built Operator Atlas
+#     (site/legacy/operator-atlas.html), which was assembled by reading each paper.
+#
 # Categories follow the survey's three verification objectives:
 #   inference -- the model ran correctly on this input
 #   testing   -- this model achieves claimed accuracy on this dataset
@@ -31,6 +45,7 @@
 inference:
   - id: deepprove
     name: DeepProve
+    claim_kind: seq  # full sequence certified end-to-end across all generated tokens
     title: "DeepProve: Verifiable End-to-End Large Language Model Inference"
     url: https://eprint.iacr.org/2026/1112
     pdf: https://eprint.iacr.org/2026/1112.pdf
@@ -74,6 +89,38 @@ inference:
         Mixed precision: residual layers use a larger bit length. Outlier smoothing via
         orthonormal rotation X*W = (X*M)(M^T*W), with M absorbed into the previous layer's
         weights. Unlike zkGPT/zkTorch, scale factors are NOT restricted to powers of two.
+      rescale_mechanism: >-
+        PRIMARY, Sec 4.3.2. y = floor( (Quant(2^f * eps) * x + 2^(f+delta-1)) / 2^(f+delta) )
+        - 2^(q-1). The arbitrary float scale eps is fixed-point-encoded as the integer
+        Quant(2^f * eps), so the MULTIPLIER is arbitrary but the DIVISOR is a power of two --
+        i.e. a right shift, which the paper notes is "easier to prove". The shift is proven with
+        a lookup argument over decomposable tables (Lasso/Shout-style): decompose x' into k-bit
+        chunks, range-check each chunk, keep the q/k most significant. The +2^(f+delta-1) term
+        is round-to-nearest (add a half before flooring).
+        DeepProve's real novelty here is Case 2: it also proves requantization when the input is
+        OUT of the expected range, via tables that emit -1/0/+1 to flag and correct overflowing
+        elements. It states that the in-range case is "the only scenario considered by prior
+        works [SLZ24 = zkLLM, QSL+25 = zkGPT]" -- i.e. those two ASSUME in-range inputs, which is
+        accurate.
+        CORRECTION, do not overclaim: DeepProve is the only PAPER with an explicit out-of-range
+        protocol, NOT the only SYSTEM with out-of-range handling. Jolt Atlas does it too -- a
+        saturating clamp (SatClamp: i64 accumulator clamped to i32) discharged by a prefix-suffix
+        Shout sumcheck and FUSED INTO THE SAME REBASE SEAM as the rescale -- but only its SOURCE
+        CODE says so; the paper never mentions it. The mechanisms differ: DeepProve DETECTS
+        out-of-range with a proven predicate (zero-detector + sign-extractor tables blended to
+        +/-2^(q-1)); Jolt SATURATES unconditionally with one clamp lookup. Proven predicate vs
+        proven function. Jolt's coverage is partial where it matters: in ZK mode Add/Sub/Sum are
+        proved UNCLAMPED, the ONNX Clamp op is an unproven passthrough (// TODO: Clamp), and the
+        tanh/erf/sigmoid clamps are prover-side assert!s over unconstrained advice.
+      conflict_flag: >-
+        UNRESOLVED. DeepProve asserts that zkGPT/zkTorch restrict scale factors to powers of two.
+        zkGPT's own text does NOT support this: zkGPT Sec 2.1/4.1 computes
+        qz = round((C1/C2) * qx * qy) where C1, C2 are Q-bit integers "obtained by searching",
+        approximating the arbitrary float ratio Sx*Sy/Sz -- an arbitrary rational, not a power of
+        two. Both systems in fact support arbitrary float scales; they differ in HOW (DeepProve:
+        integer multiplier + power-of-two shift; zkGPT: rational C1/C2 enforced by a double
+        inequality, no division at all). Treat DeepProve's characterization of prior work with
+        care. See docs/numerics.md.
       accuracy_retention:
         metric: [cosine_similarity, perplexity]
         dataset: Wikitext-2  # first 256 tokens of 25 documents; perplexity over first 255 logit rows
@@ -140,6 +187,7 @@ inference:
 
   - id: jolt-atlas
     name: Jolt Atlas
+    claim_kind: pass  # single forward pass
     title: "Jolt Atlas: Verifiable Inference via Lookup Arguments in Zero Knowledge"
     url: https://arxiv.org/abs/2602.17452
     pdf: https://arxiv.org/pdf/2602.17452
@@ -157,6 +205,14 @@ inference:
     numbers_source: primary
     quantization:
       bits: null  # still not stated as a model-wide quantization choice
+      widths_from_source: >-
+        NOT IN THE PAPER -- read from the code. Accumulator is i64, saturating-clamped to i32
+        (lookup_tables/sat_clamp.rs: `64 => (index as i64).clamp(i32::MIN as i64, i32::MAX as i64)`,
+        plus a 16->8 variant). The often-quoted "16-bit" figure is the ACTIVATION width only; the
+        accumulator width is i64 and was never stated. Fixed-point scale = 128 = 2^7 (paper Sec 4.2,
+        "128-scale fixed-point representation"). Lookup tables: 2^16 (tanh/erf/sigmoid), 2^12
+        (sin/cos), ~401 entries for the softmax exp via a two-table e^(a+b) = e^a * e^b split.
+        Teleportation tau = 4 in the paper but tau = 2 in the code.
       bits_note: >-
         Two incidental mentions only, both in Sec. 4.2 and both about the ACTIVATION LOOKUP
         TABLE rather than the model: the tau=4 table is "sufficient for 16-bit fixed-point
@@ -222,6 +278,7 @@ inference:
 
   - id: zkgpt
     name: zkGPT
+    claim_kind: pass  # single forward pass, context 32
     title: "zkGPT: An Efficient Non-interactive Zero-knowledge Proof Framework for LLM Inference"
     url: https://eprint.iacr.org/2025/1184
     pdf: https://www.usenix.org/system/files/usenixsecurity25-qu-zkgpt.pdf
@@ -272,6 +329,7 @@ inference:
 
   - id: zkpytorch
     name: zkPyTorch
+    claim_kind: token  # per generated token
     title: "zkPyTorch: A Hierarchical Optimized Compiler for Zero-Knowledge Machine Learning"
     url: https://eprint.iacr.org/2025/535
     pdf: https://eprint.iacr.org/2025/535.pdf
@@ -363,6 +421,7 @@ inference:
 
   - id: zkllm
     name: zkLLM
+    claim_kind: full  # whole inference; the paper does not state a token count
     title: "zkLLM: Zero Knowledge Proofs for Large Language Models"
     url: https://arxiv.org/abs/2404.16109
     pdf: https://arxiv.org/pdf/2404.16109
@@ -405,6 +464,7 @@ inference:
 
   - id: zkml-kang
     name: ZKML
+    claim_kind: pass  # single forward pass
     title: "ZKML: An Optimizing System for ML Inference in Zero-Knowledge Proofs"
     url: https://dl.acm.org/doi/10.1145/3627703.3650088
     pdf: https://ddkang.github.io/papers/2024/zkml-eurosys.pdf
@@ -414,22 +474,55 @@ inference:
     authors: [Bing-Jyue Chen, Suppakit Waiwitlikhit, Ion Stoica, Daniel Kang]
     authors_verified: false
     proof_system: halo2 (Plonkish)
-    hardware: 128 vCPUs, 1 TB RAM
+    hardware: "AWS r6i.32xlarge for GPT-2 (128 vCPU, 1 TB RAM)"
     open_source: true
-    numbers_source: survey
+    # PROMOTED survey -> primary, 2026-07-11: we obtained the PDF and read Tables 5, 6 and 7.
+    numbers_source: primary
     notes: >-
-      Optimizing compiler from TensorFlow Lite graphs to halo2 circuits. The standard
-      non-interactive baseline for GPT-2. CONFLICT: survey Table VI reports 3652s / 18.7s /
-      28KB; zkGPT's Table 3 measures it at 4026s / 12.1s / 7.8KB (32 threads). Different
-      hardware and configs -- do not mix.
+      Optimizing compiler from TensorFlow Lite graphs to halo2 circuits, and the standard
+      non-interactive baseline that everyone else measures their speedup against.
+
+      THE CONFOUNDER THAT INVALIDATES MOST OF THOSE SPEEDUPS: ZKML's "GPT-2" is a DISTILLED
+      GPT-2 of 81.3M parameters (Table 5; "a distilled GPT-2 optimized for inference", Sec. 9),
+      not the 124M GPT-2 that DeepProve, zkGPT and Jolt Atlas run. The paper is explicit -- its
+      Limitations section says the largest model it can prove under 1 TB of RAM *is* the
+      distilled GPT-2 -- but downstream comparisons drop the word "distilled" and the ~35%
+      parameter gap with it. We ourselves recorded it as 124M until 2026-07-11. Any "Nx faster
+      than ZKML on GPT-2" claim in this corpus is a comparison against a smaller network.
+
+      THREE-WAY NUMBER CONFLICT on the same run, now resolved. ZKML's own Table 6 (KZG):
+      3651.67 s prove / 18.70 s verify / 28128 B. The ZKP-VML survey's 3652 s / 18.7 s / 28 KB
+      is just this row, rounded -- the survey is CORRECT here. ZKTorch Sec. 6.3 re-measures ZKML
+      at 3601 s on its own hardware, and zkGPT Table 3 re-measures it at 4026 s / 12.1 s / 7.8 KB
+      on 32 threads. The last of those is closer to ZKML's IPA backend (3949.60 s / 11.98 s /
+      16512 B) than to its KZG one, so zkGPT may be benchmarking a different backend than it
+      compares against. Do not mix these rows.
+    quantization:
+      bits: null  # the paper does not state a bit width for the GPT-2 run
+      bits_note: "Not stated. ZKML discusses scale factors but does not print a bit width."
     benchmarks:
-      - model: GPT-2
-        params: 124000000
-        proving_time_s: 3652.0
+      - model: GPT-2 (distilled)
+        params: 81300000  # Table 5. NOT 124M -- this is DistilGPT-2, not GPT-2.
+        params_note: >-
+          We carried 124000000 here until 2026-07-11. It was wrong, and it placed this system at
+          the wrong x-coordinate on every throughput-vs-parameters chart in the corpus.
+        claim_kind: pass
+        backend: KZG
+        proving_time_s: 3651.67  # Table 6
         tokens_per_minute: 0.016
-        tokens_per_minute_source: derived
-        proof_size_mb: 0.028
-        verification_time_s: 18.7
+        tokens_per_minute_source: derived  # 60 / 3651.67, a single-pass proxy -- not a decode rate
+        proof_size_mb: 0.028128
+        verification_time_s: 18.70
+      - model: GPT-2 (distilled)
+        params: 81300000
+        claim_kind: pass
+        backend: IPA
+        proving_time_s: 3949.60  # Table 7
+        proof_size_mb: 0.016512
+        verification_time_s: 11.98
+        proving_time_note: >-
+          The IPA backend: slower to prove, but smaller proofs and faster verification. zkGPT's
+          re-measurement of "ZKML" (4026 s / 12.1 s) tracks this row, not the KZG one.
 
   - id: safetynets
     name: SafetyNets
@@ -581,18 +674,57 @@ inference:
     venue: USENIX Security 2021
     date: 2021-08-01
     year: 2021
-    authors: []  # TODO
-    authors_verified: false
-    proof_system: Interactive ZK / VOLE-based, with efficient field-to-ring conversions
-    hardware: AWS m5.2xlarge, 32 GB RAM
-    numbers_source: survey
-    notes: "Large proofs (~1 GB) because it is interactive/VOLE-based, not succinct."
+    authors:
+      - Chenkai Weng
+      - Kang Yang
+      - Xiang Xie
+      - Jonathan Katz
+      - Xiao Wang
+    authors_verified: true
+    proof_system: Interactive ZK / sVOLE-based (designated verifier), with efficient conversions
+      between arithmetic/Boolean, committed/authenticated, and fixed-point/IEEE-754 float
+    hardware: two AWS m5.2xlarge instances, 32 GB RAM each; ResNet-101 peaks at 12 GB. Network
+      bandwidth is throttled (50 / 200 Mbps) and is a first-order cost, not a detail.
+    numbers_source: primary
+    uses_zk: true
+    notes: >-
+      Designated-verifier and INTERACTIVE: it produces a conversation, not a proof object. The
+      transcript is bound to one verifier's MAC key, so it cannot be published, posted on-chain,
+      cached, or checked by a second party -- and its size is interactive COMMUNICATION, not a
+      proof size (hence communication_mb, not proof_size_mb, below). Non-linear layers are
+      evaluated as real IEEE-754 float circuits rather than quantized, which is why accuracy holds
+      across 101 layers and why no calibration/requantization story appears at all. Batch
+      Normalization dominates the prover (~70% of ResNet-101 inference time) because of the
+      float/fixed conversions. CNNs on CIFAR-10 only -- no transformer, no attention.
     benchmarks:
-      - model: ResNet-101
+      - model: ResNet-101 (public model, private input)
         params: 42500000
         proving_time_s: 262.0
-        proof_size_mb: 990.0
+        communication_mb: 990.0
         verification_time_s: null
+        model_note: >-
+          Table 3, 200 Mbps. This is the PUBLIC-model configuration -- the weights are revealed to
+          the verifier. It is the cheapest of the paper's three settings and does not answer the
+          motivating threat (a provider hiding its weights while proving it ran the committed
+          model). The repo previously recorded only this row, as `proof_size_mb`, from a survey.
+      - model: ResNet-101 (private committed model, private input)
+        params: 42500000
+        proving_time_s: 535.0
+        communication_mb: 1980.0
+        verification_time_s: null
+        model_note: >-
+          Table 3, 200 Mbps. The setting the paper actually sells. The abstract's headline
+          "28 minutes" is the end-to-end application of Table 4, which additionally includes
+          converting the public model commitment into privately authenticated values -- a cost
+          that is per-VERIFIER, not one-off, because authenticated values are bound to the
+          verifier's key.
+      - model: ResNet-50 (private committed model, private input)
+        params: 23500000
+        proving_time_s: 333.0
+        communication_mb: 1270.0
+        verification_time_s: null
+        accuracy: "0.02% accuracy decrease vs the plaintext model on the full CIFAR-10 test set
+          (same delta reported for ResNet-101)"
 
   - id: vcnn
     name: vCNN
@@ -619,30 +751,55 @@ inference:
     url: https://eprint.iacr.org/2021/087
     date: 2021-05-01
     year: 2021
-    authors: []  # TODO
-    authors_verified: false
-    proof_system: R1CS / Groth16, with proof-friendly quantization and stranded encoding
-    hardware: 32-core Xeon 8280M, 256 GB RAM
-    numbers_source: survey
+    authors: [Boyuan Feng, Lianke Qin, Zhenfei Zhang, Yufei Ding, Shumo Chu]
+    authors_verified: true  # read from the PDF, 2026-07-11. UCSB / Manta Network.
+    proof_system: R1CS / Groth16 (arkworks) over BLS12-381, with proof-friendly quantization and stranded encoding
+    hardware: Azure M32ls -- 32-core Intel Xeon Platinum 8280M @ 2.70GHz, 256 GiB DRAM
+    numbers_source: primary  # read the PDF 2026-07-11 (was: survey)
+    pdf_available: true  # references/proving-inference/zen.pdf
     objectives: [inference, testing]
     quantization:
-      bits: null
-      scheme: "Proof-friendly quantization + stranded encoding"
+      bits: 8
+      bits_note: >-
+        uint8 weights/activations packed into a ~254-bit BLS12-381 field element -- that packing
+        IS stranded encoding, so 8 bits is structural, not incidental. The paper never writes
+        "we use 8 bits" in a single sentence, which is presumably why this was recorded as null.
+      scheme: "Full integer quantization (Jacob et al.) + sign-bit grouping + remainder-based verification + stranded encoding"
       speedup_from_quantization: [5.43, 22.19]
-      speedup_note: "5.43x-22.19x fewer R1CS constraints (avg 15.35x) vs a vanilla zk-SNARK encoding, WHILE preserving model accuracy"
+      speedup_note: >-
+        5.43x-22.19x fewer R1CS constraints (avg 15.35x) vs ZEN-vanilla. CAVEAT: that ratio is
+        Table 3's `vanilla / ZEN-infer` column, which counts the NEURAL-NETWORK constraints only
+        and excludes the in-circuit model commitment sitting in the column beside it -- even
+        though Commitment + ZEN-infer reproduces Table 1's total proved-circuit size on every
+        row. Recomputed over the whole proved circuit, the end-to-end saving is a low
+        single-digit factor, and on ShallowNet it rounds to nothing. See content/papers/zen.md.
+      accuracy_retention: >-
+        Table 7 gives FP vs quantized accuracy for all six models; deltas are small but non-zero,
+        and non-monotone (the largest model's quantized accuracy comes out ABOVE its FP accuracy).
+        Note the abstract's "no accuracy loss" is relative to ZEN-vanilla, not to floating point.
       note: "The other direct measurement of what quantization buys, independent of SpaGKR."
     notes: >-
-      One of the first optimizing compilers for verifiable NNs. Ships ZENacc (prove accuracy)
-      and ZENinfer (prove one inference). Its whole thesis is that quantization choice, not
-      protocol choice, dominates constraint count.
+      One of the first optimizing compilers for verifiable NNs, and the first to argue that the
+      NETWORK, not the prover, is the thing to optimize -- its backend is off-the-shelf Groth16.
+      Ships ZENacc (prove accuracy on a verifier-supplied test set) and ZENinfer (prove one
+      inference). Its remainder-based verification is the ancestor of zkPyTorch's auxiliary
+      witnesses and zkGPT's result-as-witness. Its Table 3 is also the earliest measurement of
+      the in-circuit commitment bottleneck Artemis later attacks -- ZEN does not notice it.
     benchmarks:
       - model: ShallowNet / LeNet
         proving_time_s: [147, 4710]
+        proving_time_note: >-
+          ZENinfer, MEASURED rows only. The largest model (LeNet-Face-large) carries an asterisk in
+          Tables 1 and 2 -- "indicates an estimated value" -- and is excluded. Separately, ZENacc's
+          reported runtime covers model commitment + inference on ONE image (footnote 6) while the
+          constraint count in the same table is priced for 100 images: the two columns of Table 2
+          describe different circuits.
         verification_time_s: [0.023, 0.47]
-        proof_size_mb: 0.000192  # 192 bytes
+        proof_size_mb: 0.000192  # 192 bytes, constant (Groth16). The CRS is GBs, per-circuit.
 
   - id: artemis
     name: Artemis / Apollo
+    claim_kind: pass  # single forward pass
     title: "Artemis: Efficient Commit-and-Prove SNARKs for zkML"
     url: https://arxiv.org/abs/2409.12055
     pdf: https://arxiv.org/pdf/2409.12055
@@ -669,6 +826,7 @@ inference:
 
   - id: lu-et-al
     name: Lu et al.
+    claim_kind: pass  # single forward pass
     title: "Efficient Zero-Knowledge Proofs for LLM Inference (VOLE-based)"
     url: https://eprint.iacr.org/2024/1057
     date: 2024-05-01
@@ -696,22 +854,68 @@ inference:
     venue: USENIX Security 2024
     date: 2024-08-01
     year: 2024
-    authors: []  # TODO
-    authors_verified: false
-    proof_system: Digit decomposition for non-linear layers
-    hardware: AWS c5.9xlarge
-    numbers_source: survey
-    notes: "Not open-sourced (per zkGPT). Proves individual non-linear operators, not end-to-end models."
+    authors:
+      - Meng Hao
+      - Hanxiao Chen
+      - Hongwei Li
+      - Chenkai Weng
+      - Yuan Zhang
+      - Haomiao Yang
+      - Tianwei Zhang
+    authors_verified: true
+    proof_system: Interactive ZK / sVOLE-based (designated verifier), same substrate as Mystique.
+      Non-linear functions by digit decomposition + table lookup, instantiated from ZK proofs of
+      read-only memory (ZK-ROM) rather than a polynomial lookup argument
+    hardware: AWS c5.9xlarge, Intel Xeon 8000 @ 3.6 GHz, single thread. Bandwidth simulated at
+      200 / 500 / 1000 Mbps and is a first-order cost.
+    numbers_source: primary
+    uses_zk: true
+    open_source: true
+    repo: https://github.com/CryptMatrix/ZKMath
+    notes: >-
+      CORRECTION: the previous note here read "Not open-sourced (per zkGPT)". That was secondhand
+      from zkGPT's related-work section and is WRONG -- §7.1 of the paper states "The source code is
+      available at https://github.com/CryptMatrix/ZKMath".
+      Proves individual non-linear OPERATORS, never an end-to-end model: there is no CNN or
+      transformer benchmark, and consequently NO accuracy number for any model at any precision.
+      This matters because the paper replaces Mystique's IEEE-754 float circuits (chosen precisely to
+      protect accuracy through depth) with fixed-point digit tables at scale 12, running division with
+      zero refinement iterations -- and never measures the cost of that swap.
+      Inherits Mystique's proof object: interactive, designated-verifier, so the reported megabytes are
+      COMMUNICATION, not a proof size.
     benchmarks:
       - model: ReLU (operator)
-        proving_time_s: 2.1
-        proof_size_mb: 30.0
-      - model: Softmax (operator)
-        proving_time_s: 87.0
-        proof_size_mb: 816.0
+        proving_time_s: 2.107
+        communication_mb: 30.137
+        model_note: >-
+          Table 5, 200 Mbps, AMORTISED OVER A BATCH of 10^5 evaluations at fixed-point scale 12 --
+          this is not the cost of one ReLU. The batch is load-bearing: the paper's O(1)-multiplication
+          claim holds only for N >> T, where T is the lookup-table size (2^12 by default).
+      - model: Softmax (operator, dim 10)
+        proving_time_s: 87.131
+        communication_mb: 816.330
+        model_note: >-
+          Table 5, 200 Mbps, batch of 10^5 evaluations, vector dimension 10 -- a CIFAR-class shape,
+          not an LLM's sequence-length softmax. Softmax is where the improvement over Mystique is
+          largest, because it is what most punished Mystique's arithmetic-to-Boolean round trip
+          (exponentiation AND division inside a Boolean circuit).
+      - model: GELU (operator)
+        proving_time_s: 37.628
+        communication_mb: 338.182
+        model_note: >-
+          Table 5, 200 Mbps, batch of 10^5. The one operator explicitly aimed at LLMs. GELU reduces to
+          Tanh, Tanh to Sigmoid, Sigmoid to digit-decomposed exponential and division.
+      - model: Normalization (operator, dim 16)
+        proving_time_s: 192.826
+        communication_mb: null
+        model_note: >-
+          Table 5, 200 Mbps, batch of 10^5, dimension 16. Built on the reciprocal-square-root building
+          block -- exactly the "standard approach" DeepProve rejects on accuracy grounds. Whether the
+          rejection is right is untested here, because no accuracy is reported.
 
   - id: zktorch
     name: ZKTorch
+    claim_kind: pass  # EVERY row: a single forward pass over a 1- or 2-token input (Table 3)
     title: "ZKTorch: Compiling ML Inference to Zero-Knowledge Proofs via Parallel Proof Accumulation"
     url: https://arxiv.org/abs/2507.07031
     pdf: https://arxiv.org/pdf/2507.07031
@@ -721,35 +925,88 @@ inference:
     authors: [Bing-Jyue Chen, Lilia Tang, Daniel Kang]
     authors_verified: true
     proof_system: Basic blocks + parallel extension of the Mira accumulation scheme
-    numbers_source: secondhand  # LLM rows below are not from the ZKTorch paper itself -- see per-row provenance
+    hardware: "Intel Xeon Platinum 8358 @ 2.6 GHz; BN254"
+    # PROMOTED survey -> primary, 2026-07-11: we obtained the PDF and read Tables 3, 4 and
+    # Sec. 6.3 directly. Every row below used to be secondhand -- from DeepProve's comparison
+    # table and from a partisan blog, which DISAGREED with each other. Both are now superseded.
+    numbers_source: primary
+    quantization:
+      bits: 10
+      bits_note: >-
+        "For all models we use 10 bits of quantization except for GPT-j, where we used 12 bits"
+        (Sec. 6.1). ZKTorch is one of the few systems in this corpus that states a bit width at all.
+      accuracy_retention:
+        metric: [ROUGE, F1, WER, mAP]
+        note: >-
+          Table 5 compares ROUGE (GPT-J), F1 (BERT), WER (RNN-T) and mAP (RetinaNet) under
+          ZKTorch's scaling against MLPerf reference values. This is a PLAINTEXT quantization
+          study, NOT a proven claim -- a one-token BERT input cannot produce a SQuAD F1 score.
+          The paper labels it honestly, but it must not be read as ZKTorch proving a benchmark
+          result: that would be the testing objective, and no proof of it exists here.
     notes: >-
-      Successor to ZKML from the same group. Compiles models into "basic blocks", each proved
-      by a specialized protocol, then accumulates. Reports >=3x smaller proofs than
-      specialized protocols and up to 6x faster proving than a general-purpose zkML framework.
-      The LLM numbers below come from two SECONDHAND sources that disagree, and neither is the
-      ZKTorch paper's own table (still not extracted): (a) DeepProve's comparison table, which
-      reports ZKTorch proving GPT-J at 0.09 TPM on a 4 TB / 64-thread machine; (b) the ICME
-      "Definitive Guide to ZKML" blog (by a Jolt Atlas author -- treat as partisan), which
-      reports GPT-J in 20 min and GPT-2 in 10 min on 64 threads.
+      Successor to ZKML from the same group, and NOT an improved ZKML -- it discards the single
+      halo2-circuit architecture for a DAG of ~20 "basic blocks", each proved by a specialized
+      protocol and then accumulated (a parallel extension of Mira). First ZK system to prove
+      every model in MLPerf Inference: Edge v4.1. That breadth is the real contribution, and the
+      headline speedup buries it.
+
+      CRITICAL, and invisible from the abstract: every LLM benchmark here is a SINGLE FORWARD
+      PASS over a 1- or 2-token input (Table 3 lists the input dimensions explicitly). DeepProve's
+      comparison table converts the GPT-J result into 0.09 tokens/minute, which is arithmetically
+      right -- 2 tokens / (1397.52 s / 60) = 0.086 -- but is a category error: those two tokens are
+      one prompt processed in a single pass, not two decode steps. The paper never discusses
+      autoregression or KV caching anywhere. We previously carried that derived throughput figure
+      and tagged the row `claim_kind: token`; both were wrong and are now removed.
+
+      Structurally, the decode step is precisely what does NOT fold: ArgMax and TopK are built from
+      OneToOne, Ordered and CopyConstraint -- three of the seven basic blocks with no accumulation
+      support. The compiler is written to avoid the non-foldable set, and it can, because none of
+      its benchmarks ever sample a token.
+
+      The proof-size claim (">=3x smaller than specialized protocols") rests on a single ResNet-50
+      row whose own caption concedes that zkCNN and pvCNN never implemented ResNet-50 -- so their
+      cells hold those systems' proof sizes for SMALLER models (VGG-16 and LeNet-5). The
+      substitution is conservative, but the claim is an inference from three cells, two of which
+      are for different models. The proving-time claim against ZKML, by contrast, IS like-for-like:
+      same model, same hardware, and the paper says so.
     benchmarks:
       - model: GPT-J
         params: 6000000000
-        proving_time_s: 667  # implied by 0.09 TPM (60/0.09); blog instead says ~1200 s (20 min)
+        context_window: 2  # "2 tokens" -- Table 3, Input dimensions
+        claim_kind: pass   # a forward pass over a 2-token prompt. NOT a per-token decode cost.
+        proving_time_s: 1397.52  # Table 4
+        verification_time_s: 62.64
+        proof_size_mb: 6.54
+        tokens_per_minute: null  # deliberately null: the paper reports no throughput. See notes.
         proving_time_note: >-
-          Two secondhand figures: DeepProve Table 3 reports 0.09 TPM (=> ~667 s/token) on 4 TB
-          RAM / 64 threads; the ICME blog says "20 minutes on 64 threads" (~1200 s). Same order,
-          different numbers; the ZKTorch paper's own value is not yet extracted.
-        tokens_per_minute: 0.09
-        tokens_per_minute_source: derived  # from DeepProve's reported 0.09 TPM for ZKTorch
-        provenance: "DeepProve Table 3 (primary reading ZKTorch); ICME blog (partisan) gives 20 min"
-        hardware: "2.6 GHz 32 cores, 4 TB RAM, 64 threads (per DeepProve Table 3)"
+          Table 4, end-to-end. Supersedes the two secondhand figures we used to carry (DeepProve's
+          0.09 TPM => 667 s, and the ICME blog's "20 minutes"). DeepProve's number is derived from
+          exactly this row, by dividing it by the two prompt tokens.
+      - model: BERT
+        params: 340000000
+        context_window: 1  # Table 3
+        claim_kind: pass
+        proving_time_s: 880.42
+        verification_time_s: 26.67
+        proof_size_mb: 4.88
+      - model: LLaMA-2-7B
+        params: 7000000000
+        context_window: 1  # Table 3
+        claim_kind: pass
+        proving_time_s: 2645.50
+        verification_time_s: 100.14
+        proof_size_mb: 22.85
       - model: GPT-2
         params: 124000000
-        proving_time_s: 600
-        proving_time_note: '"10 minutes (down from 1+ hour)" per the ICME blog; not independently confirmed'
-        tokens_per_minute: 0.1  # 60/600, single-pass proxy
-        tokens_per_minute_source: derived
-        provenance: "ICME 'Definitive Guide to ZKML' blog (partisan -- Jolt Atlas author). Not in papers I have read directly."
+        claim_kind: pass
+        proving_time_s: 599.0  # Sec. 6.3, head-to-head against ZKML on identical hardware
+        verification_time_s: 12.0
+        tokens_per_minute: null  # the paper reports no throughput; do not re-derive one
+        proving_time_note: >-
+          Sec. 6.3, the one like-for-like comparison in the paper: ZKTorch 599 s prove / 12 s verify
+          vs ZKML 3601 s / 19 s, same model, same hardware. NOTE: our `zkml-kang` entry carries
+          3652 s for that same ZKML GPT-2 run, taken from the survey -- a new survey-vs-primary
+          conflict; both values are recorded here in papers.yml.
 
   - id: nanozk
     name: NANOZK
@@ -803,7 +1060,60 @@ inference:
         extra arithmetic constraints hardening the lookup/range proofs against a malicious
         prover. GeLU needs ~70 table entries; claims 1-3 orders of magnitude smaller activation
         circuits than prior work, at full precision.
-      accuracy_retention: "full IEEE-754 double precision -- no fixed-point precision loss"
+      accuracy_retention: >-
+        The HONEST PROVER computes in full IEEE-754 double precision, so there is no fixed-point
+        precision loss in an honest execution. But see soundness_caveat: this is a property of
+        what the honest server computes, NOT of what the proof enforces.
+    mechanism: >-
+      PRIMARY, Sec 4.2-4.3. Three-part trick. (1) OFFLINE: approximate the activation by a
+      piecewise polynomial (GeLU: m=8 pieces of degree k=10) and store the coefficients in a
+      lookup table of just 70 entries. (2) ONLINE: the prover evaluates the activation EXACTLY
+      in IEEE-754 double and feeds that exact value y downstream -- the polynomial approximation
+      is never used for subsequent layers, which is what stops approximation error compounding
+      across depth. (3) PROVE: an extended Caulk lookup (forcing an ordered, contiguous block of
+      coefficients) + a private-interval range proof (the correct piece was selected without
+      revealing which), plus an "approximation-soundness" relation binding y to the polynomial:
+      |y - f(y')| <= delta * |f(y')|. That inequality is enforced division-free via witnesses
+      l1 = y - f(y'), l2 = delta*f(y'), z3 = (l1+l2)(l2-l1), proving z3 >= 0 (i.e. l1^2 <= l2^2);
+      float non-negativity is just "sign bit 0 OR mantissa 0". Horner's method keeps the
+      polynomial to k float mults + k float adds.
+    soundness_caveat: >-
+      IMPORTANT, and not stated as a limitation by the paper. ZIP does NOT prove that y is the
+      correct IEEE-754 activation of y'. y is a WITNESS, and the only constraint binding it is
+      the relative-error inequality above. So the proof establishes that y lies within a
+      DELTA-RELATIVE BALL around a certified piecewise-polynomial approximation -- not that y is
+      the true activation. An honest prover puts the exact double in that ball; a malicious
+      prover may put anything in it.
+      The ball is not tight. ZIP's own experimental parameters (Sec 5.2): delta = 9e-4 for SeLU
+      and ELU, but delta = 9e-2 for GeLU -- a 9% per-activation relative-error budget available
+      to an adversary. For scale: bfloat16's machine epsilon is ~7.8e-3, an order of magnitude
+      TIGHTER than the slack ZIP's flagship GeLU proof permits. A paper headlined
+      "double precision" has, on its flagship activation, a soundness guarantee looser than bf16.
+      AND IT IS NOT ONLY THE ACTIVATIONS. ZIP's LINEAR layers are not exactly bound either in the
+      configuration whose timings it advertises: Sec 5.4 checks them with a randomized
+      (Freivalds-style) linear combination "with a small relative tolerance to handle IEEE-754
+      rounding". The paper states that "without RLC and thus preserving full numerical precision"
+      end-to-end proving takes 40/42/47 min versus the advertised 20.67/15.91/13.94 -- i.e. the
+      headline numbers are for the TOLERANCE-BOUNDED configuration, roughly 2-3x faster than the
+      exact one. So the advertised system is approximate end to end: approximate activations AND
+      approximate linear layers.
+      To be fair: this is not a bug and is not hidden. ZIP's soundness theorem is stated w.r.t.
+      F-hat (the APPROXIMATED network) and is honestly proved. The gap is between what the paper
+      claims colloquially ("IEEE-754-compliant inference") and what the constraint system
+      enforces. Whether the delta-slack is EXPLOITABLE -- whether an adversary can steer a
+      classification by nudging each activation within its ball, and whether the error compounds
+      or cancels across layers -- is NOT analyzed in the paper. Open question.
+    ieee754_baseline_costs: >-
+      PRIMARY, Sec 4.1. The price of naive IEEE-754 in a circuit, which ZIP compiles from prior
+      work and which is the best published costing of "why not just use floats":
+      per-operation Boolean gate counts -- single precision 2,456 gates/add and 8,854 gates/mul
+      (from Mystique, USENIX Sec '21); double precision 15,637 gates/add and 44,899 gates/mul
+      (from Archer-Atapoor-Smart, "The cost of IEEE arithmetic in secure computation",
+      LATINCRYPT '21). Composed up with gadgets for sqrt and tanh, ZIP estimates a SINGLE GeLU
+      activation costs ~1,302,142 R1CS constraints in single precision and ~6,808,760 in double.
+      ZIP itself: 5,830 R1CS constraints per GeLU (a ~1,172x reduction vs the 6.8M baseline),
+      falling to 4,599 at 2^14 activations via shared subexpressions; 17,112 PlonK constraints
+      per GeLU. SeLU/ELU see 545x-791x reductions. Backend: gnark PlonK over BN254.
     notes: >-
       The counter-philosophy to everyone else here, on the accuracy axis: rather than quantizing
       the model to fit the prover, ZIP makes the prover handle native floating-point. NOT an LLM
@@ -812,7 +1122,9 @@ inference:
       model-private like zkLLM. Most useful to this collection as the concrete example that
       quantization is a choice, not a necessity -- see the "bend the model vs bend the prover"
       theme (SafetyNets origin; zkGPT relaxations and Jolt teleportation bend the model;
-      DeepProve and ZIP bend the prover).
+      DeepProve and ZIP bend the prover). But read soundness_caveat before citing it as a clean
+      win: its precision is a property of the honest prover, not of the proof.
+      See content/zk-inference/numerics.md.
     benchmarks: []  # per-model timings not yet extracted; datasets MNIST / UTKFace / SST-2
 
   - id: ezkl
@@ -830,6 +1142,273 @@ inference:
       Not a paper, but the de facto baseline that Jolt Atlas, NANOZK and others benchmark
       against. On nanoGPT (per Jolt Atlas): 237s proving, >400s key generation, 0.34s verify.
     benchmarks: []
+
+  - id: range-arithmetic
+    name: Range-Arithmetic
+    title: "Range-Arithmetic: Verifiable Deep Learning Inference on an Untrusted Party"
+    url: https://arxiv.org/abs/2505.17623
+    pdf: https://arxiv.org/pdf/2505.17623
+    venue: arXiv:2505.17623v2
+    date: 2026-06-09  # v2; v1 is 2025-05-23
+    year: 2026
+    authors: [Ali Rahimi, Babak H. Khalaj]
+    authors_verified: true
+    affiliation: Sharif University of Technology
+    proof_system: Sum-check + concatenated range proofs (Bulletproofs-style), interactive
+    uses_zk: false  # "incorporating privacy-preserving features" is listed as FUTURE WORK (Sec 6)
+    open_source: true
+    repo: https://github.com/trainingzk/Range-Arithmetic
+    hardware: null  # not stated
+    numbers_source: primary  # we read the PDF; but see benchmarks -- there is almost nothing to source
+    quantization:
+      bits: null
+      bits_note: >-
+        Parameterised, not fixed: the scheme is stated over a fixed-point format with 1 sign bit,
+        t integer bits and s fractional bits, and Fig. 3 sweeps bit length. No single bit width is
+        claimed for a model, and no accuracy delta is reported at any width.
+      scheme: >-
+        Fixed-point with rounding proven ARITHMETICALLY. The core trick (Theorem A.1): to prove
+        a' = R(a), the prover sends a' and a remainder e with a = e + 2^s * a' (mod p), then range
+        proofs pin e and a' to their intervals -- which forces a' to be the correctly rounded value.
+        Rounding and ReLU therefore need no Boolean encoding, no high-degree polynomial, and no
+        lookup table. This is the one genuinely nice idea in the paper.
+      accuracy_retention: null
+    notes: >-
+      Third camp in the numerics debate, alongside relax-the-semantics (garg-fp) and
+      keep-IEEE-optimize-the-circuit (zklp): keep FIXED point, but prove the ROUNDING with range
+      proofs rather than bit-decomposition. Claims to be the first to get O(n^3) prover, O(n^2)
+      verifier, O(log n) communication AND fixed-point rounding AND ReLU together, with no
+      preprocessing and no R1CS. Descends from SafetyNets (interactive sum-check, integrity not
+      privacy) rather than from the SNARK line.
+      NOT zero-knowledge -- see uses_zk. Like SafetyNets, it buys integrity only, and privacy is
+      explicitly future work.
+    quality_flag: >-
+      CAUTION -- the bibliography does not survive checking, and that is a bad sign in a paper we
+      cannot otherwise verify. Reference [25] attributes "Jolt Atlas" to Bagad, Domb and Thaler and
+      cites it as "Cryptology ePrint Archive, 2026, https://eprint.iacr.org/2026/xxx" -- an
+      UNSUBSTITUTED PLACEHOLDER URL, and the wrong authors (Jolt Atlas is Benno, Centelles, Douchet
+      and Gibran, arXiv:2602.17452). Reference [24] attributes ZIP to "Y. Zhang et al." (it is
+      Riasi, Wang, Behnia, Vo, Hoang). References [23] ("zkReLU", IEEE TIFS vol. 20 pp. 1200-1215)
+      and [27] ("ValidCNN", IEEE TIFS vol. 20 pp. 2218-2233) look fabricated: zkReLU is a component
+      of zkDL, not a standalone TIFS paper, and [27]'s page range is identical to that of pvCNN
+      [15], a different paper in the same list. Several references also carry trailing editorial
+      annotations ("achieves >50x speedup for ReLU/sigmoid via table-lookup") that read as
+      machine-generated. The MATH (Theorem A.1) checks out and the technique is real; the
+      scholarship around it does not. Do not cite this paper's characterisations of other work.
+    benchmarks:
+      - model: DNN (MNIST)
+        params: null
+        proving_time_s: null
+        proving_time_note: >-
+          NOT REPORTED IN TEXT. Sec. 5 reports prover/verifier runtime and communication only as
+          log-scale plots (Fig. 3, vs bit length; Fig. 4, vs matrix size) with no absolute figure
+          stated anywhere in prose or in a table. Same problem as SafetyNets. There is no number
+          here to put in a table, and inventing one off a log axis would be a fabrication.
+        proof_size_mb: null
+        verification_time_s: null
+
+numerics_primitives:
+  # NOT ML systems. These are the arithmetic building blocks underneath zkML: how you represent a
+  # real number in a circuit at all. They matter because the entire zkML literature justifies
+  # quantization by asserting that native floating point is "infeasible" in a circuit -- and these
+  # two papers, which NO zkML system in this file cites, show that it is not.
+  # See content/zk-inference/numerics.md.
+  - id: garg-fp
+    name: Garg et al. (FP)
+    title: "Succinct Zero Knowledge for Floating Point Computations"
+    url: https://dl.acm.org/doi/10.1145/3548606.3560653
+    venue: ACM CCS 2022
+    date: 2022-11-07
+    year: 2022
+    authors: [Sanjam Garg, Abhishek Jain, Zhengzhong Jin, Yinuo Zhang]
+    authors_verified: true
+    numbers_source: primary
+    proof_system: Succinct ZK argument over a relative-error model of floating-point arithmetic
+    approach: relaxed-semantics
+    notes: >-
+      CAMP 1 of the two float-in-ZK camps: RELAX THE SEMANTICS. The insight is that you need not
+      prove the IEEE rounding *procedure*, only that the result is *accurate*. So instead of
+      arithmetising round-to-nearest, prove a per-gate relative-error bound
+      |c - g(a,b)| <= delta * |g(a,b)|, where g is the exact sum/product and delta can be set to
+      machine epsilon -- "the relative error bound in the IEEE standard". Zeros, infinities and NaN
+      are handled as separate corner cases. Inspired by the FHE-for-floats line, which made the
+      same move.
+      Explicitly a DEVIATION, and the paper says so (Sec 2, Our Model): "our model does not
+      guarantee that the value in the output wire of a step of the computation is rounded to the
+      nearest number (as is done in the IEEE standard). Instead, our model allows a larger (by a
+      factor of 2 in some cases) absolute error."
+      Prover speedup vs verifying exact IEEE: ~57x for FP32, ~236x for FP64.
+      CRITICAL CONNECTION: this is the technique ZIP uses, one level up -- ZIP applies the same
+      relative-error relation to whole ACTIVATIONS rather than to individual float gates. But Garg
+      sets delta = machine epsilon (as tight as the model admits); ZIP sets delta = 9e-2 for GeLU.
+      Same machinery, wildly different slack. See zip.soundness_caveat.
+    benchmarks: []
+
+  - id: archer-ieee
+    name: Archer et al. (IEEE cost)
+    title: "The Cost of IEEE Arithmetic in Secure Computation"
+    url: https://eprint.iacr.org/2021/054
+    venue: LATINCRYPT 2021
+    date: 2021
+    year: 2021
+    authors: [David W. Archer, Shahla Atapoor, Nigel P. Smart]
+    authors_verified: true
+    numbers_source: primary
+    proof_system: n/a -- MPC (Scale-Mamba, LSSS + binary circuits), not ZK
+    approach: exact-ieee754
+    notes: >-
+      The origin of the double-precision gate counts that ZIP and ZKLP both quote, and which the
+      zkML literature leans on when it calls floats "infeasible". MPC rather than ZK, but it is
+      where the numbers come from, so it is worth pinning down.
+      PRIMARY TABLE (Sec 3, IEEE-754-compliant FP64 circuits, compiled via CBMC-GC to Bristol
+      Fashion, OR gates removed so only AND/XOR/INV remain):
+        add: 5,385 AND | 8,190 XOR | 2,062 INV | AND-depth 235
+        mul: 19,626 AND | 21,947 XOR | 3,326 INV | AND-depth 129
+        div: 82,269 AND | 84,151 XOR | 17,587 INV | AND-depth 3,619
+      PROVENANCE NOTE, verified by us: the figures "15,637 add / 44,899 mul" quoted by ZIP and by
+      ZKLP are the TOTAL gate counts, i.e. AND+XOR+INV summed from the rows above
+      (5385+8190+2062 = 15,637; 19626+21947+3326 = 44,899). Both secondhand quotes are arithmetically
+      correct. But the total is a generous way to state the cost: in most MPC/ZK settings the AND
+      gates dominate (XOR is often free), so the AND-only cost is 5,385 / 19,626 -- roughly 3x and
+      2x smaller. Archer et al. go further and say that for their LSSS-based engine "the dominant
+      cost is not the number of AND gates but the DEPTH of the AND gates".
+      So when the zkML literature cites ~45k gates for an FP64 multiply as evidence that floats are
+      hopeless, it is citing the largest of several defensible numbers, transplanted from MPC into
+      a ZK argument. That does not make the conclusion wrong -- 19,626 AND gates is still enormous
+      next to a field multiply -- but the figure deserves the asterisk.
+    benchmarks: []
+
+  - id: zklp
+    name: ZKLP
+    title: "Zero-Knowledge Location Privacy via Accurate Floating-Point SNARKs"
+    url: https://arxiv.org/abs/2404.14983
+    pdf: https://arxiv.org/pdf/2404.14983
+    venue: arXiv 2404.14983
+    date: 2024-04-23
+    year: 2024
+    authors: [Jens Ernstberger, Chengru Zhang, Luca Ciprian, Philipp Jovanovic, Sebastian Steinhorst]
+    authors_verified: true
+    numbers_source: primary
+    proof_system: gnark / PlonKish with LogUp lookup arguments over BN254
+    approach: exact-ieee754
+    notes: >-
+      CAMP 2: KEEP THE SEMANTICS, OPTIMIZE THE CIRCUIT. Despite the location-privacy title this is
+      the important accurate-floating-point-SNARK paper, and the single strongest refutation of the
+      "floats are infeasible in a circuit" premise the whole zkML literature rests on.
+      Builds ZKP circuits FULLY COMPLIANT with IEEE 754 -- subnormals and all -- validated against
+      the Berkeley TestFloat conformance suite. The trick: push the circuit-hostile parts
+      (comparison, shifts, normalization) into LOOKUPS (LogUp, in gnark) instead of gates, so the
+      shared tables amortize across operations.
+      HEADLINE: 2^1 FP32 multiplications cost 209 constraints each; 2^15 FP32 multiplications cost
+      *64 constraints per operation*. Compare the naive IEEE-754 emulation cost the paper itself
+      tabulates (Sec 6): FP32 2,456 gates/add and 8,854 gates/mul; FP64 15,637/add and 44,899/mul.
+      Those same four figures are independently quoted by ZIP (from Mystique and from
+      Archer-Atapoor-Smart, LATINCRYPT'21) -- two primary sources in agreement.
+      THE INVERSION: ZKLP's IEEE-754 FLOAT circuits use 15.9x FEWER constraints than an unoptimized
+      FIXED-POINT baseline (FP32; 12.2x for FP64), because reaching comparable accuracy in fixed
+      point demands so many bits. In an application that genuinely needs dynamic range, floating
+      point is the *cheaper* circuit. The core zkML trade -- "give up dynamic range, buy cheap
+      arithmetic" -- is a bet, not a law, and it can go the other way.
+      It also states the soundness case outright (Sec 1): fixed-point "fails some tests whereas
+      floating-point passes all. Even worse, this inconsistency can be exploited by adversaries to
+      generate valid proofs for maliciously crafted statements, thereby breaking the soundness".
+      CAVEAT, before over-reading this for zkML: 64 constraints/multiply is superb next to 8,854
+      and still terrible next to sum-check, which proves an entire matrix product for almost
+      nothing. Floats do not threaten integer sum-check for LLM MATMULS. Where they plausibly win
+      is the non-linear operators and the precision-critical seams -- which is exactly where zkML's
+      cost actually lives. Nobody in zkML has tested this.
+    benchmarks: []
+
+  - id: secfloat
+    name: SecFloat
+    title: "SecFloat: Accurate Floating-Point meets Secure 2-Party Computation"
+    url: null
+    url_note: >-
+      The PDF we hold is the self-published "Full Version" and carries no DOI, eprint number or
+      canonical URL. Venue is confirmed INDEPENDENTLY from three PDFs in references/ that cite it
+      (bolt, zkpot-garg, zklp): IEEE S&P 2022, pp. 576-595. We do not guess the canonical link.
+    venue: IEEE S&P 2022
+    date: 2022-05-01
+    year: 2022
+    authors:
+      - Deevashwer Rathee
+      - Anwesh Bhattacharya
+      - Rahul Sharma
+      - Divya Gupta
+      - Nishanth Chandran
+      - Aseem Rastogi
+    authors_verified: true
+    affiliation: UC Berkeley / Microsoft Research
+    proof_system: n/a -- 2PC (secret sharing + OT), not ZK. Same caveat as archer-ieee.
+    approach: exact-ieee754
+    open_source: true
+    repo: https://github.com/mpc-msri/EzPC
+    numbers_source: primary
+    notes: >-
+      The MPC mirror of ZKLP, and the strongest EMPIRICAL statement in this file that fixed point
+      is a choice with a failure mode -- not a free lunch. SecFloat builds crypto-friendly but
+      PRECISE 2PC functionalities for 32-bit floats (add, mul, div, compare) and math functions
+      (exp, log, trig), by decomposing each into integer 2PC building blocks rather than compiling
+      an IEEE Boolean circuit. Reports up to six orders of magnitude more precision and up to two
+      orders of magnitude more efficiency than prior cryptographic float libraries, and three
+      orders of magnitude over a precise 2PC baseline.
+      WHY IT MATTERS TO US, and it is one sentence in the abstract: "All prior works on secure
+      inference of deep neural networks rely on ad hoc float-to-fixed converters. We evaluate a
+      model where the fixed-point approximations used in privacy-preserving machine learning
+      completely fail and floating-point is necessary." The case study (Sec. IX-C) is
+      privacy-preserving advertising. So the claim "quantize, it is fine" has a published
+      counterexample -- from the MPC column, which the zkML column does not cite.
+      Note the direction of the argument differs from ZKLP's: ZKLP shows exact floats can be CHEAP
+      in a circuit; SecFloat shows fixed point can be WRONG for a real model. Together they are
+      the two halves of the case the zkML literature has never answered.
+      NOT a ZK system and not a graph point. Filed here because it is where the float-vs-fixed
+      evidence lives.
+    benchmarks: []  # per-benchmark 2PC comm/runtime not extracted; the corpus-relevant claim is qualitative
+
+  - id: prob-truncation
+    name: Probabilistic truncation in PPML
+    title: "On Probabilistic Truncation in Privacy-preserving Machine Learning"
+    url: null
+    url_note: >-
+      The PDF carries no DOI, arXiv id or eprint number -- only the AAAI-25 proceedings header and
+      page 22955. Venue (AAAI 2025) is taken from the paper's own header. The AAAI OJS article id
+      is NOT guessed here; fill it in only after looking it up.
+    venue: AAAI 2025
+    date: 2025-02-01
+    year: 2025
+    authors:
+      - Lijing Zhou
+      - Bingsheng Zhang
+      - Ziyu Wang
+      - Tianpei Lu
+      - Qingrui Song
+      - Su Zhang
+      - Hongrui Cui
+      - Yu Yu
+    authors_verified: true
+    affiliation: Huawei / Zhejiang University / Shanghai Jiao Tong University
+    proof_system: n/a -- MPC / secret sharing (ABY3, ABY2.0, EdaBits, Bicoptor lineage), not ZK
+    approach: fixed-point-truncation
+    numbers_source: primary
+    notes: >-
+      The re-quantization problem, studied properly, in the column that studied it. Every fixed-point
+      system must TRUNCATE after a multiply to rescale, and the cheap (non-interactive) truncation
+      protocols used across PPML -- SecureML, ABY3, EdaBits, Bicoptor -- are PROBABILISTIC: they
+      fail with probability 2^-(l - l_x - 1), where l is the ring size and l_x the value's bit
+      length. A failure is not a rounding error, it is a large wrong value. The paper's response is
+      a non-interactive DETERMINISTIC cut protocol that removes the probabilistic error, which then
+      lets the ring be smaller (Bicoptor's DReLU communication drops ~50%). Separately it shrinks
+      the DReLU input to a few effective bits, cutting ReLU communication by over 70% at no
+      noticeable accuracy cost.
+      THE ZKML CONNECTION, which nobody on the zkML side has drawn: zkML's re-quantization step is
+      the same operation, and DeepProve, zkGPT and zkTorch all prove it with lookups/range checks.
+      In ZK the analogous failure is not silent inaccuracy but an out-of-range value that cannot be
+      looked up at all (see deepprove.quantization and content/zk-inference/quantization.md) --
+      DIFFERENT failure mode, SAME underlying operation, and this is the only paper in the file that
+      quantifies how often the cheap version of it goes wrong. It is the missing prior art for the
+      claim that truncation is where fixed-point correctness actually breaks.
+      NOT a ZK system, not a graph point. MPC, filed here for the numerics argument.
+    benchmarks: []  # communication/round costs are per-protocol (ReLU/DReLU), not per-model
 
 testing:
   # "Verifiable testing": prove a committed model achieves a claimed accuracy on a dataset.
@@ -1141,7 +1720,10 @@ verifiable_federated_learning:
     name: ACORN
     title: "ACORN: Input Validation for Secure Aggregation"
     url: https://eprint.iacr.org/2022/1461
+    pdf: https://www.usenix.org/system/files/usenixsecurity23-bell.pdf  # eprint PDF is Cloudflare-blocked
     venue: USENIX Security 2023
+    numbers_source: primary  # read the USENIX PDF 2026-07-11. The 2-8x figure IS in the paper --
+                             # but it was attached to the WRONG contribution here. See below.
     date: 2022-10-24
     year: 2023
     authors: [James Bell, Adrià Gascón, Tancrède Lepoint, Baiyu Li, Sarah Meiklejohn, Mariana Raykova, Cathie Yun]
@@ -1149,32 +1731,104 @@ verifiable_federated_learning:
     uses_zk: true
     primitive: Zero-knowledge input validation over a secure-aggregation protocol
     what_is_proven: "Client inputs satisfy L0 / L2 / Linf bounds."
+    architecture: >-
+      THREE protocols, and keeping them apart is the whole point of this entry.
+      (1) RLWE-SecAgg -- a new secure-aggregation protocol using a lattice-based input encoding
+      instead of Bell et al.'s PRG-based one. Cuts client work from O(l log n) to O(l + log n).
+      NO ZERO-KNOWLEDGE IS INVOLVED.
+      (2) ACORN-detect -- RLWE-SecAgg plus ZK input validation; malformed inputs are detected.
+      (3) ACORN-robust -- additionally removes malformed inputs and completes the aggregation.
+      The ZK contribution is a new logarithmic-proof-size argument for an L-infinity bound on a
+      vector held in a constant-size commitment.
     benchmarks:
-      - speedup_vs_bell_ccs20: [2, 8]
-        note: "2-8x client-computation speedup vs Bell et al. (CCS 2020)"
+      # PROVENANCE CORRECTION (2026-07-11). The 2-8x was previously recorded here as if it were a
+      # cost of the zero-knowledge input validation. IT IS NOT. It is the speedup of the
+      # NON-ZK base protocol (RLWE-SecAgg) over Bell et al.'s PRG-SecAgg, from swapping the input
+      # encoding. It says nothing about what the ZK validation costs.
+      - component: RLWE-SecAgg (base protocol, NO input validation)
+        speedup_vs_bell_ccs20: [2, 8]
+        speedup_metric: client computation
+        note: >-
+          Abstract: "it results in 2-8X speedups in client computation in practical scenarios."
+          Sec. 6: "roughly up to 5x speedup in the FA setting for l >= 2^15, and up to more than
+          8x speedup in the FL setting." The range spans the two settings, not a spread within one.
+      # These are the numbers that actually describe the ZERO-KNOWLEDGE contribution:
+      - component: ACORN-detect (ZK input validation)
+        client_proving_time_s: 80
+        client_proving_time_note: >-
+          "in under 80 seconds, a client running ACORN-detect on a standard laptop can (1) show
+          k-hotness of a binary input of length 1M, or (2) show that a dense vector of length 250K
+          has its L-infinity norm bounded by 2^16" (Sec. 1.1). Upper bound, standard laptop.
+        communication_overhead_vs_unvalidated: 0.1  # i.e. +10% over non-validated secure aggregation
+        communication_improvement_vs_prior_zk: 30   # ">30X in terms of client communication"
+        note: "Abstract: input validation 'improves on prior work by more than 30X in terms of client communication (with comparable computation costs)'."
+      - component: end-to-end (four real-world FL/FA tasks)
+        bandwidth_overhead_factor: 1.05  # "a bandwidth overhead of at most 1.05X"
     notes: >-
-      Author overlap with Optimum Vicinity (Gascón, Meiklejohn, Raykova) -- the same Google
-      group works both the zkPoT and secure-aggregation sides.
+      The cheapest ZK input validation in this cell, and the reason is worth internalising: the
+      ZK proof is bolted onto a secure-aggregation protocol whose encoding was ALREADY chosen to
+      make the proof cheap. The ~10% communication overhead for validation is what everyone else
+      in this section pays double digits for (see the Table 1 comparison against RoFL and EIFFeL).
+      Author overlap with Optimum Vicinity (Gascón, Meiklejohn, Raykova) -- the same Google group
+      works both the zkPoT and secure-aggregation sides.
 
   - id: eiffel
     name: EIFFeL
     title: "EIFFeL: Ensuring Integrity for Federated Learning"
     url: https://arxiv.org/abs/2112.12727
+    pdf: https://arxiv.org/pdf/2112.12727
     venue: ACM CCS 2022
+    numbers_source: primary  # read the arXiv PDF 2026-07-11. The 2.4s figure IS in the paper --
+                             # abstract, Sec. 1, and Table 2 (2,367 ms). But it was mislabelled as
+                             # a proving time and was missing the one condition that decides
+                             # whether it means anything: d = 1000. See below.
     date: 2021-12-23
     year: 2022
     authors: [Amrita Roy Chowdhury, Chuan Guo, Somesh Jha, Laurens van der Maaten]
     authors_verified: true
+    affiliation: UW-Madison / Meta AI
     uses_zk: true
     primitive: Secret-shared non-interactive proofs (SNIP-style) + Shamir secret sharing; clients act as verifiers
     what_is_proven: "An arbitrary public validation predicate holds on each update; malformed updates are removed from the aggregate."
+    complexity: "O(m*n*d) client AND server computation -- QUADRATIC in the client count n (since the malicious count m is a fixed fraction of n) and LINEAR in the update dimension d."
     benchmarks:
+      # PROVENANCE CORRECTION (2026-07-11). Two problems with the previous record:
+      #   (1) 2.4s was tagged `proving_time_s`. It is NOT a proving time -- it is the END-TO-END
+      #       per-iteration wall clock, including client compute, server compute AND network
+      #       latency (Sec. 6, Table 2). The client's own runtime at this configuration is 1.3s.
+      #   (2) `d` was missing entirely. d is the update dimensionality, cost is LINEAR in it, and
+      #       the benchmarked value is 1000 -- a thousand-parameter "MNIST classifier". Without d,
+      #       the 2.4s is not interpretable.
       - model: MNIST classifier
-        clients: 100
-        poisoning_rate: 0.10
-        proving_time_s: 2.4
-        proving_time_note: "per training iteration; matches non-poisoned FL accuracy"
-    notes: "Solves the core tension: secure aggregation masks updates, which is exactly what stops you checking they are well-formed."
+        update_dimension: 1000       # d = 1K. THE missing condition. Cost is linear in d.
+        clients: 100                 # n = 100. Cost is QUADRATIC in n.
+        poisoning_rate: 0.10         # m = 10%
+        end_to_end_time_s: 2.4       # Table 2: 2,367 ms. Client + server + communication latency.
+        client_time_s: 1.3           # Sec. 6, Computation Costs -- the client's own share.
+        server_time_s: 1.0
+        accuracy_note: "matches the accuracy of a non-poisoned federated learner"
+        note: >-
+          Abstract: "with 100 clients and 10% poisoning, EIFFeL can train an MNIST classification
+          model to the same accuracy as that of a non-poisoned federated learner in just 2.4s per
+          iteration." Confirmed in Table 2 (n=100, d=1K, m=10%: 2,367 ms).
+    scaling_note: >-
+      THE HEADLINE DOES NOT SURVIVE SCALE, and Table 2 says so. End-to-end time per iteration at
+      d=1000, m=10%, by client count: n=50 -> 1,072 ms; n=100 -> 2,367 ms; n=150 -> 4,326 ms;
+      n=200 -> 6,996 ms; n=250 -> 10,389 ms. That is quadratic, and it stops at 250 clients.
+      In d it is linear and the paper states the slope directly: a client takes ~1.3s at d=1K but
+      "around 11s when d = 10K".
+      So "2.4s per iteration" describes n=100 clients and a 1,000-parameter model. Real federated
+      learning runs thousands to millions of clients over models with 10^5 to 10^9 parameters --
+      several orders of magnitude beyond the benchmark on BOTH axes, with cost quadratic in one
+      and linear in the other. The number is true, primary, and should never be quoted without d.
+    notes: >-
+      Solves the core tension: secure aggregation masks updates, which is exactly what stops you
+      checking they are well-formed. Its distinguishing move against Prio is that it needs no
+      honest-server assumption -- "This is different from Prio [28] (the original SNIP deployment
+      setting) that rely on multiple honest servers to perform verification" -- the CLIENTS act as
+      the verifiers, on secret shares of each other's proofs.
+      Soundness error is dominated by SNIP's 2M-2/|F| with M < 4d < 40K in the evaluation, giving
+      a rejection probability on the order of 10^-12.
 
   - id: prio
     name: Prio / Prio+
@@ -1556,157 +2210,6 @@ secure_inference_to_review:
   - {title: "SecureGPT: Multi-Party Privacy-Preserving Transformer Inference in GPT", venue: "IEEE TIFS 2024"}
   - {title: "MPCache: MPC-Friendly KV Cache Eviction for Private LLM Inference", url: "https://arxiv.org/abs/2501.06807", note: "The 2PC world's answer to the KV-cache problem."}
 
-# ============================================================================
-# SOUNDNESS & ATTACKS
-#
-# The systems above are only as good as the arguments underneath them. This section tracks
-# what is known to break, and what has not been checked. Nothing here is a demonstrated break
-# of a deployed zkML system -- but the gap between "no known break" and "analyzed" is where
-# audit work lives. Entries carry `status:` to keep that distinction sharp:
-#   proven_attack        -- a working attack exists against the stated protocol class
-#   implementation_bug   -- a real bug found in real code, now fixed
-#   open_question        -- plausible attack surface, NOT demonstrated. Do not cite as a break.
-# ============================================================================
-
-soundness_and_attacks:
-  - id: fiat-shamir-gkr-attack
-    name: Fiat-Shamir attacks on GKR
-    title: "How to Prove False Statements: Practical Attacks on Fiat-Shamir"
-    url: https://eprint.iacr.org/2025/118
-    venue: CRYPTO 2025
-    date: 2025-01-24
-    year: 2025
-    authors: [Dmitry Khovratovich, Ron Rothblum, Lev Soukhanov]
-    authors_verified: true
-    status: proven_attack
-    target: "The GKR protocol compiled to a non-interactive succinct argument via Fiat-Shamir, for non-deterministic bounded-depth computation."
-    what_breaks: >-
-      Two attacks. (1) Adaptive: for a specific circuit, produce accepting proofs of FALSE
-      statements. (2) Functional equivalence: given any circuit C and any output y, construct a
-      functionally equivalent circuit C* for which an accepting proof that C* outputs y can be
-      produced -- regardless of whether it is true.
-    caveats: >-
-      CRITICAL, do not overclaim. The attack requires the ATTACKER to choose or modify the
-      circuit. The paper explicitly states security depends on "the specific implementation of
-      the circuit C, rather than just its functionality", and that the attack does NOT apply to
-      fixed, honestly-chosen circuits in standard deployments. Non-adaptive variants need either
-      very large depth or additional assumptions on the underlying primitives. This is a
-      theoretical vulnerability, not a demonstrated break of any deployed zkML system.
-    affects_in_this_repo:
-      # Every one of these uses GKR / sum-check made non-interactive with Fiat-Shamir.
-      - zkgpt        # GKR + sumcheck + Fiat-Shamir, Hyrax/BN254
-      - deepprove    # sum-check + lookups
-      - zkpytorch    # Expander (GKR)
-      - zkcnn        # GKR + sumcheck
-      - zkllm        # sum-check + tlookup
-      - spagkr       # GKR / sumcheck
-      - kaizen       # recursive GKR-style proofs (training)
-    not_affected:
-      # Sum-check/GKR-family, but NOT reachable by this attack. Listed explicitly so nobody
-      # "helpfully" adds them to affects_in_this_repo later.
-      - id: safetynets
-        why: >-
-          Genuinely interactive -- the verifier sends live random challenges and there is no
-          Fiat-Shamir transform to attack. The attack is against FS-compiled GKR specifically.
-          SafetyNets is the ancestor of every system in the affects list above and is the only
-          one that predates the compilation step that makes them vulnerable.
-    open_question: >-
-      In MLaaS the prover IS the model owner, and the model IS the circuit. If a deployment
-      commits to WEIGHTS but does not independently pin the ARCHITECTURE, the
-      functional-equivalence attack is structurally close to the model-substitution threat that
-      NANOZK and DeepProve exist to prevent. Whether any specific system here is inside or
-      outside the attack's precondition has NOT been analyzed. That analysis is the single
-      highest-value open item in this repo.
-
-  - id: halo2-query-collision
-    name: Halo2 query collision
-    title: "Uncovering the Query Collision Bug in Halo2: How a Single Extra Query Breaks Soundness"
-    url: https://blog.zksecurity.xyz/posts/halo2-query-collision/
-    venue: zkSecurity blog
-    date: 2025-07-09
-    year: 2025
-    authors: [Suneal Gong]
-    authors_verified: true
-    status: implementation_bug
-    target: "Halo2's multipoint opening argument"
-    what_breaks: >-
-      When the same polynomial is queried at the same evaluation point more than once, one of
-      the evaluations is silently ignored during multi-opening. A malicious prover can adjust
-      witness values to forge evaluations and pass verification. Root cause is domain wrapping:
-      with 2^k rows, Rotation(0) and Rotation(2^k) denote the same point but are not
-      deduplicated by the frontend, so the collision goes undetected.
-    affected: [Zcash halo2, PSE fork, Axiom, ezkl]
-    affects_in_this_repo:
-      - ezkl         # halo2 backend -- the baseline Jolt Atlas and NANOZK benchmark against
-      - zkml-kang    # halo2 (Plonkish)
-    resolution: "Disclosed to Zcash, PSE, Axiom and ezkl. Zcash's fix detects query collisions and rejects proofs with conflicting values at the same point. No production deployments reported compromised."
-    notes: >-
-      The concrete reminder that zkML inherits every soundness bug of its backend. Two systems
-      in this repo's inference tables sit on halo2.
-
-  - id: snark-vuln-sok
-    name: "SoK: SNARK vulnerabilities"
-    title: "SoK: What don't we know? Understanding Security Vulnerabilities in SNARKs"
-    url: https://arxiv.org/abs/2402.15293
-    venue: arXiv:2402.15293
-    date: 2024-02-23
-    year: 2024
-    authors: [Stefanos Chaliasos, Jens Ernstberger, David Theodore, David Wong, Mohammad Jahanara, Benjamin Livshits]
-    authors_verified: true
-    status: taxonomy
-    notes: >-
-      Taxonomy built from 141 real SNARK vulnerabilities. The headline lesson for this repo:
-      what is "proven correct" on paper routinely fails in implementation, and
-      under-constrained circuits are the most common and most severe class. Any zkML system
-      here is a circuit, and therefore in scope.
-
-  - id: zkp-vuln-auditing
-    name: ZKP Vulnerability Analysis and Security Auditing
-    title: "Zero-Knowledge Proof Vulnerability Analysis and Security Auditing"
-    url: https://eprint.iacr.org/2024/514
-    venue: IACR ePrint 2024/514
-    date: 2024-04-01
-    year: 2024
-    authors: []  # TODO
-    authors_verified: false
-    status: taxonomy
-    notes: "Companion taxonomy. Not yet read."
-
-  - id: zkboost-prior-vuln
-    name: ZKBoost's fix to prior zkPoT
-    title: "ZKBoost: Zero-Knowledge Verifiable Training for XGBoost"
-    url: https://eprint.iacr.org/2026/202
-    date: 2026-02-08
-    year: 2026
-    status: proven_attack
-    what_breaks: "The paper states its VOLE-based instantiation 'resolves security vulnerabilities in prior zero-knowledge training proofs'. The specific prior protocol and the nature of the vulnerability have NOT been extracted -- read the paper."
-    cross_reference: zkboost
-    notes: "Evidence that the zkPoT literature already has at least one real soundness break in it. Worth chasing down: which protocol, and is it in our training table?"
-
-  - id: quantization-soundness-surface
-    name: Quantization as an audit surface
-    title: "(no paper -- our own observation)"
-    status: open_question
-    authors: []
-    notes: >-
-      NOT A PAPER AND NOT A KNOWN BUG. Flagged as an audit surface only. Quantized zkML shifts
-      correctness onto range checks and lookup arguments: zkGPT's "result-as-witness" paradigm
-      has the prover supply the result of Softmax/LayerNorm/GeLU as a witness and then prove it
-      lies in range. Soundness therefore rests entirely on those range constraints being
-      complete. An under-constrained range check in a result-as-witness design would let a
-      prover assert an arbitrary non-linear output. Combined with the SoK finding that
-      under-constrained circuits are the most common SNARK bug class, this is where we would
-      look first in an audit. No such bug is known in any system listed here.
-
-# ============================================================================
-# ALTERNATIVES TO ZERO KNOWLEDGE
-#
-# zkML carries >1000x overhead vs plain inference. These are the competing answers to
-# "how do I trust a model I did not run". Recording them keeps the repo honest: ZK buys
-# public verifiability with no hardware trust, and for many deployments that is not worth
-# 1000x. Compare on the `trust_assumption` field, not on speed.
-# ============================================================================
-
 alternatives_to_zk:
   - id: opml
     name: opML
@@ -1773,20 +2276,86 @@ alternatives_to_zk:
     name: TEE confidential LLM inference
     title: "Confidential LLM Inference: Performance and Cost Across CPU and GPU TEEs"
     url: https://arxiv.org/abs/2509.18886
+    pdf: https://arxiv.org/pdf/2509.18886
+    venue: "arXiv:2509.18886 [cs.PF]"
     date: 2025-09-23
     year: 2025
-    authors: []  # TODO
-    authors_verified: false
-    approach: Hardware TEE (NVIDIA H100 confidential computing; CPU TEEs)
+    numbers_source: primary  # read the PDF 2026-07-11. The 4-8% figure SURVIVES: it is stated in
+                             # the abstract and again in the summary table (Sec. V / Table "Single
+                             # resource"). But it is heavily conditioned -- see benchmarks below.
+    authors: [Marcin Chrapek, Marcin Copik, Etienne Mettaz, Torsten Hoefler]
+    authors_verified: true
+    affiliation: ETH Zurich
+    approach: Hardware TEE (NVIDIA H100 confidential computing; Intel TDX and SGX CPU TEEs)
     trust_assumption: "Trust the hardware vendor and the attestation chain. Vulnerable to side channels; no public verifiability of the computation itself."
+    mentions_zk: false  # VERIFIED: the strings "zero-knowledge", "zkML", "SNARK" and "proof of"
+                        # appear ZERO times in this paper. The TEE-vs-ZK comparison is OURS, not
+                        # the authors'. They measure CONFIDENTIALITY overhead; we reuse the figure
+                        # to reason about verifiability. The overhead transfers (it is just the
+                        # cost of running the model inside the enclave), but the paper makes no
+                        # claim about verifiable computation and must not be cited as if it did.
+    hardware: >-
+      GPU: H100 NVL, 94 GB, rented from Azure -- confidential NCCads_H100_v5 vs non-confidential
+      NCads_H100_v5, on a 40-vCPU AMD EPYC 9V84 host with 320 GiB. Ubuntu 24.04, vLLM 0.8.5.
+      CPU: Intel TDX and SGX with AMX, Llama2 7B/13B/70B.
+    baseline_note: >-
+      NOT bare metal, and the paper says so: "As our machine is rented, we do not have access to
+      bare metal and present the results for raw and Confidential GPUs (cGPU)." The GPU baseline
+      is a NON-CONFIDENTIAL AZURE VM. That is arguably the right comparison for a deployment
+      decision, but it is not "overhead versus raw hardware".
     benchmarks:
-      - overhead_percent: [4, 8]
-        note: "4-8% throughput penalty on H100 CC, diminishing as batch and input sizes grow."
+      - platform: H100 cGPU (GPU TEE)
+        model: Llama2 7B
+        overhead_percent: [4, 8]
+        overhead_metric: throughput
+        gpus: 1  # SINGLE GPU. This is the condition that matters most -- see scale_up_note.
+        note: >-
+          "throughput penalties of 4-8% that diminish as batch and input sizes grow" (Abstract);
+          reproduced as the "Single resource" row of the summary table. Insight 10: "GPU TEEs
+          achieve less than 10% overheads, which decreases with larger batch and input sizes."
+      - platform: Intel TDX (VM TEE)
+        model: Llama2 7B/13B/70B
+        overhead_percent: [5, 10]
+        overhead_metric: throughput
+        latency_overhead_percent: 20  # abstract: "under 10% throughput and 20% latency overheads"
+        note: "Summary table: ~5-10% single-resource. Latency overhead is 2x the throughput overhead and is never quoted downstream."
+      - platform: Intel SGX (process TEE)
+        overhead_percent: [4, 5]
+        overhead_metric: throughput
+      - platform: Intel TDX (VM TEE)
+        workload: RAG pipeline (BM25 / reranked BM25 / SBERT, Elasticsearch, BEIR)
+        overhead_percent: [6, 7]
+        note: "Insight 12 -- entire RAG pipeline inside TDX lands at the same overhead as plain inference."
+    scale_up_note: >-
+      THE CAVEAT THAT REFRAMES THE HEADLINE, and it is the paper's own. The 4-8% is a SINGLE-GPU
+      number on a model that fits on one H100. Multi-GPU confidential inference is not 4-8%:
+      "As the cGPU instances do not support RDMA and GPUdirect, all data is transferred through
+      the CPU, capping throughput at 3GB/s (considerably lower than the non-confidential 40GB/s)."
+      That is a >13x interconnect penalty, and it hits exactly the tensor- and pipeline-parallel
+      patterns any production-scale serving stack uses. The summary table grades the H100 cGPU
+      "D (NVLINK unprotected)" on scale-up.
+    security_gap_note: >-
+      AND THE 4-8% BUYS AN INCOMPLETE TEE. "H100s do not encrypt their HBM memory [31], compared
+      to CPUs that do." The summary table grades the H100 cGPU "B (HBM unencrypted)" on memory --
+      WEAKER than the CPU TEEs it is being compared against. The authors expect closing that gap
+      to cost more: "While B100s address these issues, we expect that they will add a
+      non-negligible overhead to H100s' results, since we identified memory encryption as a
+      significant cost in CPUs." Separately, network protection (IPsec) is "required on top of
+      both CPUs and GPUs, which also introduces an overhead of up to 90%".
     notes: >-
-      THE number that frames the whole field: 4-8% overhead for TEEs vs >1000x for ZK. If the
-      verifier is willing to trust NVIDIA, ZK is a very expensive way to buy the same
-      confidence. ZK's answer is that trusting NVIDIA is exactly the assumption some verifiers
-      cannot make. Deployed in production (e.g. Phala GPU TEEs on OpenRouter).
+      The number that frames the alternatives argument, now read from the source and standing up --
+      with conditions. 4-8% is real, primary, and stated in the abstract. It is also: ONE H100,
+      ONE model that fits on it (Llama2 7B), measured against a non-confidential CLOUD VM rather
+      than bare metal, with GPU memory LEFT UNENCRYPTED, and excluding network protection that the
+      paper says is required and costs up to 90%. Multi-GPU serving falls off a cliff (3GB/s vs
+      40GB/s interconnect).
+      So the honest form of the claim is narrower than "TEEs cost 4-8%": it is "a single-GPU,
+      7B-class confidential deployment with unencrypted HBM costs 4-8%". That is still three
+      orders of magnitude cheaper than ZK, so the strategic conclusion survives intact -- if the
+      verifier will trust NVIDIA's attestation, ZK is a very expensive way to buy similar
+      confidence. But the headline figure is not a general constant, it is the best corner of a
+      cost surface, and the paper's own authors expect it to rise as the hardware gets more secure.
+      Deployed in production (e.g. Phala GPU TEEs on OpenRouter).
 
   - id: proof-of-sampling
     name: Proof of Sampling

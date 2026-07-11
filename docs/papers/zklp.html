@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZKLP — zkAI</title>
+<meta name="description" content="Zero-Knowledge Location Privacy via Accurate Floating-Point SNARKs">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../numerics/index.html">Numerics</a> · <b>ZKLP</b></div><h2 class="ptitle">ZKLP</h2><p class="psub">Zero-Knowledge Location Privacy via Accurate Floating-Point SNARKs</p><p class="authors">Jens Ernstberger, Chengru Zhang, Luca Ciprian, Philipp Jovanovic, Sebastian Steinhorst</p><div class="pmeta"><div><dt>Venue</dt><dd>arXiv 2404.14983</dd></div><div><dt>Date</dt><dd>2024-04-23</dd></div><div><dt>Proof system</dt><dd>gnark / PlonKish with LogUp lookup arguments over BN254</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Paper</dt><dd><a href="https://arxiv.org/abs/2404.14983">https://arxiv.org/abs/2404.14983</a></dd></div><div><dt>PDF</dt><dd><a href="https://arxiv.org/pdf/2404.14983">https://arxiv.org/pdf/2404.14983</a></dd></div></div><h3 class="head">Approach</h3><div class="prose"><p>exact-ieee754</p></div><h3 class="head">Notes</h3><div class="prose"><p>CAMP 2: KEEP THE SEMANTICS, OPTIMIZE THE CIRCUIT. Despite the location-privacy title this is the important accurate-floating-point-SNARK paper, and the single strongest refutation of the "floats are infeasible in a circuit" premise the whole zkML literature rests on. Builds ZKP circuits FULLY COMPLIANT with IEEE 754 -- subnormals and all -- validated against the Berkeley TestFloat conformance suite. The trick: push the circuit-hostile parts (comparison, shifts, normalization) into LOOKUPS (LogUp, in gnark) instead of gates, so the shared tables amortize across operations. HEADLINE: 2^1 FP32 multiplications cost 209 constraints each; 2^15 FP32 multiplications cost <em>64 constraints per operation</em>. Compare the naive IEEE-754 emulation cost the paper itself tabulates (Sec 6): FP32 2,456 gates/add and 8,854 gates/mul; FP64 15,637/add and 44,899/mul. Those same four figures are independently quoted by ZIP (from Mystique and from Archer-Atapoor-Smart, LATINCRYPT'21) -- two primary sources in agreement. THE INVERSION: ZKLP's IEEE-754 FLOAT circuits use 15.9x FEWER constraints than an unoptimized FIXED-POINT baseline (FP32; 12.2x for FP64), because reaching comparable accuracy in fixed point demands so many bits. In an application that genuinely needs dynamic range, floating point is the <em>cheaper</em> circuit. The core zkML trade -- "give up dynamic range, buy cheap arithmetic" -- is a bet, not a law, and it can go the other way. It also states the soundness case outright (Sec 1): fixed-point "fails some tests whereas floating-point passes all. Even worse, this inconsistency can be exploited by adversaries to generate valid proofs for maliciously crafted statements, thereby breaking the soundness". CAVEAT, before over-reading this for zkML: 64 constraints/multiply is superb next to 8,854 and still terrible next to sum-check, which proves an entire matrix product for almost nothing. Floats do not threaten integer sum-check for LLM MATMULS. Where they plausibly win is the non-linear operators and the precision-critical seams -- which is exactly where zkML's cost actually lives. Nobody in zkML has tested this.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>Ignore the title. The location-privacy protocol is the paper's stated contribution and the
+floating-point circuits are framed as the means to it, but for this SoK the ranking is inverted:
+<strong>this is the first set of SNARK circuits fully compliant with IEEE 754, and it is the single
+strongest refutation of the premise the entire zkML literature rests on.</strong></p>
+<p>The premise being that native floating point is infeasible in a circuit. Every quantization decision
+catalogued in <a href="../zk-inference/quantization.html">the inference section</a> is downstream of it, and it is
+sourced — when it is sourced at all — to the cost of <em>naively</em> transliterating a software float
+routine into gates.</p>
+<p>ZKLP's move is to stop transliterating. The parts of IEEE-754 that are hostile to a circuit are
+hostile for one reason: they are <strong>integer operations in $\mathbb{Z}_{2^k}$</strong> — comparison, shifting,
+normalization — being emulated inside $\mathbb{F}_p$. So push them into <strong>lookups</strong> (LogUp, in gnark)
+rather than gates, and share the tables across every operation in the circuit. The cost then
+<em>amortizes</em>: the more float operations you prove, the cheaper each one gets.</p>
+<p>The second contribution, and the one that makes the first tractable, is <strong>nondeterministic
+programming used systematically</strong>. The prover computes the hard part outside the circuit and hands
+it in as an untrusted hint; the circuit only <em>verifies</em> it. Square root is the clean example: rather
+than running Newton's method in-circuit, the prover supplies $n$, and the circuit enforces
+$n^2 \le (m_\alpha \ll (M{+}4{+}b)) < (n+1)^2$ with two range checks — which pins $n$ as <em>the</em> integer
+square root and nothing else. Division, normalization and the exponent's least-significant bit are
+handled the same way.</p>
+<p>This is worth dwelling on, because it is the same pattern as the <em>result-as-witness</em> paradigm that
+every zkML system uses for its non-linearities — and it is the pattern I flagged as the highest-value
+audit surface in this SoK. ZKLP is a worked example of that pattern applied to a computation with an
+<strong>exact</strong> referent, where the verification predicate uniquely determines the hint. It is the case
+where the pattern is done right, which makes it a useful control.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>Bit-exact IEEE-754. Not a faithful-rounding relaxation, not an interval bound.</strong> The output is
+constrained to be <em>the</em> correctly-rounded result — the same bits the hardware would produce. This is
+the distinction that separates ZKLP from <a href="../papers/garg-fp.html">Garg et al. (FP)</a> and from <a href="../papers/zip.html">ZIP</a>, and it is the whole reason the
+paper is in this collection.</p>
+<p>The claim is backed the way such a claim should be: not by a theorem alone but by <strong>conformance
+testing against the Berkeley TestFloat suite</strong>, including the edge cases everyone skips — signed
+zeros, subnormals, $\pm\infty$, NaN. Subnormals in particular are where partial-compliance
+implementations quietly give up (ZKLP notes that the closest 2PC work drops them), and they are
+exactly the regime a low-magnitude activation lands in.</p>
+<p>The efficiency claim is an <strong>amortized</strong> one, and the distinction matters when reading it:</p>
+<blockquote class="q"><p>The extensive use of lookups leads to amortization — 21 single precision floating point
+(FP32) multiplications require 209 constraints, whereas 215
+FP32 multiplications require 64 constraints per operation.</p><cite><b>ZKLP (Ernstberger et al.)</b> · §1, Introduction</cite></blockquote>
+
+<p>(The exponents render as superscripts in the PDF: $2^1$ and $2^{15}$ multiplications.) So the marginal
+cost falls as the circuit grows — which is the right shape for ML, where you are proving a great many
+identical operations, and the wrong shape for a single scalar computation.</p>
+<p>The inversion is the finding. ZKLP benchmarks its float circuits not against other float circuits but
+against <strong>fixed point</strong>, and fixed point loses — because reaching comparable accuracy over the
+dynamic range the application needs demands so many fixed-point bits that the "cheap" representation
+stops being cheap. In an application that genuinely needs dynamic range, floating point is <strong>the
+cheaper circuit.</strong> The founding trade of zkML — give up range, buy cheap arithmetic — is a bet, and
+this is a worked example of it losing.</p>
+<p>And the paper makes the soundness case explicitly, which is rare:</p>
+<blockquote class="q"><p>with randomly generated test cases, fixed-point representation fails some tests whereas
+floating-point passes all. Even worse, this inconsistency can be exploited by adversaries
+to generate valid proofs for maliciously crafted statements,
+thereby breaking the soundness of ZKLP.</p><cite><b>ZKLP (Ernstberger et al.)</b> · §1, Introduction</cite></blockquote>
+
+<p>That is not a precision complaint dressed up. It is: <strong>the mismatch between the circuit's arithmetic
+and the reference implementation's arithmetic is itself an exploitable soundness gap</strong> — a statement
+about <em>completeness-turned-soundness</em> that applies verbatim to any zkML system whose quantized circuit
+disagrees with the float model it claims to be proving.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The headline comparison is against a baseline the authors built and call unoptimized.</strong> The
+constraint-count advantage over fixed point is measured against <code>ΠBase</code>, their own fixed-point
+implementation, which approximates $\sin$ by Taylor series and $\arctan$ by Remez <em>in-circuit</em>, and
+which needs 62-bit and 121-bit fixed-point types to hold the intermediates. That is a genuinely hard
+workload for fixed point — a geolocation pipeline with trigonometry and a large dynamic range — and
+the authors chose it because it is their application, not to be unfair. But it is not a transformer.
+Do not carry the ratio across.</p>
+<p><strong>The regime is wrong for matmuls, and the paper does not claim otherwise.</strong> Sixty-four constraints
+per multiply is extraordinary next to the thousands that naive emulation costs. It is still terrible
+next to sum-check, which proves an entire matrix product for close to nothing. <strong>Floating point does
+not threaten integer sum-check for an LLM's linear algebra</strong>, and any reading of this paper that
+concludes otherwise is a misreading.</p>
+<p>Where the result plausibly <em>does</em> bite is the non-linear operators and the precision-critical rescale
+seams — which is exactly where zkML's cost actually lives, and exactly the place nobody has tried it.</p>
+<p><strong>The amortization is not free, it is conditional.</strong> The per-operation cost falls only because lookup
+tables are shared across many operations. That is a claim about a circuit with many float ops of the
+same kind. Whether a transformer's operator mix — matmul in integers, a handful of float-critical
+non-linearities at the seams — amortizes the tables well, or whether you pay for a lookup table to
+prove a few thousand GeLUs, is unknown. It is a real question and it cuts against the optimistic
+reading.</p>
+<p><strong>Nobody in zkML has cited this paper.</strong> ZKLP's own conclusion proposes the application — it says its
+methods can enable "efficient, precise training and inference proofs," citing Kang et al. — and in the
+two years since, no zkML system in this collection has taken it up. That is not a criticism of ZKLP.
+It is the finding: this is a third literature, adjacent to zkML and to the SNARK-vulnerability
+literature, and read by neither. See <a href="../graph/index.html">the citation graph</a>.</p>
+<div class="audit"><span class="audit-h">What a reviewer should take from this paper</span><p>The reason ZKLP belongs in a soundness section rather than only a numerics one is that it is the
+clean demonstration of a pattern the rest of this SoK sees done <em>badly</em>.</p>
+<p>Every float operation here is a <strong>nondeterministic hint plus a verification predicate</strong>, and the
+soundness of the whole IEEE-754 claim reduces to those predicates uniquely determining the hint. The
+square-root check is the model: $n^2 \le x < (n+1)^2$, two range checks, and $n$ is pinned. Note also
+the field-wraparound reasoning the paper is careful about — its LSB check works precisely because a
+dishonest $b$ would push $e$ "close to $(p-1)/2$" where it cannot fit in $E-1$ bits. That is a
+constraint whose soundness depends on an argument about $\mathbb{F}_p$'s modulus, written down.</p>
+<p><strong>What to grep for, in any system:</strong> for each nondeterministic hint, the predicate that verifies it.
+Then ask the only question that matters — <em>does this predicate admit exactly one hint, or a set of
+them?</em> ZKLP's admit one. <a href="../papers/garg-fp.html">Garg et al. (FP)</a>'s relative-error relation admits a ball. <a href="../papers/zip.html">ZIP</a> inherits the
+ball and widens it. Three papers, one pattern, three very different security properties, and the
+difference is invisible unless you go and read the predicate.</p></div></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/secfloat.html">SecFloat</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li class="none">none recorded</li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mystique — zkAI</title>
+<meta name="description" content="Mystique: Efficient Conversions for Zero-Knowledge Proofs with Applications to Machine Learning">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>Mystique</b></div><h2 class="ptitle">Mystique</h2><p class="psub">Mystique: Efficient Conversions for Zero-Knowledge Proofs with Applications to Machine Learning</p><p class="authors">Chenkai Weng, Kang Yang, Xiang Xie, Jonathan Katz, Xiao Wang</p><div class="pmeta"><div><dt>Venue</dt><dd>USENIX Security 2021</dd></div><div><dt>Date</dt><dd>2021-08-01</dd></div><div><dt>Proof system</dt><dd>Interactive ZK / sVOLE-based (designated verifier), with efficient conversions between arithmetic/Boolean, committed/authenticated, and fixed-point/IEEE-754 float</dd></div><div><dt>Hardware</dt><dd>two AWS m5.2xlarge instances, 32 GB RAM each; ResNet-101 peaks at 12 GB. Network bandwidth is throttled (50 / 200 Mbps) and is a first-order cost, not a detail.</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Uses ZK</dt><dd>yes</dd></div><div><dt>Paper</dt><dd><a href="https://eprint.iacr.org/2021/730">https://eprint.iacr.org/2021/730</a></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th><th>params</th><th>proving time s</th><th>communication mb</th><th>accuracy</th></tr></thead><tbody><tr><td>ResNet-101 (public model, private input)</td><td>42.5M</td><td>262</td><td>990</td><td><span class="na">—</span></td></tr><tr><td>ResNet-101 (private committed model, private input)</td><td>42.5M</td><td>535</td><td>1980</td><td><span class="na">—</span></td></tr><tr><td>ResNet-50 (private committed model, private input)</td><td>23.5M</td><td>333</td><td>1270</td><td>0.02% accuracy decrease vs the plaintext model on the full CIFAR-10 test set (same delta reported for ResNet-101)</td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>model_note:</b> Table 3, 200 Mbps. This is the PUBLIC-model configuration -- the weights are revealed to the verifier. It is the cheapest of the paper&#x27;s three settings and does not answer the motivating threat (a provider hiding its weights while proving it ran the committed model). The repo previously recorded only this row, as `proof_size_mb`, from a survey.</p><p style="font-size:13px;color:#6f7d86"><b>model_note:</b> Table 3, 200 Mbps. The setting the paper actually sells. The abstract&#x27;s headline &quot;28 minutes&quot; is the end-to-end application of Table 4, which additionally includes converting the public model commitment into privately authenticated values -- a cost that is per-VERIFIER, not one-off, because authenticated values are bound to the verifier&#x27;s key.</p><h3 class="head">Notes</h3><div class="prose"><p>Designated-verifier and INTERACTIVE: it produces a conversation, not a proof object. The transcript is bound to one verifier's MAC key, so it cannot be published, posted on-chain, cached, or checked by a second party -- and its size is interactive COMMUNICATION, not a proof size (hence communication_mb, not proof_size_mb, below). Non-linear layers are evaluated as real IEEE-754 float circuits rather than quantized, which is why accuracy holds across 101 layers and why no calibration/requantization story appears at all. Batch Normalization dominates the prover (~70% of ResNet-101 inference time) because of the float/fixed conversions. CNNs on CIFAR-10 only -- no transformer, no attention.</p></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>Mystique is not a proof system. It is a set of <strong>conversions</strong>, plus one matrix-multiplication
+protocol, bolted onto an existing sVOLE-based interactive ZK backend. The thesis is that no single
+representation is right for a whole neural network, so the thing worth optimising is the cost of
+<em>changing representation</em>:</p>
+<ul>
+<li><strong>Arithmetic ↔ Boolean</strong> (<code>zk-edaBits</code>), so linear layers can live in 𝔽ₚ and non-linear layers in
+  a Boolean circuit.</li>
+<li><strong>Publicly committed ↔ privately authenticated</strong> (<code>C2A</code>), which is the conversion that makes
+  "prove against a model the world has already seen a commitment to" possible at all. It is
+  instantiated with a PRF (LowMC) evaluated inside a Boolean circuit.</li>
+<li><strong>Fixed-point ↔ IEEE-754 floating point</strong>, so the non-linear layers can be evaluated in <em>real
+  single-precision floats</em>.</li>
+</ul>
+<p>That third conversion is the one that separates Mystique from everything else in this collection.
+<a href="../papers/zkllm.html">zkLLM</a>, <a href="../papers/deepprove.html">DeepProve</a> and <a href="../papers/jolt-atlas.html">Jolt Atlas</a> all quantize the entire network and then spend their
+prover budget fighting the consequences — requantization, clamping, lookup-table domains, outlier
+smoothing. Mystique refuses. Non-linearities are computed on honest IEEE-754 floats, which is why
+its accuracy holds up across a hundred layers and why it needs no calibration story at all. The
+<code>Requant</code> operator that costs <a href="../papers/deepprove.html">DeepProve</a> the largest single slice of its prover <em>does not exist
+here</em>.</p>
+<p>The matmul protocol is a generalised Freivalds check. To prove <code>A · B = C</code> on authenticated
+matrices, the verifier samples random vectors <code>u</code>, <code>v</code> and the parties reduce to proving the single
+inner product <code>uᵀ·A·B·v = uᵀ·C·v</code>. The circuit shrinks from <code>O(n³)</code> private multiplications to one
+dot product, with communication independent of the inner dimension.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>That a committed CNN was correctly evaluated on a private image — interactively, to exactly one
+verifier, who had to be online for the whole thing.</strong></p>
+<p>This is a genuinely different object from the proofs elsewhere in this section, and the differences
+are not cosmetic.</p>
+<p><strong>There is no proof.</strong> Mystique is a <em>designated-verifier interactive</em> protocol. What it produces is
+a conversation, not an artifact. The prover and verifier co-generate the transcript, and the
+transcript convinces nobody who did not participate in it — the verifier's authentication key is
+what makes it sound, so anyone holding that key could have forged it. You cannot post it on a chain,
+cache it in a CDN, hand it to a regulator, or let a second customer check the same proof. The paper
+is admirably direct about this in its conclusion:</p>
+<blockquote class="q"><p>In particular, our ZK protocol can only prove to one verifier at a time, and the communication cost
+is fairly high compared to succinct ZK proofs like zk-SNARKs.</p><cite><b>Mystique</b> · §8, Conclusion</cite></blockquote>
+
+<p><strong>What <code>papers.yml</code> calls <code>proof_size_mb</code> is not a proof size.</strong> It is total interactive
+communication. A succinct proof's size is what the verifier <em>stores</em>; this number is what the two
+parties <em>exchange</em>. The two are not comparable quantities and should never be plotted on the same
+axis.</p>
+<p><strong>The memory/communication trade runs the opposite way from a SNARK.</strong> Mystique's own motivation for
+sVOLE is that a zk-SNARK prover's memory scales with the statement, which it argues would put a
+billion-constraint statement out of reach on commodity hardware. The sVOLE prover streams, so
+ResNet-101 fits in a fraction of the machine's RAM. That is the actual bargain: <strong>small prover
+memory, enormous transcript.</strong> <a href="../papers/deepprove.html">DeepProve</a> takes the opposite side of exactly the same trade,
+scaling <em>out</em> to a cluster and shipping a proof measured in megabytes. Neither is free; they are
+different bets about which resource is scarce.</p>
+<p><strong>Three settings, three prices.</strong> Model and image can each be private or public, and Table 3 prices
+all three combinations separately. The cheapest is the one where the model is public — which is to
+say, the one where nothing about the model is hidden and the motivating threat (a service provider
+lying about which model it ran) is the only thing being addressed. See the audit note below; this
+distinction has already gone missing once.</p>
+<p><strong>It is a CNN paper.</strong> LeNet-5, ResNet-50, ResNet-101, CIFAR-10. No attention, no softmax over a
+sequence, no autoregression. Reading it as an LLM result is a category error — but reading its
+<em>mechanism</em> as inapplicable to LLMs would also be a mistake, which is why it now carries scheme
+entries on the operator atlas.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<div class="audit"><span class="audit-h">`papers.yml` records the setting where the model is *not* private</span><p>The ResNet-101 row in <code>papers.yml</code> (262 s, 990 MB, <code>numbers_source: survey</code>) is exactly Table 3's
+<strong>public-model, private-image</strong> column at 200 Mbps — the cheapest of the three settings, and the one
+in which the model parameters are revealed to the verifier.</p>
+<p>The setting Mystique actually sells — a <em>private, publicly committed</em> model, i.e. the "ZK proofs of
+correct inference" application from its own introduction — is roughly twice that on both axes
+(535 s, 1.98 GB). And the end-to-end application including the commitment pull is the abstract's
+headline: an inference "using a committed (private) ResNet-101 model in 28 minutes", against "the
+same task when the model is public in 5 minutes".</p>
+<p>So the repo currently credits Mystique with the cost of the configuration that answers the <em>weaker</em>
+threat model. Both numbers are real and both are in the paper; the row should say which one it is.</p></div>
+
+<p><strong>Batch Normalization eats the paper.</strong> The float-circuit trick buys accuracy, and the bill arrives
+at the conversion boundary:</p>
+<blockquote class="q"><p>Note that the Batch Normalization takes around 70% of time in both cases because it involves
+complicated arithmetic operations and conversions between floating-point and fixed-point numbers,
+which are costly to maintain accuracy.</p><cite><b>Mystique</b> · §7.2, Microbenchmark</cite></blockquote>
+
+<p>This is the honest reading of Mystique: it does not escape the non-linearity tax that dominates
+<a href="../papers/deepprove.html">DeepProve</a> and <a href="../papers/zkllm.html">zkLLM</a>. It <em>relocates</em> it — out of lookup tables and into arithmetic–Boolean
+conversion — and then pays it in the same proportion. A normalization layer costing the majority of
+the prover is the single most reproducible finding in this whole literature. <a href="../papers/hao-et-al.html">Hao et al.</a> exists
+precisely to attack this bill, and is the paper to read next.</p>
+<p><strong>The matmul speedup is a circuit-size result, not a prover-time result.</strong> The Freivalds trick
+removes private multiplications from the <em>circuit</em>; it does not remove the multiplication from the
+<em>prover</em>, who still has to compute <code>A · B</code> locally to know <code>C</code>. The paper says so:</p>
+<blockquote class="q"><p>The main efficiency bottleneck is the local computation of matrix multiplication by the prover.</p><cite><b>Mystique</b> · §7.1, Benchmarking Our Building Blocks</cite></blockquote>
+
+<p>Read the headline improvement as a statement about communication and circuit size. The prover's
+asymptotic work is unchanged.</p>
+<p><strong>The amortization argument quietly assumes the property the protocol does not have.</strong> On the cost
+of converting a public model commitment into authenticated values, the paper says:</p>
+<blockquote class="q"><p>The cost to “pull” a publicly committed model to be used in ZK proofs is high, but it could always
+be amortized over multiple private inferences.</p><cite><b>Mystique</b> · §7.3, End-to-End Applications</cite></blockquote>
+
+<p>Amortized over multiple inferences <em>for the same verifier</em>. Authenticated values are bound to the
+verifier's MAC key, so a second verifier means redoing the pull, and the whole interaction, from
+scratch. In the MLaaS setting the paper motivates — one model owner, many clients — the pull is
+therefore <strong>per-client</strong>, not one-off, and does not amortize in the direction the sentence implies.
+This is the designated-verifier limitation resurfacing as an economic one, and it is the strongest
+argument for why the succinct lineage won despite being slower per proof.</p>
+<p><strong>Credit where due.</strong> The accuracy evaluation is the best in this cluster: the full CIFAR-10 test
+set, a reported accuracy delta against the plaintext model, and — unusually — the ℓ₂ distance
+between the plaintext and ZK probability vectors, not just top-1 agreement. Nobody in the sum-check
+lineage reports the distribution of the error. They should.</p></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li class="none">none recorded</li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li><a href="../papers/deepprove.html">DeepProve</a></li><li><a href="../papers/garg-fp.html">Garg et al. (FP)</a></li><li><a href="../papers/hao-et-al.html">Hao et al.</a></li><li><a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a></li><li><a href="../papers/range-arithmetic.html">Range-Arithmetic</a></li><li><a href="../papers/zip.html">ZIP</a></li><li><a href="../papers/zkgpt.html">zkGPT</a></li><li><a href="../papers/zkllm.html">zkLLM</a></li><li><a href="../papers/zklp.html">ZKLP</a></li><li><a href="../papers/zkml-survey.html">ZKP-VML Survey</a></li><li><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a></li><li><a href="../papers/zkpytorch.html">zkPyTorch</a></li><li><a href="../papers/zktorch.html">ZKTorch</a></li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a><a href="../zk-inference/index.html">The landscape</a><a href="../zk-inference/proof-systems.html">Proof systems</a><a href="../zk-inference/vision-and-trees.html">Vision and trees</a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

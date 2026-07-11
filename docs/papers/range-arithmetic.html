@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Range-Arithmetic — zkAI</title>
+<meta name="description" content="Range-Arithmetic: Verifiable Deep Learning Inference on an Untrusted Party">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../papers/index.html">Papers</a> · <a href="../zk-inference/index.html">Proving inference</a> · <b>Range-Arithmetic</b></div><h2 class="ptitle">Range-Arithmetic</h2><p class="psub">Range-Arithmetic: Verifiable Deep Learning Inference on an Untrusted Party</p><p class="authors">Ali Rahimi, Babak H. Khalaj</p><div class="pmeta"><div><dt>Venue</dt><dd>arXiv:2505.17623v2</dd></div><div><dt>Date</dt><dd>2026-06-09</dd></div><div><dt>Affiliation</dt><dd>Sharif University of Technology</dd></div><div><dt>Proof system</dt><dd>Sum-check + concatenated range proofs (Bulletproofs-style), interactive</dd></div><div><dt>Numbers from</dt><dd>primary</dd></div><div><dt>Uses ZK</dt><dd>no</dd></div><div><dt>Open source</dt><dd>yes</dd></div><div><dt>Paper</dt><dd><a href="https://arxiv.org/abs/2505.17623">https://arxiv.org/abs/2505.17623</a></dd></div><div><dt>PDF</dt><dd><a href="https://arxiv.org/pdf/2505.17623">https://arxiv.org/pdf/2505.17623</a></dd></div><div><dt>Code</dt><dd><a href="https://github.com/trainingzk/Range-Arithmetic">https://github.com/trainingzk/Range-Arithmetic</a></dd></div><div><dt>Quantization</dt><dd><span class=na>not stated</span></dd></div></div><h3 class="head amber">Reported benchmarks</h3><div class="scrollx"><table class="matrix"><thead><tr><th>model</th></tr></thead><tbody><tr><td>DNN (MNIST)</td></tr></tbody></table></div><p style="font-size:13px;color:#6f7d86"><b>proving_time_note:</b> NOT REPORTED IN TEXT. Sec. 5 reports prover/verifier runtime and communication only as log-scale plots (Fig. 3, vs bit length; Fig. 4, vs matrix size) with no absolute figure stated anywhere in prose or in a table. Same problem as SafetyNets. There is no number here to put in a table, and inventing one off a log axis would be a fabrication.</p><h3 class="head">Notes</h3><div class="prose"><p>Third camp in the numerics debate, alongside relax-the-semantics (garg-fp) and keep-IEEE-optimize-the-circuit (zklp): keep FIXED point, but prove the ROUNDING with range proofs rather than bit-decomposition. Claims to be the first to get O(n^3) prover, O(n^2) verifier, O(log n) communication AND fixed-point rounding AND ReLU together, with no preprocessing and no R1CS. Descends from SafetyNets (interactive sum-check, integrity not privacy) rather than from the SNARK line. NOT zero-knowledge -- see uses_zk. Like SafetyNets, it buys integrity only, and privacy is explicitly future work.</p></div><h3 class="head">Quantization, in full</h3><div class="scrollx"><table class="matrix"><tbody><tr><th>bits</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>None</pre></td></tr><tr><th>bits_note</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Parameterised, not fixed: the scheme is stated over a fixed-point format with 1 sign bit, t integer bits and s fractional bits, and Fig. 3 sweeps bit length. No single bit width is claimed for a model, and no accuracy delta is reported at any width.</pre></td></tr><tr><th>scheme</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>Fixed-point with rounding proven ARITHMETICALLY. The core trick (Theorem A.1): to prove a&#x27; = R(a), the prover sends a&#x27; and a remainder e with a = e + 2^s * a&#x27; (mod p), then range proofs pin e and a&#x27; to their intervals -- which forces a&#x27; to be the correctly rounded value. Rounding and ReLU therefore need no Boolean encoding, no high-degree polynomial, and no lookup table. This is the one genuinely nice idea in the paper.</pre></td></tr><tr><th>accuracy_retention</th><td><pre class='ascii' style='margin:0;border:0;padding:0;background:none'>None</pre></td></tr></tbody></table></div><h3 class="head amber">Our reading</h3><div class="prose"><h2 id="what-is-new">What is new</h2>
+<p>A third answer to the numerics question, sitting between <a href="../papers/garg-fp.html">Garg et al. (FP)</a> (relax the float semantics) and
+<a href="../papers/zklp.html">ZKLP</a> (keep IEEE, optimise the circuit): <strong>keep fixed point, and prove the rounding
+arithmetically.</strong></p>
+<p>The idea lives in Theorem A.1 and it is genuinely clean. To prove that <code>a'</code> is the correctly rounded
+value of a fixed-point <code>a</code> with <code>s</code> fractional bits, the prover supplies <code>a'</code> together with a
+remainder <code>e</code>, and shows</p>
+<p>$$a \equiv e + 2^{s} \cdot a' \pmod p$$</p>
+<p>with two range proofs pinning <code>e</code> and <code>a'</code> to their intervals. Given a wide enough field, those three
+conditions <strong>force</strong> <code>a'</code> to be the rounded value — no other assignment satisfies them. Rounding, and
+therefore ReLU, reduces to sum-check plus concatenated range proofs, with <strong>no Boolean encoding, no
+high-degree polynomial, and no lookup table.</strong></p>
+<p>That last clause is what makes the paper worth reading. Every other system in the proving-inference
+table pays for its non-linearities with a table whose size grows exponentially in the bit width — the
+cliff <a href="../papers/zkgpt.html">zkGPT</a> documents explicitly and <a href="../papers/jolt-atlas.html">Jolt Atlas</a> spends its entire design budget dodging.
+Range-Arithmetic simply declines to build the table. I checked the math; it works.</p>
+<h2 id="what-it-actually-proves">What it actually proves</h2>
+<p><strong>One forward pass of a four-layer, roughly ten-thousand-parameter fully-connected network on MNIST,
+at 6 integer and 8 fractional bits, interactively, with integrity but not privacy.</strong></p>
+<p>This is a <a href="../papers/safetynets.html">SafetyNets</a>-shaped system, not a SNARK: the verifier sends live challenges, and
+"incorporating privacy-preserving features" is listed in §6 as future work. It is not
+zero-knowledge — which also means, like SafetyNets, it sits outside the reach of
+the Fiat–Shamir/GKR attack, because there is no Fiat–Shamir transform to attack.</p>
+<p>Note the scale. Ten thousand parameters is smaller than SafetyNets' 2017 MNIST network, and roughly
+four orders of magnitude below GPT-2. There is no transformer, no softmax, no attention. And there is
+no floating-point accuracy baseline, so what the quantization cost in model quality is unknown — the
+paper reports the quantized model's MNIST accuracy and nothing to compare it against.</p>
+<h2 id="what-to-distrust">What to distrust</h2>
+<p><strong>The verifier is not succinct, and on the only model evaluated it is nearly as expensive as the
+prover.</strong> This is the finding, and the paper walks straight past it. §I names the three metrics for a
+verifiable-computing scheme — proof size, <em>verifier cost</em>, and prover effort — and says the verifier
+must be able to check the result "without re-executing the computation."</p>
+<div class="audit"><span class="audit-h">The verifier does two-thirds of the prover&#x27;s work</span><p>From §V-A, the MNIST case study, stated in prose:</p>
+<blockquote>
+<p>The prover's runtime is approximately <strong>230 milliseconds</strong>, and the verifier's runtime is
+approximately <strong>154 milliseconds</strong>.</p>
+</blockquote>
+<p>The verifier costs about <strong>two-thirds of the prover</strong>, on a network with roughly ten thousand
+parameters — a model that plain inference evaluates in microseconds. Verification is therefore
+<em>orders of magnitude more expensive than simply re-running the computation</em>, which is the one thing
+a verifiable-computing scheme exists to avoid, and which §I explicitly names as the goal.</p>
+<p>Compare the rest of the corpus: <a href="../papers/zkgpt.html">zkGPT</a> verifies GPT-2 in a fraction of a second, <a href="../papers/deepprove.html">DeepProve</a> in
+a few seconds, both on models four orders of magnitude larger. The paper never puts its prover and
+verifier figures side by side, and never remarks on their ratio.</p></div>
+
+<p>This also <strong>corrects <code>papers.yml</code></strong>, which currently records every timing field as <code>null</code> with the
+note that the paper reports runtimes "only as log-scale plots... with no absolute figure stated
+anywhere in prose or in a table." That is not right: §V-A states both figures in prose, and states
+the bit width (6 integer, 8 fractional). The figures exist. They are simply not flattering.</p>
+<p><strong>Python, on a laptop.</strong> The implementation is Python, benchmarked on a consumer Asus laptop. Nothing
+here is comparable to any other row in this corpus, in either direction, and the paper does not claim
+otherwise.</p>
+<p><strong>The bibliography does not survive checking, and that disqualifies the paper as a source for anyone
+else's results.</strong> Reference [25] attributes <em>Jolt Atlas</em> to Bagad, Domb and Thaler and cites it as
+<code>https://eprint.iacr.org/2026/xxx</code> — <strong>an unsubstituted placeholder URL</strong>, and the wrong authors
+(<a href="../papers/jolt-atlas.html">Jolt Atlas</a> is Benno, Centelles, Douchet and Gibran). Reference [24] attributes <a href="../papers/zip.html">ZIP</a> to
+"Y. Zhang et al."; ZIP is Riasi, Wang, Behnia, Vo and Hoang. References [23] ("zkReLU", IEEE TIFS
+vol. 20, pp. 1200–1215) and [27] ("ValidCNN", IEEE TIFS vol. 20, pp. 2218–2233) appear fabricated —
+zkReLU is a component of <a href="../papers/zkdl.html">zkDL</a> rather than a standalone TIFS paper, and [27]'s page range is
+<em>identical</em> to that of <a href="../papers/pvcnn.html">pvCNN</a>, a different paper in the same list. Several entries carry trailing
+editorial annotations that read as machine-generated.</p>
+<p>The theorem is correct and the technique is real — I checked the math, not the citations. But the
+paper's characterisations of other systems (including its comparison figure against <a href="../papers/zip.html">ZIP</a> and
+<a href="../papers/jolt-atlas.html">Jolt Atlas</a>) rest on a reference list containing a placeholder URL and at least two apparently
+invented entries, and should not be quoted.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Nobody has tried this at transformer scale</h5><p>Range-Arithmetic's pitch is that fixed-point rounding and ReLU are available without lookup tables.
+If it holds up, it attacks the dominant cost of every lookup-centric zkML prover head-on — and
+<a href="../papers/deepprove.html">DeepProve</a>'s own breakdown says requantization is its single largest line item.</p>
+<p>The evaluation is matrix multiplication and a ten-thousand-parameter MLP. Nobody, including the
+authors, has run it on a model with a softmax in it. The technique deserves a serious re-implementation
+by someone with a working bibliography.</p></div></div></div><h3 class="head">Citation neighbourhood</h3><div class="cites"><div><h5>Builds on</h5><ul><li><a href="../papers/artemis.html">Artemis / Apollo</a></li><li><a href="../papers/ezkl.html">ezkl</a></li><li><a href="../papers/garg-fp.html">Garg et al. (FP)</a></li><li><a href="../papers/hao-et-al.html">Hao et al.</a></li><li><a href="../papers/jolt-atlas.html">Jolt Atlas</a></li><li><a href="../papers/mystique.html">Mystique</a></li><li><a href="../papers/pvcnn.html">pvCNN</a></li><li><a href="../papers/safetynets.html">SafetyNets</a></li><li><a href="../papers/spagkr.html">SpaGKR</a></li><li><a href="../papers/zip.html">ZIP</a></li><li><a href="../papers/zkml-survey.html">ZKP-VML Survey</a></li><li><a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a></li></ul></div><div><h5>Cited by, in this corpus</h5><ul><li class="none">none recorded</li></ul></div></div><p style="font-size:13px;color:#6f7d86">Edges are a proxy: paper A's text mentions B anywhere (body or bibliography). See the <a href="../graph/index.html">full graph</a>.</p><h3 class="head">Discussed in</h3><div class="rail"><a href="../numerics/bridge.html">The bridge nobody crosses</a><a href="../numerics/index.html">Floats, fixed point, and the rescale seam</a></div><details class='tbl'><summary>Other recorded fields</summary><pre class='ascii' style='margin:0'>quality_flag: &#x27;CAUTION -- the bibliography does not survive checking, and that is
+  a bad sign in a paper we cannot otherwise verify. Reference [25] attributes &quot;Jolt
+  Atlas&quot; to Bagad, Domb and Thaler and cites it as &quot;Cryptology ePrint Archive, 2026,
+  https://eprint.iacr.org/2026/xxx&quot; -- an UNSUBSTITUTED PLACEHOLDER URL, and the wrong
+  authors (Jolt Atlas is Benno, Centelles, Douchet and Gibran, arXiv:2602.17452).
+  Reference [24] attributes ZIP to &quot;Y. Zhang et al.&quot; (it is Riasi, Wang, Behnia, Vo,
+  Hoang). References [23] (&quot;zkReLU&quot;, IEEE TIFS vol. 20 pp. 1200-1215) and [27] (&quot;ValidCNN&quot;,
+  IEEE TIFS vol. 20 pp. 2218-2233) look fabricated: zkReLU is a component of zkDL,
+  not a standalone TIFS paper, and [27]&#x27;&#x27;s page range is identical to that of pvCNN
+  [15], a different paper in the same list. Several references also carry trailing
+  editorial annotations (&quot;achieves &gt;50x speedup for ReLU/sigmoid via table-lookup&quot;)
+  that read as machine-generated. The MATH (Theorem A.1) checks out and the technique
+  is real; the scholarship around it does not. Do not cite this paper&#x27;&#x27;s characterisations
+  of other work.&#x27;
+</pre></details></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

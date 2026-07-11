@@ -1,0 +1,133 @@
+# Site structure for the zkAI SoK.
+#
+# Each section becomes a directory under docs/. Pages inside a section come from
+# content/<section-dir>/*.md, ordered by their `order:` frontmatter.
+#
+#   key        stable id, referenced by content frontmatter `section:`
+#   dir        URL path segment under docs/
+#   title      shown in the sidebar group + page header
+#   blurb      one-liner for the section index card
+#   cell       which cell of the 2x2 this belongs to (verify/private x infer/train),
+#              or `meta` for cross-cutting. Drives colour.
+#   papers_from  which top-level key(s) of papers.yml this section owns. The section
+#              index auto-lists them, and every paper there gets a page under
+#              /papers/<id>/. A paper key listed nowhere is a validator error --
+#              that is how we catch a new papers.yml category silently going unlisted.
+
+sections:
+  - key: start
+    dir: ""
+    title: Orientation
+    blurb: The 2x2 map, how to read the numbers, and what this SoK is claiming.
+    cell: meta
+    papers_from: []
+
+  - key: zk-inference
+    dir: zk-inference
+    title: Proving inference
+    blurb: >-
+      zkML: prove a forward pass (or a whole generation) ran correctly against a
+      committed model. The most active cell by far.
+    cell: verify-infer
+    papers_from: [inference]
+
+  - key: zk-testing
+    dir: zk-testing
+    title: Proving testing
+    blurb: Prove a model achieves a claimed accuracy on a dataset it was not trained on.
+    cell: verify-infer
+    papers_from: [testing]
+
+  - key: zk-training
+    dir: zk-training
+    title: Proving training
+    blurb: >-
+      zkPoT: prove these weights are the result of correctly running this training
+      procedure on this data. The hardest claim in the table.
+    cell: verify-train
+    papers_from: [training]
+
+  - key: federated
+    dir: federated
+    title: Federated & aggregation
+    blurb: >-
+      Verifiable federated learning and secure aggregation -- a hybrid cell, buying
+      some verifiability and some privacy, usually against a weaker adversary.
+    cell: verify-train
+    papers_from: [verifiable_federated_learning]
+
+  - key: numerics
+    dir: numerics
+    title: Numerics
+    blurb: >-
+      Real numbers on a finite field. Fixed point, floating point, truncation and rounding --
+      the substrate BOTH columns are built on, and the one layer they independently reinvented.
+    # `meta`, deliberately, and it is not a cop-out. This category is genuinely mixed: garg-fp
+    # and zklp are ZK papers; archer-ieee, secfloat and prob-truncation are MPC/2PC papers that
+    # do no proving at all. They were briefly filed under zk-inference, which would have put
+    # three MPC papers into the *verifiability* column -- and any edge from them into Iron or
+    # Cheetah would then have registered as "the two literatures now cite each other", which is
+    # the corpus's headline finding, destroyed by a filing error rather than by evidence.
+    # These papers are a shared substrate consumed by both columns, so they belong to neither.
+    cell: meta
+    papers_from: [numerics_primitives]
+
+  - key: private-inference
+    dir: private-inference
+    title: Private inference
+    blurb: >-
+      2PC, MPC and FHE transformer inference. Hides the data or the model from the
+      counterparty. Proves nothing about correctness.
+    cell: private-infer
+    papers_from: [secure_inference_2pc, secure_inference_to_review]
+
+  - key: private-training
+    dir: private-training
+    title: Private training
+    blurb: Training under MPC/HE. Confidentiality without a proof.
+    cell: private-train
+    papers_from: [private_training_no_proofs]
+
+  - key: properties
+    dir: properties
+    title: Proving properties
+    blurb: >-
+      Fairness, provenance, licensing. A claim about a *model*, not about a
+      computation -- which is why it does not fit the other cells.
+    cell: meta
+    papers_from: [proving_properties]
+
+
+  - key: alternatives
+    dir: alternatives
+    title: Alternatives to ZK
+    blurb: >-
+      opML, TEEs, and sampling. Verifiability without paying 1000x -- for a weaker,
+      and usually crisply stateable, guarantee.
+    cell: meta
+    papers_from: [alternatives_to_zk, sampling_based_verification]
+
+  - key: surveys
+    dir: surveys
+    title: Surveys & reports
+    blurb: Prior surveys, and where we disagree with them.
+    cell: meta
+    papers_from: [surveys]
+
+  - key: backlog
+    dir: backlog
+    title: Backlog
+    blurb: Indexed but not yet read. Honest about what we have not done.
+    cell: meta
+    papers_from: [to_review]
+
+# Auto-generated sections (no content/ dir; build.py owns them entirely)
+generated:
+  - key: papers
+    dir: papers
+    title: Papers
+    blurb: Every paper in papers.yml, one page each, with its citation neighbourhood.
+  - key: graph
+    dir: graph
+    title: Citation graph
+    blurb: Who builds on whom. The two columns of the 2x2 do not cite each other.

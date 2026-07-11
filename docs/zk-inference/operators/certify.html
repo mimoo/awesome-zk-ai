@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autoregression &amp; certification — Operator atlas</title>
+<meta name="description" content="KV caching, sequence certification — the trick that kills the quadratic">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../../index.html">The map</a><a class="nav" href="../../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="crumb"><a href="../../zk-inference/index.html">Proving inference</a> · <a href="../../zk-inference/operators/index.html">Operator atlas</a> · <b>Autoregression &amp; certification</b></div><h2 class="ptitle">Autoregression &amp; certification</h2><p class="psub">KV caching, sequence certification — the trick that kills the quadratic</p><div class="math">$$\begin{aligned}
+\text{prompt} &: \texttt{"The cat"}\\
+\text{claimed} &: \texttt{"sat on the mat"}\\[6pt]
+\text{concatenated} &: [\texttt{The},\, \texttt{cat},\, \texttt{sat},\, \texttt{on},\, \texttt{the},\, \texttt{mat}]\\
+\text{predicted} &: [\texttt{cat},\, \texttt{sat},\, \texttt{on},\, \texttt{the},\, \texttt{mat},\, \bot]\\[6pt]
+\text{certify} &\iff \text{predicted}[t] = \text{concatenated}[t{+}1]\quad \forall t
+\end{aligned}
+\\[8pt]
+\text{one forward pass} \;\Rightarrow\; \text{prover } O(t\,|C|),\;\text{not } O(t^2 |C|)$$</div><h3 class="head">The algorithm</h3><div class="prose"><p>Rather than proving $t$ sequential generation steps, prove one forward pass over the concatenated prompt-and-output, and check that every position predicts its successor.</p></div><h3 class="head" style="color:var(--rose)">Why it resists a proof</h3><div class="prose"><p>This is the difference between a demo and a system. Every prior work proves a single token, because the honest alternative — emulating a KV cache as in-circuit RAM — requires committing to auxiliary data linear in the number of reads and writes.</p></div><h3 class="head" style="color:var(--cyan)">Cryptographic toolbox</h3><ul class="kit"><li>Causal mask ⇒ position t cannot see token t+1</li><li>Argmax ⇒ the forward pass is deterministic</li><li>Many predictions in one pass ⇒ everything batches</li></ul><h3 class="head amber">How each scheme proves it</h3><div class="scheme" data-p="deepprove"><div class="scheme-head"><span class="pname"><a href="../../papers/deepprove.html" style="color:inherit">DeepProve</a></span></div><div class="scheme-body"><p class="tldr">Certify the output rather than replay the computation. Soundness rests entirely on the causal mask plus determinism.</p><blockquote class="q"><p>Our certification algorithm for this is extremely simple: It just feeds the entire sequence of input and output tokens into the model at once, essentially performing a single inference step. In practice, this translates to proving only the last inference step leading to prover times that are only linear to the input and output tokens rather than quadratic.</p><cite><b>DeepProve</b> · §3.1</cite></blockquote><blockquote class="q"><p>Because of the Attention Mask, the model&#x27;s calculation for the $t$-th token cannot use the values of the $(t+1)$-th token. Moreover, argmax in the final layer of GPT-2 and Gemma 3 provides determinism to the execution.</p><cite><b>DeepProve</b> · §3.1</cite></blockquote><ul><li>The attention mask guarantees the model's computation at position $t$ cannot depend on token $t{+}1$. So if the prediction at $t$ equals the claimed token at $t{+}1$, that token was correctly computed. Argmax supplies the determinism.</li><li>Reduces prover cost from quadratic to <strong>linear</strong> in total sequence length, with no in-circuit RAM and no KV-cache emulation.</li><li>A single pass produces $s$ predictions simultaneously, which is exactly what the <em>batched</em> softmax, lookup and sumcheck variants exist to exploit. The trick and the batching are co-designed.</li><li>This is why throughput <em>increases</em> with sequence length (127 → 175 TPM as sequence goes 64 → 512): matmul's sublinear prover cost amortizes across more tokens.</li></ul></div></div><div class="scheme" data-p="jolt-atlas"><div class="scheme-head"><span class="pname"><a href="../../papers/jolt-atlas.html" style="color:inherit">Jolt Atlas</a></span></div><div class="scheme-body"><p class="tldr">The prover proves a single forward pass over a fixed-length sequence — there is no autoregression and no KV cache in the proving path. Generation exists only as an unproven execution helper, and it re-runs the whole model per token.</p><ul><li><strong>The prover proves one forward pass.</strong> Every prover entry point (<code>gpt2.rs</code>, <code>qwen.rs</code>, <code>bge.rs</code>, <code>gpt2_zk_bench.rs</code>, e2e tests) builds one input with <code>("sequence_length", s), ("past_sequence_length", 0)</code>, calls <code>ONNXProof::prove</code> once and <code>verify</code> once. There is no loop over generated tokens anywhere in <code>jolt-atlas-core</code>.</li><li><strong>No KV cache exists</strong> — grepping <code>kv_cache</code> / <code>past_key_values</code> / <code>present_key</code> / <code>use_cache</code> returns nothing. <code>past_sequence_length</code> is a plumbing parameter the exported ONNX graph accepts, but it is hard-coded to <code>0</code> at all ~10 call sites; a past-KV input is never populated.</li><li><strong>Generation is a naive quadratic helper</strong> in the <em>tracer</em> (<code>gpt2_generate.rs</code>), not the prover: each token reloads the model and runs a full forward pass over the entire growing sequence <code>[1, cur_len]</code>, argmaxes the last logit row, appends, repeats. It exists to sanity-check quantized-vs-float coherence, and produces no proof.</li><li><strong>So the two systems live on opposite ends of this axis.</strong> DeepProve certifies the <em>whole generated sequence</em> in one pass with the trick on the left; Jolt Atlas proves a <em>single</em> forward pass and never composes tokens. <a href="#/op/logits">zkPyTorch</a> takes a third route — it <em>batches</em> all tokens into one circuit by decoupling the autoregressive dependency (a proof only verifies the output).</li><li>Note Jolt Atlas <em>could</em> express a KV cache as read/write consistency — it already has the Twist-and-Shout <a href="#/op/memory">memory</a> machinery for <code>Gather</code>. It simply doesn't, because there is no cache to check. That is the same trade DeepProve names: emulating a KV cache would <em>introduce</em> RAM into a computation that otherwise has none.</li></ul></div></div><div class="pager"><a href="../../zk-inference/operators/argmax.html">← previous<span>Argmax / greedy decode</span></a><a class="next" href="../../zk-inference/operators/memory.html">next →<span>Memory &amp; read consistency</span></a></div></div></main>
+</div>
+<script src="../../vendor/katex/katex.min.js"></script>
+<script src="../../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

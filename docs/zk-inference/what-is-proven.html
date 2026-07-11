@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What is actually being proven — zkAI</title>
+<meta name="description" content="Several systems report a throughput number and the community ranks them against each other. They are certifying different claims on different inputs on different hardware, and in one case nobody knows">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub on" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../zk-inference/index.html">Proving inference</a> · <b>What is actually being proven</b></div><h2 class="ptitle">What is actually being proven</h2><p class="lede">Several systems report a throughput number and the community ranks them against each other. They are certifying different claims on different inputs on different hardware, and in one case nobody knows what the claim is.</p><div class="rail"><a href="../papers/deepprove.html">DeepProve</a><a href="../papers/zkgpt.html">zkGPT</a><a href="../papers/zkllm.html">zkLLM</a><a href="../papers/jolt-atlas.html">Jolt Atlas</a><a href="../papers/zkpytorch.html">zkPyTorch</a><a href="../papers/zkml-kang.html">ZKML</a><a href="../papers/zktorch.html">ZKTorch</a><a href="../papers/nanozk.html">NANOZK</a><a href="../papers/hao-et-al.html">Hao et al.</a><a href="../papers/artemis.html">Artemis / Apollo</a><a href="../papers/lu-et-al.html">Lu et al.</a></div><div class="prose"><p>Take the throughput column of the <a href="../zk-inference/index.html">inference table</a>. It is the number that gets
+screenshotted, and it is the number this page exists to break.</p>
+<p>A tokens-per-minute figure is a rate: <em>proven tokens</em> over <em>wall-clock minutes</em>. The
+denominator is at least honest. The numerator is not a single quantity. Across the systems
+in this section, "a token" silently means at least four different things.</p>
+<h2 id="four-different-claims">Four different claims</h2>
+<p><strong>1. All the tokens the model generated.</strong> <a href="../papers/deepprove.html">DeepProve</a> is explicit that this is its
+contribution, and it is the strongest claim anyone makes:</p>
+<blockquote class="q"><p>In this work, we present DeepProve, the first system to enable efficient end-to-end
+verification of full LLM inference (i.e., for all generated tokens of a prompt) on
+untrusted cloud servers using zero-knowledge proofs (ZKPs). In contrast, prior work either
+provides only a proof-of-concept partial implementation for a single token (zkGPT,
+USENIX'25), or focuses exclusively on specific components of the inference pipeline, such
+as Softmax (zkLLM, CCS'24).</p><cite><b>DeepProve</b> · Abstract</cite></blockquote>
+
+<p>Its throughput figure is therefore a genuine decode rate: the prompt is generated, and the
+proof covers the whole generation. It is the only number in the table that means what a
+casual reader assumes all of them mean.</p>
+<p>Note carefully <em>how</em> it gets there. DeepProve does not put the autoregressive loop in a
+circuit — it "achieves end-to-end verification by certifying the correctness of the output
+sequence rather than encoding the expensive inference computation in-circuit," which it
+says would force circuit size quadratic in the sequence length or in-circuit RAM. That is a
+design decision with a cost profile, not a free lunch: among the succinct provers in the
+table, DeepProve's proofs are orders of magnitude larger than <a href="../papers/zkgpt.html">zkGPT</a>'s, which is what
+certifying a whole sequence rather than one pass buys you.</p>
+<p><strong>2. Exactly one forward pass.</strong> <a href="../papers/zkgpt.html">zkGPT</a> proves a single token. So, in effect, do
+<a href="../papers/zkml-kang.html">ZKML</a>, <a href="../papers/artemis.html">Artemis / Apollo</a>, <a href="../papers/lu-et-al.html">Lu et al.</a> and <a href="../papers/zktorch.html">ZKTorch</a> — their reported quantity is
+<em>seconds to produce one proof of one pass</em>, and the tokens-per-minute entry attached to them
+in <code>papers.yml</code> is marked <code>derived</code>: we computed it, by dividing sixty by their proving time.
+Nobody in those papers claims it as a decode rate, and nobody should. (<a href="../papers/deepprove.html">DeepProve</a>
+characterises <a href="../papers/zktorch.html">ZKTorch</a> the same way — "proofs of correctness for one output token at a
+time".)</p>
+<p>The derivation is not merely conservative — it is <em>generous to the wrong system</em>. Sustained
+generation is not one forward pass repeated. It has a growing KV cache, growing attention
+cost per step, and a batching structure that a one-shot prover never has to confront. A
+single-pass prover extrapolated to a rate is being credited with solving a problem it
+never faced.</p>
+<p><strong>3. A batched circuit over a sequence, with the loop decoupled.</strong> <a href="../papers/zkpytorch.html">zkPyTorch</a> does
+something more interesting than either, and it is routinely missed because the paper is
+filed as "a compiler". At its model level it observes that a proof only <em>verifies</em> the
+output — it does not compute it — so the token-by-token dependency can be broken and all
+tokens proven in a single batched circuit, turning many small matmuls into one large one.
+That is the same insight DeepProve builds a whole system around, published earlier, in a
+paper whose headline number is a per-token cost on a <em>single CPU core</em>.</p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Is zkPyTorch&#x27;s batched circuit the same claim as DeepProve&#x27;s?</h5><p>Both decouple the autoregressive dependency by exploiting the fact that the output is
+already known. DeepProve claims priority for end-to-end multi-token verification and
+<a href="../papers/zkpytorch.html">zkPyTorch</a> does not contest it. But zkPyTorch's own §4 describes batching <em>all output
+tokens of an LLM</em> into one proving circuit, which sounds like the same statement. We have
+not resolved whether the difference is substantive (KV-cache handling? attention masking
+across the batch?) or presentational. Until someone does, treat "the first to prove a full
+generation" as a claim we are relaying, not one we have verified.</p></div></div>
+
+<p><strong>4. Nobody knows.</strong> <a href="../papers/jolt-atlas.html">Jolt Atlas</a> reports an end-to-end proving time for GPT-2 and states
+neither the sequence length nor the token count. It never discusses autoregression or KV
+caching anywhere in the paper. Its GPT-2 result cannot be converted into a rate, cannot be
+placed on the throughput axis, and cannot be compared to anything above — not because the
+number is bad, but because the <em>unit is unknown</em>. <code>papers.yml</code> records its
+<code>tokens_per_minute</code> as <code>null</code> and its <code>context_window</code> as <code>null</code>, and that is the honest
+entry.</p>
+<p>And a fifth, off the axis entirely: <a href="../papers/hao-et-al.html">Hao et al.</a> and <a href="../papers/nanozk.html">NANOZK</a> prove <em>pieces</em>. Hao et al.
+prove individual non-linear operators; NANOZK proves a transformer block. Neither has
+proven a model. They belong in an operator comparison, not a system one.</p>
+<h2 id="and-sometimes-a-different-model">And sometimes, a different model</h2>
+<p>There is a further degree of freedom, and it is the one most likely to invalidate a
+comparison outright: <strong>the network in the circuit may not be the network in the model zoo.</strong></p>
+<p><a href="../papers/deepprove.html">DeepProve</a>'s related-work section makes a specific and checkable accusation against
+<a href="../papers/zkgpt.html">zkGPT</a> — that it proves a modified GPT-2 which "doesn't contain residual connections,
+attention masks, and the final projection layer," and that these relaxations "significantly
+circumvent the outlier issues" that make quantization hard. It levels a second one at
+<a href="../papers/zkml-kang.html">ZKML</a>, calling its GPT-2 "slightly modified" too.</p>
+<p>We cannot confirm the implementation from the outside. What we can confirm is the paper:
+<strong>the strings "residual", "attention mask" and "projection layer" do not appear anywhere in
+<a href="../papers/zkgpt.html">zkGPT</a>'s text</strong> — a full-text search of the PDF returns nothing. That is not proof of the
+accusation, but for a paper whose central claim is proving GPT-2, the silence is
+conspicuous. A GPT-2 without residual connections is a different function, and residual
+paths are precisely where the large-magnitude activations that make quantization hard tend
+to live.</p>
+<div class="debate"><h4>Whose GPT-2?</h4><p>Every LLM row in the table says "GPT-2". If <a href="../papers/zkgpt.html">zkGPT</a> proves a GPT-2 without residuals,
+attention masks and the final projection, and <a href="../papers/deepprove.html">DeepProve</a> proves the whole thing, then the
+two systems are not proving the same function — and the throughput gap between them is
+partly a measurement of how much of GPT-2 each chose to include. The accusation comes from a
+competitor and should be weighed as such. It is also <em>checkable in principle</em> — DeepProve is
+open source; <code>papers.yml</code> records zkGPT's availability as unknown, which is itself part of
+the problem. Until someone checks, this belongs alongside bit width and context length on
+the list of confounders, not in the footnotes.</p></div>
+
+<h2 id="the-confounders-stack-and-they-all-point-the-same-way">The confounders stack, and they all point the same way</h2>
+<p>Set aside what is proven for a moment and suppose every system reported the same claim. The
+comparison would still be broken, because at least four variables move at once between the
+two systems at the top of the table:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Effect on the comparison</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>What is proven</strong></td>
+<td>A full generation versus a single forward pass. Not the same numerator.</td>
+</tr>
+<tr>
+<td><strong>Which model</strong></td>
+<td>A GPT-2 with residual connections and attention masks, versus one possibly without. Not the same function.</td>
+</tr>
+<tr>
+<td><strong>Context window</strong></td>
+<td>The systems' benchmark sequence lengths differ by more than an order of magnitude. Attention is quadratic in it.</td>
+</tr>
+<tr>
+<td><strong>Bit width</strong></td>
+<td>The faster system runs at the <em>lower</em> precision. Lookup-table cost scales with bit width. See <a href="../zk-inference/quantization.html">Quantization</a>.</td>
+</tr>
+<tr>
+<td><strong>Hardware</strong></td>
+<td>CPU core counts, clock speeds and memory differ across every row. <a href="../papers/zkgpt.html">zkGPT</a> attributes its entire gap to <a href="../papers/zkllm.html">zkLLM</a> to CPU-versus-GPU, not to protocol.</td>
+</tr>
+</tbody>
+</table>
+<p>Every one of those pushes in the same direction — they all flatter the same system. That
+does not make its result wrong. DeepProve is, by a wide margin, the fastest reported LLM
+prover, and its lead is large enough to survive a lot of normalization. But the headline
+ratio between it and <a href="../papers/zkgpt.html">zkGPT</a> — the one people quote — is <em>not a protocol comparison</em>, and
+<strong>nobody has isolated the protocol contribution.</strong> The honest statement is that the two
+systems are two orders of magnitude apart on a rate whose definition differs between them.</p>
+<div class="debate"><h4>Should derived throughput numbers exist at all?</h4><p>The case for: without them there is no way to put a single-pass system on any chart with a
+multi-token one, and the alternative is a table with holes where the comparison should be.
+The case against: a derived number is indistinguishable from a reported one once it has
+been screenshotted, and the derivation embeds an assumption (that decode is a forward pass
+in a loop) that is <em>false</em>. We keep both, and tag <code>tokens_per_minute_source: reported</code>
+versus <code>derived</code> in <code>papers.yml</code> so the chart can shape them differently. If you take one
+thing from this page: <strong>a hollow marker is not a slower system, it is a different claim.</strong></p></div>
+
+<h2 id="hardware-is-not-held-constant-either">Hardware is not held constant either</h2>
+<p><a href="../papers/zkgpt.html">zkGPT</a> is CPU-only. <a href="../papers/jolt-atlas.html">Jolt Atlas</a> deliberately runs on a laptop with consumer memory —
+its entire thesis is on-device proving, and its numbers should be read as <em>what a laptop can
+do</em>, which is a far more impressive framing than the row it occupies in the table.
+<a href="../papers/zkllm.html">zkLLM</a> is a datacenter GPU. <a href="../papers/zkml-kang.html">ZKML</a> and <a href="../papers/artemis.html">Artemis / Apollo</a> use very large multi-core
+machines. <a href="../papers/zkpytorch.html">zkPyTorch</a>'s headline is a <em>single core</em>, which makes it the most sandbagged
+entry in the table and the one most likely to be misread as slow.</p>
+<p>A cross-system throughput comparison across that hardware spread is, at best, indicative of
+which <em>engineering effort</em> is furthest along. It is not a measurement of which protocol is
+better.</p>
+<h2 id="what-a-paper-in-this-field-should-report">What a paper in this field should report</h2>
+<p>None of the systems here report all four of these. Most report one or two.</p>
+<ol>
+<li><strong>The sequence length</strong> used in the benchmark, and the <strong>number of tokens</strong> the proof
+   covers. Without these the throughput figure has no unit.</li>
+<li><strong>The bit width</strong>, and the <strong>accuracy delta</strong> it costs on a named metric and dataset. A
+   throughput number with unbounded accuracy loss is not a result — any system can go
+   arbitrarily fast by quantizing to garbage.</li>
+<li><strong>The hardware</strong>, including thread count, and which machine the <em>headline</em> figure came
+   from when several were used. (<a href="../papers/deepprove.html">DeepProve</a> is exemplary here and it still takes care:
+   its headline throughput comes from its <em>secondary</em> machine, not its primary one.)</li>
+<li><strong>Whether the proof covers a generation or a pass</strong>, stated in one sentence, in the
+   abstract.</li>
+<li><strong>Every layer of the reference architecture the circuit does not implement.</strong> If the
+   residuals or the attention mask were dropped to make quantization tractable, that is a
+   result about a different network and it belongs in the abstract, not in a competitor's
+   related-work section.</li>
+</ol>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Nobody has done this</h5><p>Not one system in this section reports sequence length, token count, bit width <em>and</em> an
+accuracy delta together. The two that come closest — <a href="../papers/deepprove.html">DeepProve</a> and <a href="../papers/zkgpt.html">zkGPT</a> — each
+miss at least one, and the field's fastest laptop prover (<a href="../papers/jolt-atlas.html">Jolt Atlas</a>) misses three of
+the four. Until a paper does, cross-system throughput ranking is a genre convention, not a
+measurement.</p></div></div></div><div class="pager"><a href="../zk-inference/index.html">← previous<span>The landscape</span></a><a class="next" href="../zk-inference/proof-systems.html">next →<span>Proof systems</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>

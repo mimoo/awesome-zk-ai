@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Floats, fixed point, and the rescale seam — zkAI</title>
+<meta name="description" content="A neural network multiplies real numbers; a SNARK multiplies integers mod p, and an MPC protocol multiplies secret shares of them. Every system in this section is an answer to that disagreement. The c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/katex/katex.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <a class="mark" href="../index.html" style="color:inherit"><i></i><span>zkSecurity Research</span></a>
+      <h1><a href="../index.html" style="color:inherit">zk<em>AI</em></a></h1>
+    </div>
+    <div class="filter">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="filter" type="text" placeholder="filter pages…" autocomplete="off">
+    </div>
+    <nav id="nav"><div class="navgroup">Orientation</div><a class="nav sec" href="../index.html">The map</a><a class="nav" href="../index.html">How to read this</a><div class="navgroup">Proving inference</div><a class="nav sec" href="../zk-inference/index.html">Overview<span class="cnt">20</span></a><a class="nav sub" href="../zk-inference/what-is-proven.html">What is actually being proven<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/proof-systems.html">Proof systems<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/quantization.html">Quantization, the hidden variable<span class="miss">draft</span></a><a class="nav sub" href="../zk-inference/vision-and-trees.html">Vision and trees<span class="miss">draft</span></a><div class="navgroup">Proving testing</div><a class="nav sec" href="../zk-testing/index.html">Overview<span class="cnt">2</span></a><div class="navgroup">Proving training</div><a class="nav sec" href="../zk-training/index.html">Overview<span class="cnt">10</span></a><a class="nav sub" href="../zk-training/systems.html">The systems, grouped by what they gave up<span class="miss">draft</span></a><a class="nav sub" href="../zk-training/relaxations.html">Every relaxation, and what an adversary can still do<span class="miss">draft</span></a><div class="navgroup">Federated &amp; aggregation</div><a class="nav sec" href="../federated/index.html">Overview<span class="cnt">9</span></a><a class="nav sub" href="../federated/systems.html">What each system actually proves<span class="miss">draft</span></a><div class="navgroup">Numerics</div><a class="nav sec on" href="../numerics/index.html">Overview<span class="cnt">5</span></a><a class="nav sub" href="../numerics/bridge.html">The bridge nobody crosses<span class="miss">draft</span></a><div class="navgroup">Private inference</div><a class="nav sec" href="../private-inference/index.html">Overview<span class="cnt">13</span></a><a class="nav sub" href="../private-inference/threat-models.html">Threat models -- who learns what<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/systems.html">What each system actually built<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/nonlinearities.html">The non-linearity problem, twice<span class="miss">draft</span></a><a class="nav sub" href="../private-inference/cost-model.html">Where the cost goes, and why the numbers do not compare<span class="miss">draft</span></a><div class="navgroup">Private training</div><a class="nav sec" href="../private-training/index.html">Overview<span class="cnt">5</span></a><div class="navgroup">Proving properties</div><a class="nav sec" href="../properties/index.html">Overview<span class="cnt">6</span></a><div class="navgroup">Alternatives to ZK</div><a class="nav sec" href="../alternatives/index.html">Overview<span class="cnt">7</span></a><a class="nav sub" href="../alternatives/optimistic.html">Optimistic verification — fraud proofs and challenge windows<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/tees.html">TEEs — the assumption that is actually deployed<span class="miss">draft</span></a><a class="nav sub" href="../alternatives/sampling.html">Sampling — trading soundness for milliseconds, on purpose<span class="miss">draft</span></a><div class="navgroup">Surveys &amp; reports</div><a class="nav sec" href="../surveys/index.html">Overview<span class="cnt">4</span></a><div class="navgroup">Backlog</div><a class="nav sec" href="../backlog/index.html">Overview<span class="cnt">23</span></a><div class="navgroup">Index</div><a class="nav sec" href="../papers/index.html">Papers<span class="cnt">73</span></a><a class="nav sec" href="../graph/index.html">Citation graph</a></nav>
+  </aside>
+  <main><div class="page"><div class="banner">Draft — not yet reviewed against the primary sources.</div><div class="crumb"><a href="../numerics/index.html">Numerics</a> · <b>Floats, fixed point, and the rescale seam</b></div><h2 class="ptitle">Floats, fixed point, and the rescale seam</h2><p class="lede">A neural network multiplies real numbers; a SNARK multiplies integers mod p, and an MPC protocol multiplies secret shares of them. Every system in this section is an answer to that disagreement. The cost of the answer is not in the matmuls — it is at the seams between them, where a wide accumulator must be squeezed back down. That squeeze is a division, and neither a field nor a secret share can divide.</p><div class="rail"><a href="../papers/deepprove.html">DeepProve</a><a href="../papers/zkgpt.html">zkGPT</a><a href="../papers/zkllm.html">zkLLM</a><a href="../papers/zkpytorch.html">zkPyTorch</a><a href="../papers/jolt-atlas.html">Jolt Atlas</a><a href="../papers/safetynets.html">SafetyNets</a><a href="../papers/zip.html">ZIP</a><a href="../papers/mystique.html">Mystique</a><a href="../papers/hao-et-al.html">Hao et al.</a><a href="../papers/zkcnn.html">zkCNN</a><a href="../papers/garg-fp.html">Garg et al. (FP)</a><a href="../papers/zklp.html">ZKLP</a><a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a><a href="../papers/secfloat.html">SecFloat</a><a href="../papers/prob-truncation.html">Probabilistic truncation in PPML</a><a href="../papers/range-arithmetic.html">Range-Arithmetic</a><a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a></div><div class="prose"><p><strong>This section belongs to neither column of the 2x2, because it sits underneath both.</strong></p>
+<p>Everywhere else in this SoK, a page belongs to a cell: you are either proving a computation or
+hiding it. The papers here do neither. They answer a question that arrives <em>before</em> the
+cryptography does — <strong>how do you represent a real number at all, once you have left the reals?</strong> —
+and both columns have to answer it before they can begin.</p>
+<p>So the five papers in this section split down the middle, and the split is not the one the rest of
+the atlas uses. <a href="../papers/garg-fp.html">Garg et al. (FP)</a> and <a href="../papers/zklp.html">ZKLP</a> build floating-point arithmetic inside a <em>proof</em>.
+<a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a>, <a href="../papers/secfloat.html">SecFloat</a> and <a href="../papers/prob-truncation.html">Probabilistic truncation in PPML</a> build it inside a <em>secure computation</em> — no
+proving anywhere, no verifier, nothing to check. They are in the same section because they are
+solving the same problem, and because, as the <a href="../numerics/bridge.html">bridge</a> page shows, they are the only
+place where the two literatures of this repo demonstrably touch.</p>
+<p>Read this page for the problem. Read <a href="../numerics/bridge.html">the bridge</a> for who has been quietly borrowing
+from whom.</p>
+<hr>
+<p><a href="../zk-inference/quantization.html">Quantization</a> asks <em>where each system set the bit-width knob, and what it
+cost them</em>. This page asks the question underneath: <strong>why does the knob exist at all, and what
+exactly are you paying for when you turn it?</strong></p>
+<p>The short answer is that sum-check makes matrix multiplication nearly free, so the matmuls are
+not where the money goes. The money goes to the <strong>seams between</strong> the matmuls, where the output
+of one layer has to be rounded back down to the width the next layer expects. Rounding is
+division. <strong>Division is not an operation a finite field has.</strong> Everything below is a consequence —
+and almost all of it restates, in ZK vocabulary, a constraint the MPC world hit first.</p>
+<h2 id="deep-learning-chose-range-over-precision">Deep learning chose range over precision</h2>
+<p>Start with the format the industry actually runs on, because it is the opposite of what a
+circuit wants.</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Sign</th>
+<th>Exp</th>
+<th>Mantissa</th>
+<th>Max finite</th>
+<th>Machine $\epsilon$</th>
+<th>~Decimal digits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FP32</td>
+<td>1</td>
+<td>8</td>
+<td>23</td>
+<td>$\approx 3.4\times10^{38}$</td>
+<td>$2^{-23}$</td>
+<td>~7.2</td>
+</tr>
+<tr>
+<td>FP16</td>
+<td>1</td>
+<td>5</td>
+<td>10</td>
+<td>$65{,}504$</td>
+<td>$2^{-10}$</td>
+<td>~3.3</td>
+</tr>
+<tr>
+<td><strong>BF16</strong></td>
+<td>1</td>
+<td><strong>8</strong></td>
+<td><strong>7</strong></td>
+<td>$\approx 3.4\times10^{38}$</td>
+<td>$2^{-7}$</td>
+<td><strong>~2.4</strong></td>
+</tr>
+<tr>
+<td>FP8 (E4M3)</td>
+<td>1</td>
+<td>4</td>
+<td>3</td>
+<td>$448$</td>
+<td>$2^{-3}$</td>
+<td>~1</td>
+</tr>
+<tr>
+<td>INT8</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>$127$</td>
+<td><em>(step 1)</em></td>
+<td><em>uniform</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>BF16 is the row that matters, because of what it gave up.</strong> It keeps every bit of FP32's
+exponent — the full $10^{-38}$ to $10^{38}$ dynamic range — and pays by cutting the mantissa from
+23 bits to 7. It carries roughly <em>two decimal digits</em>. It is a wildly imprecise format, and it is
+what modern models train and run in.</p>
+<p>That was a deliberate trade, and it is the fact the whole numerics problem hangs on:</p>
+<blockquote>
+<p><strong>Deep learning needs dynamic range far more than it needs precision.</strong></p>
+</blockquote>
+<p>Weights cluster near zero; activations occasionally spike enormously; gradients decay across
+depth. What kills a network is a value that <em>overflows to infinity</em> or <em>underflows to zero</em> — not
+a value wrong in its eighth significant digit. Networks are statistical objects with enormous
+redundancy and they absorb per-element noise; they do not absorb a silently zeroed tensor. FP16,
+with only 5 exponent bits, really does overflow in training and needs loss-scaling to survive.
+BF16 exists to make that class of problem disappear. The industry chose range.</p>
+<p><strong>A fixed-point number is precisely the opposite trade.</strong> $Q_{m.f}$ is an integer with an implied
+binary point: a uniform absolute step of $2^{-f}$ and a hard ceiling at $2^m$. Uniform precision
+everywhere, <em>no dynamic range at all</em>. It is the format deep learning rejected — and it is the
+only thing you can cheaply put in a circuit.</p>
+<p><a href="../papers/zkpytorch.html">zkPyTorch</a> states the resulting bind more crisply than anyone:</p>
+<blockquote class="q"><p>directly handling floating-point numbers is infeasible due to the high computational overhead
+required for native floating-point support in ZK circuits. To address this, previous ZKML schemes
+employ fixed-point numbers to approximate floating-point values. However, due to the wide dynamic
+range of floating-point numbers, fixed-point representations require a significantly larger bit
+width for accurate representation. For instance, the standard float32 format can represent
+positive numbers ranging from approximately $2^{-126}$ to $2^{127}$, whereas 32-bit fixed-point
+numbers are limited to a range of $2^{-16}$ to $2^{16}$. This disparity forces fixed-point
+representations to use additional bits to emulate floating-point numbers, thereby necessitating
+ZKML to operate over large finite fields, such as the scalar field of the BN254 curve, which
+considerably reduces efficiency in proof generation.</p><cite><b>zkPyTorch</b> · §2.3, Machine Learning Quantization</cite></blockquote>
+
+<p>Read that as a causal chain, because it organizes the entire section:</p>
+<p>$$\text{float dynamic range} \Rightarrow \text{many fixed-point bits} \Rightarrow \text{big field} \Rightarrow \text{slow prover}$$</p>
+<p>The field's response was to break the chain at the front: quantize to small integers, so you can
+use a small field. <a href="../papers/zkpytorch.html">zkPyTorch</a> picks <strong>M61</strong> for exactly this reason — its aggressive
+quantization is not primarily about lookup tables, it is about <em>escaping BN254</em>. <strong>Your numeric
+format chooses your field, and your field is a constant factor on the entire circuit.</strong></p>
+<p>But breaking the chain at the front adds a term at the back that the papers underplay:
+<em>and now you must prove all the rounding.</em></p>
+<h2 id="what-a-field-refuses-to-give-you">What a field refuses to give you</h2>
+<p>A SNARK offers variables in $\mathbb{F}_p$ and two operations, $+$ and $\times$. What is <em>absent</em>
+is what costs money:</p>
+<p><strong>No order.</strong> $\mathbb{F}_p$ is not ordered. "Is $a < b$?" is not a field question — the elements
+are residue classes, they do not sit on a line. Every ReLU, max, clamp, and comparison must be
+<em>manufactured</em>, usually by decomposing into bits.</p>
+<p><strong>No magnitude.</strong> There is no $|x|$. Negative numbers are a <em>convention</em>: we agree to read $p-5$
+as $-5$, and that works only while everything stays inside a window we reserved by hand. Nothing
+in the field enforces the window.</p>
+<p><strong>No division.</strong> You <em>can</em> divide in $\mathbb{F}_p$ — $x/2^s$ means $x\cdot(2^s)^{-1} \bmod p$,
+and that inverse exists. But it is <strong>not truncation</strong>. If $x$ is not an exact multiple of $2^s$,
+field division returns a perfectly valid field element that is a huge, unrelated number bearing no
+relation to $\lfloor x/2^s \rfloor$. Field division inverts field multiplication; <strong>integer
+division is a different function entirely</strong>, and the field does not implement it.</p>
+<p>That is the crux:</p>
+<blockquote>
+<p>The rescale after a matmul is a floor-division. Floor-division is not a field operation.
+You cannot compute it — you can only <strong>guess it and check it</strong>.</p>
+</blockquote>
+<h2 id="the-rescale-seam">The rescale seam</h2>
+<p>Take a dot product of $n$ values quantized to $q$ bits:</p>
+<p>$$q\text{-bit} \times q\text{-bit} \rightarrow 2q \text{ bits}, \qquad \text{summed over } n \rightarrow 2q + \log_2 n \text{ bits}$$</p>
+<p>At $q=8$ with hidden dimension $4096$, an 8-bit input becomes a 28-bit output. Every matmul
+inflates its operands and must be deflated before the next one, or widths compound layer over
+layer until they pass the modulus. <a href="../papers/deepprove.html">DeepProve</a> puts it plainly:</p>
+<blockquote class="q"><p>the bit-length of the intermediate values in LLM inference would grow rapidly, leading to
+computation slowdown and even potential field overflow.</p><cite><b>DeepProve</b> · §4, Requantization</cite></blockquote>
+
+<p>Deflating means computing $y = \text{round}\big((S_x S_w / S_y)\cdot \text{acc}\big)$ — which needs
+two things a field hates: multiplication by an <strong>arbitrary float ratio</strong>, and <strong>rounding</strong>.</p>
+<h3 id="the-universal-trick-advise-then-range-check">The universal trick: advise, then range-check</h3>
+<p>Nobody computes the division. <strong>Everybody guesses it and checks it.</strong> To prove
+$y = \lfloor x/2^s \rfloor$, the prover supplies both $y$ and a remainder $r$ as
+non-deterministic advice, and the circuit enforces:</p>
+<p>$$x = y\cdot 2^s + r \qquad\text{and}\qquad 0 \le r < 2^s \qquad\text{and}\qquad y \text{ in range}$$</p>
+<p>The first constraint is one multiplication and one addition — nearly free. It is also, <strong>on its
+own, worthless</strong>: without the range check the prover can pick <em>any</em> $y$ and set
+$r = x - y\cdot 2^s$ to match. The range check is not a detail. <strong>The range check is the entire
+proof.</strong> The arithmetic is bookkeeping; the security is all in the bounds.</p>
+<p><a href="../papers/zkgpt.html">zkGPT</a> names the pattern outright:</p>
+<blockquote class="q"><p>division, square root, and exponentiation as advice and check the correctness of the computation.
+This is much cheaper than simulating the computation in arithmetic relations.</p><cite><b>zkGPT</b> · §4.3</cite></blockquote>
+
+<h3 id="how-the-range-check-is-actually-done-and-why-lookups-changed-everything">How the range check is actually done — and why lookups changed everything</h3>
+<p>The pattern above is stable across a decade. What has changed, and what actually moved the cost
+curve, is the <em>implementation of the range check</em>. Three generations, and you can watch them
+happen:</p>
+<p><strong>Generation 1 — bit decomposition.</strong> Decompose the value into bits, prove the bits recompose to
+it, and simply <em>drop</em> the low $k$ bits. That is division by $2^k$, and it is what the
+<a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a> report describes as the standard approach:</p>
+<blockquote class="q"><p>we scale the model weights and inputs by a factor of $s$ each, and the bias values by a factor of
+$s^2$ each, and after performing a typical linear layer computation $Wx + b$, we "un-scale" the
+output by a factor of $s$, i.e. we divide by $s$. For the division operation we use bit
+decomposition, truncating the $k$ least significant bits to effectively divide by $s = 2^k$.</p><cite><b>Modulus, The Cost of Intelligence</b> · §3.2, Fixed-point division</cite></blockquote>
+
+<p>Cost: roughly one constraint per bit, per value, at every seam. Note also how it handles sign —
+by the raw field convention, <em>"the range $p/2 < x < p$ represents negative values"</em> — precisely the
+hand-reserved window from the section above, with nothing but a comment enforcing it.</p>
+<p><strong>Generation 2 — wider chunks, checked by lookup.</strong> The same report's Halo2 implementation already
+decomposes in <strong>base 1024 instead of base 2</strong>, and range-checks each limb against $[0, 1023]$ <em>with
+a lookup table</em>. One lookup replaces ten bit-constraints. The gadget did not change; the
+<em>verification of the gadget</em> got cheaper.</p>
+<p><strong>Generation 3 — decomposable lookup tables.</strong> Which is exactly where <a href="../papers/deepprove.html">DeepProve</a> lands: $k$-bit
+chunks, each range-checked against a small table, with the tables <em>decomposable</em> so they never have
+to be materialized in full (the Lasso/LogUp line of work). Same seam, same advice, same three
+constraints — but the expensive one is now a lookup argument instead of a bit-blast.</p>
+<p><strong>This is the real reason lookup arguments transformed zkML</strong>, and it is usually explained
+backwards. They are not primarily a trick for evaluating non-linearities. They are a cheaper way to
+do the <em>range checks</em>, and range checks are what rounding costs. Non-linearities were the visible
+beneficiary; the rescale seam is where the tonnage was.</p>
+<p>and then states the cost model that governs this entire field:</p>
+<blockquote class="q"><p>rounding introduces range relations to prove, which are more computationally expensive than
+proving arithmetic relations.</p><cite><b>zkGPT</b> · §5.1, Constraint level optimization</cite></blockquote>
+
+<p><strong>Arithmetic is cheap; rounding is expensive; the game is to round as seldom as possible.</strong> Once
+you hold that sentence, every design decision in every paper here becomes legible.</p>
+<h3 id="two-ways-to-kill-the-arbitrary-float-scale">Two ways to kill the arbitrary float scale</h3>
+<p>The ratio $S_xS_w/S_y$ is a float, and you cannot put a float in a field. There are exactly two
+moves, and the two leading LLM systems each took one.</p>
+<p><strong>Move A — integer multiplier, power-of-two shift.</strong> <a href="../papers/deepprove.html">DeepProve</a> fixed-point-encodes the float
+scale as an integer, multiplies by it, adds a half for round-to-nearest, then divides by a power
+of two — which is a <em>shift</em>:</p>
+<p>$$y = \left\lfloor \frac{\text{Quant}(2^f\epsilon)\cdot x + 2^{f+\delta-1}}{2^{f+\delta}} \right\rfloor - 2^{q-1}$$</p>
+<blockquote class="q"><p>At first glance, this formula seems "SNARK-unfriendly" as it requires one division per element.
+Observe, however, that the divisor is a power of two number, and thus the division can be
+considered as a right shift which is easier to prove.</p><cite><b>DeepProve</b> · §4.3.2, Case 1</cite></blockquote>
+
+<p>The shift is proven by a lookup argument over <em>decomposable tables</em>: decompose into $k$-bit
+chunks, range-check every chunk, keep the most significant ones. Note what happened — <strong>the range
+check and the shift are the same operation.</strong></p>
+<p><strong>Move B — rational approximation, inequality sandwich.</strong> <a href="../papers/zkgpt.html">zkGPT</a> never divides at all. It
+approximates the float ratio by a rational $C_1/C_2$ of two $Q$-bit integers, then encodes "$q_z$
+is the correctly rounded result" as a pair of integer inequalities:</p>
+<p>$$C_2 q_y(2q_z - 1) \;\le\; 2C_1 q_x \;<\; C_2 q_y (2q_z+1)$$</p>
+<p>Multiply through by the denominator and rounding becomes a <em>sandwich of two comparisons</em>. No
+division survives. The trick generalizes beautifully — zkGPT proves square roots the same way:</p>
+<p>$$q_y = \text{round}(\sqrt{q_x}) \iff (2q_y-1)^2 \le 4q_x \le (2q_y+1)^2 - 1$$</p>
+<p>An irrational function reduced to two multiplications and a range check.</p>
+<p>One caveat on provenance, since this page is arguing partly from it: zkGPT spells out the <em>search</em>
+for $C_1/C_2$ — "obtained by searching in an interval $[1, 2^Q]$ and finding the nearest fraction"
+— and spells out the double inequality, in §4.3, where it is discussing <strong>division</strong>. For the
+matmul rescale (§2.1) it says only that $C_1, C_2$ are "$Q$-bit integers" with
+$C_1/C_2 \approx S_xS_y/S_z$, and never writes that inequality out. The mechanism is clearly the
+same one; but if you want the fully explicit version, it is stated for division, not for the
+rescale.</p>
+<div class="debate"><h4>Does zkGPT restrict scales to powers of two?</h4><p><a href="../papers/deepprove.html">DeepProve</a> says its own scale factors, "unlike zkGPT/zkTorch, are <em>not</em> restricted to powers
+of two" — a claim repeated in our own <a href="../zk-inference/quantization.html">quantization</a> page. zkGPT's text does not
+support it. As quoted above, zkGPT searches $[1, 2^Q]$ for the <em>nearest fraction</em> $C_1/C_2$ to the
+true float ratio: an arbitrary rational, not a power of two. Both systems support arbitrary float
+scales; they differ in <strong>mechanism</strong>, not in generality — DeepProve puts the arbitrary part in the
+<em>multiplier</em> and keeps a power-of-two <em>divisor</em>; zkGPT keeps both arbitrary and pays with an
+inequality instead of a division. Recorded as <code>conflict_flag</code> on <code>deepprove</code> in <code>papers.yml</code>.</p></div>
+
+<h3 id="since-rounding-is-the-cost-round-less-often">Since rounding is the cost, round less often</h3>
+<p>If range checks dominate, the optimization writes itself. Three papers found it independently and
+gave it three names:</p>
+<ul>
+<li><a href="../papers/zkgpt.html">zkGPT</a> — <strong>constraint fusion</strong>: merge the computation between two adjacent roundings into one
+  rounding. It is explicit that this generalizes a trick <a href="../papers/zkcnn.html">zkCNN</a> and <a href="../papers/zkpytorch.html">zkPyTorch</a> used only in
+  the narrow convolution→ReLU case.</li>
+<li><a href="../papers/deepprove.html">DeepProve</a> — <strong>delayed requantization</strong>: fuse the non-linearity with the requantization that
+  follows it and prove both in one lookup.</li>
+<li><a href="../papers/jolt-atlas.html">Jolt Atlas</a> — accumulate in <strong>i64</strong> across a node and rebase only at node boundaries, so
+  intermediate products never round at all.</li>
+</ul>
+<p>Same insight, three vocabularies: <em>minimize the number of seams.</em></p>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>Is bit width actually the expensive knob?</h5><p><a href="../papers/deepprove.html">DeepProve</a> reports that raising its bit width by four bits costs well under one percent of
+prover time, because the <em>number</em> of lookup tables barely changes. If the cost is the number of
+rounding <strong>seams</strong> rather than their <strong>width</strong>, then a decade of aggressive quantization has been
+optimizing the wrong variable — trading accuracy for a saving that was never there. This is
+directly testable and nobody has tested it.</p></div></div>
+
+<h2 id="softmax-is-the-worst-thing-in-the-building">Softmax is the worst thing in the building</h2>
+<p>$\text{softmax}(x)_i = e^{x_i} / \sum_j e^{x_j}$ is hostile to fixed point in three independent
+ways, and they map exactly onto the three things §"What a field refuses to give you" says are
+missing:</p>
+<ol>
+<li><strong>Unbounded dynamic range.</strong> $e^{20}\approx 4.9\times10^{8}$ and $e^{-20}\approx 2.1\times10^{-9}$
+   — seventeen orders of magnitude from a modest input range. That is what a float's exponent
+   field is <em>for</em>, and what fixed point cannot represent.</li>
+<li><strong>It needs a max-subtraction to be numerically stable</strong> ($e^{x_i - \max x}$). But $\max$ is a
+   <strong>comparison</strong>, and the field has no order — so numerical stability itself costs range checks.</li>
+<li><strong>It ends in a division</strong> by the sum, on a value whose magnitude you do not know in advance.</li>
+</ol>
+<p>Range, order, and division: softmax hits all three weaknesses at once. So it is unsurprising that
+it is where every system spends its cleverness — <a href="../papers/zkllm.html">zkLLM</a> builds a bespoke <code>zkAttn</code> to avoid
+bit-decomposing it; <a href="../papers/zkpytorch.html">zkPyTorch</a> gives up on arithmetic and looks $\exp$ up in a piecewise table;
+<a href="../papers/jolt-atlas.html">Jolt Atlas</a> runs a four-stage batched sumcheck with a one-hot <code>argmax</code>, an operand link, and a
+saturating clamp made unique by a complementary-slackness argument.</p>
+<p>And <a href="../papers/hao-et-al.html">Hao et al.</a> gives the cleanest measurement anyone has of what non-linear dynamic range
+costs, by benchmarking the operators standalone: softmax against ReLU, same system, same hardware.
+The gap between them — in both proving time and proof size — is the price of the exponent field,
+and it is not a small gap. RMSNorm/LayerNorm is the same story in miniature: a sum of squares
+(magnitude grows quadratically) followed by a reciprocal square root (both ends of the range at
+once).</p>
+<p><strong>The map of "hard to quantize" and the map of "expensive to prove" are the same map.</strong> That is
+not a coincidence — both are measuring dynamic range.</p>
+<h3 id="why-softmax-is-unquantizable-by-construction">Why softmax is unquantizable <em>by construction</em></h3>
+<p>There is a deeper reason than "exp has a big range", and it is the most elegant fact I found while
+writing this page. Bondarenko et al. (<em><a href="https://arxiv.org/abs/2306.12929">Quantizable
+Transformers</a></em>) point out that an attention head often wants to
+emit a <strong>no-op</strong> — to attend to nothing. But softmax can never output exactly zero:</p>
+<blockquote>
+<p>$\text{softmax}(x)_i = 0$ would require an infinite dynamic range.</p>
+</blockquote>
+<p>So to approximate "attend to nothing", training drives the losing logits <em>apart without bound</em>. The
+network manufactures enormous activations because the only way to express zero attention is to push
+a logit toward $-\infty$. <strong>The outliers are not a defect of the model. They are softmax's boundary
+condition, made of activations.</strong></p>
+<p>That single observation ties the whole page together. The outliers of §"the statement is
+conditional" (which threaten field overflow), the dynamic range of §1 (which forced BF16), and the
+expense of softmax in every prover here are <em>the same phenomenon</em>, seen from three angles. And it
+is empirically load-bearing: Bondarenko et al. report a vanilla BERT-base whose maximum activation
+infinity-norm is ~735, and which is <strong>destroyed</strong> by W8A8 quantization (perplexity in the
+thousands). Swap in a <em>clipped</em> softmax that <strong>can</strong> emit exact zeros, and the infinity-norm falls
+to ~21 and W8A8 perplexity lands at ~4.5 — a working model.</p>
+<p>The industry's own carve-outs confirm the diagnosis from the other side. SmoothQuant quantizes the
+linear layers and attention BMMs to INT8 and explicitly keeps <strong>Softmax, LayerNorm and the residual
+connections in FP16</strong>. DeepSeek-V3 — the largest publicly documented FP8 training run — puts all
+three Linear GEMMs in FP8 but keeps the <strong>normalization operators and attention operators</strong> in
+BF16/FP32. It also found its hardware's FP8 accumulation retained only ~14 bits of the partial sum,
+and had to promote to FP32 every 128 elements to stay correct.</p>
+<p><strong>The parts of a transformer that industry refuses to put in 8 bits are exactly the parts zkML
+must put in a lookup table.</strong> Both are paying for the same missing exponent field.</p>
+<h2 id="overflow-proving-the-wrong-statement-correctly">Overflow: proving the wrong statement, correctly</h2>
+<p>Return to the field's silent failure mode, because it deserves its own section.</p>
+<p><strong>If an accumulator exceeds $p$, the arithmetic wraps — and the prover then produces a completely
+valid proof of the wrapped result.</strong> The proof is not lying. The circuit really did compute what
+the proof says. It is just that the circuit computes in $\mathbb{Z}/p\mathbb{Z}$ and you <em>thought</em>
+it was computing in $\mathbb{Z}$.</p>
+<p>This is a <strong>semantic</strong> gap, not a cryptographic one, and that makes it nastier: no amount of
+soundness analysis of the argument system will catch it. The proof system is working perfectly.
+The <em>encoding</em> is what broke.</p>
+<p>There are three postures, and the literature takes all three:</p>
+<ol>
+<li><strong>Prove it cannot happen.</strong> Range-check every intermediate. Correct, and expensive.</li>
+<li><strong>Argue it cannot happen, offline.</strong> <a href="../papers/zkpytorch.html">zkPyTorch</a> runs a calibration phase that estimates
+   value ranges and checks the chosen bit width avoids intermediate overflow. <a href="../papers/safetynets.html">SafetyNets</a> does
+   the analytic version — it derives the largest representable value for its Mersenne prime and
+   <em>rules out</em> scaling factors that would exceed it. Sound <strong>iff</strong> the calibration set covers the
+   true input distribution: an ML assumption doing cryptographic work.</li>
+<li><strong>Assume it away.</strong> Which is what most of the field did.</li>
+</ol>
+<p>That last posture is not my characterization — it is <a href="../papers/deepprove.html">DeepProve</a>'s. Its actual contribution in
+§4.3.2 is <em>Case 2</em>: proving requantization when the input is <strong>out</strong> of range, via lookup tables
+that emit $-1/0/+1$ to detect and correct overflowing elements. It introduces this by observing
+that the in-range case is</p>
+<blockquote class="q"><p>the only scenario considered by prior works</p><cite><b>DeepProve</b> · §4.3.2, Case 1</cite></blockquote>
+
+<p>— citing <a href="../papers/zkllm.html">zkLLM</a> and <a href="../papers/zkgpt.html">zkGPT</a>, which is accurate: those two do assume it.</p>
+<p>But <strong>DeepProve is the only <em>paper</em> to give an explicit out-of-range protocol, not the only
+<em>system</em> to have one.</strong> <a href="../papers/jolt-atlas.html">Jolt Atlas</a> arrives at the same place by a different route, and only its
+source code says so: a saturating clamp (<code>SatClamp</code>, materializing an <code>i64</code> accumulator clamped to
+<code>i32</code>) discharged by a prefix-suffix Shout sumcheck and <strong>fused into the same rebase seam as the
+rescale</strong> — the seam-minimization principle of the previous section, applied to overflow. Its paper
+never mentions this.</p>
+<p>The two mechanisms are genuinely different, and the difference is worth naming: DeepProve <em>detects</em>
+out-of-range with a proven predicate (a zero-detector table and a sign-extractor table, blended to
+$\pm 2^{q-1}$); Jolt Atlas <em>saturates unconditionally</em> with a single clamp lookup. <strong>A proven
+predicate versus a proven function.</strong> Both are real out-of-range handling.</p>
+<p>Jolt's coverage is also partial, and in the places that matter for an auditor: in ZK mode <code>Add</code>,
+<code>Sub</code> and <code>Sum</code> are proved <em>un-clamped</em>; the standalone ONNX <code>Clamp</code> operator is an unproven
+passthrough (<code>// TODO: Clamp</code>); and the <code>tanh</code>/<code>erf</code>/<code>sigmoid</code> clamps are prover-side <code>assert!</code>s
+over unconstrained advice. A <code>debug_assert</code> is not a constraint.</p>
+<div class="audit"><span class="audit-h">The statement is conditional, and the condition is unproven</span><p>For most of zkML's history the systems have proved: <em>"the network was evaluated correctly,
+</em><em>assuming</em><em> no intermediate value ever left its expected range"</em> — and have not proved the
+assumption.</p>
+<p>That would be a footnote if out-of-range activations were a rare accident. <strong>They are not.</strong></p>
+<p>Dettmers et al.'s LLM.int8() work characterizes them precisely: transformers undergo a <em>phase
+transition</em> at around the 6.7B-parameter scale, after which the same outlier appears in <strong>all
+layers, in the same feature dimension</strong>, for roughly 75% of sequence positions. Those outliers run
+<strong>3–20× larger</strong> than the largest magnitude in any other feature dimension (which typically sit in
+$[-3.5, 3.5]$). They are ~0.1% of features — in a 6.7B model, on the order of 150,000 outliers per
+sequence, concentrated in about <strong>six feature dimensions</strong>. And the trigger is <em>perplexity</em>, not
+parameter count: it is a property of how good the model is, not how big.</p>
+<p>So the hazard is <strong>structural, not statistical</strong>. It is systematic, it is concentrated, it lives in
+known dimensions, and it is exactly what <a href="../papers/deepprove.html">DeepProve</a>'s rotation trick and every SmoothQuant-style
+method exist to fight. A calibration range estimated on benign data is being asked to hold against
+an input the <em>prover</em> chose.</p>
+<p>So the question for any system here: <strong>can an adversarially chosen input drive an accumulator past
+the modulus, and yield a valid proof of a wrong inference?</strong> As far as I can tell this is
+unanalyzed everywhere. DeepProve and Jolt Atlas both <em>bound</em> the accumulator — one by a proven
+predicate, one by a saturating clamp — but neither asks whether a chosen input can drive a value
+past the modulus in the first place, and the rest of the field does not bound it at all. It pairs
+naturally with the
+Fiat–Shamir question — both are cases where the proof is fine and the
+<em>statement being proved</em> is not the one anybody thinks it is.</p></div>
+
+<h2 id="so-can-we-just-use-floats">So can we just use floats?</h2>
+<p>Every paper in this section says no, in a tone suggesting it is settled. <strong>It is not settled, and
+the folklore is wrong.</strong> This is the part of the document I would most want a reader to take away,
+because the entire literature is organized around a premise that two papers outside it have
+already falsified.</p>
+<h3 id="why-the-naive-answer-is-no">Why the naive answer is "no"</h3>
+<p>Floats are expensive because IEEE-754 is <em>an algorithm, not an operation</em>: align exponents, add
+mantissas, renormalize, round, handle subnormals, handle NaN and $\pm\infty$. Every step is
+data-dependent branching, and branching in a circuit means evaluating <strong>all</strong> branches and
+selecting — bit decomposition, comparisons, shifts.</p>
+<p>Two independent primary sources agree on what that costs, and they agree with each other exactly.
+Here is the comparison as <a href="../papers/zip.html">ZIP</a> compiles it, and as the ZKLP paper independently restates it:</p>
+<blockquote class="q"><p>Naively converting FP32 operations compliant to IEEE 754 requires 2456 and 8854 boolean gates for
+addition and multiplication [22]. FP64 addition and multiplication require 15637 and 44899 boolean
+gates respectively [21].</p><cite><b>ZKLP (Ernstberger et al.)</b> · §6, Comparison With Other Works</cite></blockquote>
+
+<div class="debate"><h4>The number the field leans on deserves an asterisk</h4><p>We traced those double-precision figures back to their source, <a href="../papers/archer-ieee.html">Archer et al. (IEEE cost)</a>, and they check out
+arithmetically — but they are the <em>most generous</em> of several defensible numbers. Archer's table
+reports the FP64 circuits by gate type: addition is 5,385 AND + 8,190 XOR + 2,062 INV; multiply is
+19,626 AND + 21,947 XOR + 3,326 INV. Sum each row and you get exactly the 15,637 and 44,899 that
+ZIP and ZKLP quote.</p>
+<p>But in most MPC and ZK settings <strong>the AND gates are what cost</strong>, and XOR is cheap or free — so the
+load-bearing figures are 5,385 and 19,626, two to three times smaller. Archer et al. go further
+and say that for their engine "the dominant cost is not the number of AND gates but the <em>depth</em>".</p>
+<p>So the citation chain runs: an MPC paper's total-gate column → quoted as "gates" by two ZK papers →
+absorbed by the zkML literature as proof that floats are hopeless. The conclusion still holds
+(19,626 AND gates is enormous next to a field multiply). But this is a number that has been
+travelling for years without anyone opening the table it came from.</p></div>
+
+<p>Compose that up to a real activation and it gets ugly. <a href="../papers/zip.html">ZIP</a> estimates a <strong>single GeLU</strong> under
+true IEEE-754 semantics — those primitives plus $\sqrt{\cdot}$ and $\tanh$ — at roughly <strong>1.3
+million R1CS constraints in single precision and 6.8 million in double.</strong> For one activation, on
+one scalar. GPT-2 evaluates a GeLU on every one of its 3,072 MLP hidden units in each of its 12
+layers — roughly $4\times10^4$ of them per token, before a single matmul is proven.</p>
+<p>That is the number the whole field is quietly reasoning from, and it <em>is</em> hopeless. But it is the
+cost of <strong>naive</strong> emulation — transliterating a software float routine into gates. It was never a
+lower bound, and two lines of work have since beaten it, in two completely different ways.</p>
+<h3 id="camp-1-relax-the-semantics-garg-et-al-ccs-22">Camp 1: relax the semantics (Garg et al., CCS '22)</h3>
+<p><a href="../papers/garg-fp.html">Garg et al. (FP)</a> (<em>Succinct Zero Knowledge for Floating Point Computations</em>) makes the
+observation that you do not actually need to prove the IEEE rounding <em>procedure</em>. You need to
+prove the result is <strong>accurate</strong>. So instead of arithmetising round-to-nearest, prove a
+relative-error bound on each gate:</p>
+<p>$$|c - g(a,b)| \le \delta\,|g(a,b)|$$</p>
+<p>where $g$ is the exact product or sum, and $\delta$ can be set to machine epsilon — <em>"the relative
+error bound in the IEEE standard."</em> Zeros, infinities and NaN are handled as separate corner
+cases. The paper is candid that this is a <strong>deviation</strong>, not a compliance:</p>
+<blockquote class="q"><p>our model does not guarantee that the value in the output wire of a step of the computation is
+rounded to the nearest number (as is done in the IEEE standard). Instead, our model allows a
+larger (by a factor of 2 in some cases) absolute error.</p><cite><b>Garg et al., CCS &#x27;22</b> · §2, Our Model</cite></blockquote>
+
+<p>It buys roughly <strong>57× on the prover for FP32 and 236× for FP64</strong> against exact-IEEE verification.</p>
+<p><strong>And that is precisely <a href="../papers/zip.html">ZIP</a>'s technique, one level up.</strong> ZIP applies the same relative-error
+relation not to individual float gates but to whole <em>activations</em> — cite-for-cite, it is Garg's
+numerical-analysis machinery reused at the layer level. Which reframes ZIP: it is not a
+"native IEEE-754" system in the sense a reader assumes. It is a <strong>relative-error</strong> system whose
+honest prover happens to compute in double. That is exactly the gap the audit box below is about,
+and now we can see it is inherited, not invented.</p>
+<h3 id="camp-2-keep-the-semantics-optimize-the-circuit-zklp">Camp 2: keep the semantics, optimize the circuit (ZKLP)</h3>
+<p>The other camp refuses the trade, and this is the result that should change how this section is
+written.</p>
+<p><a href="../papers/zklp.html">ZKLP</a> (<em>Zero-Knowledge Location Privacy via Accurate Floating-Point SNARKs</em>) builds
+floating-point circuits that are <strong>fully compliant with IEEE 754</strong> —
+validated against the Berkeley TestFloat conformance suite, subnormals and all — by expressing the
+awkward parts as <strong>lookups</strong> (LogUp, in gnark) rather than as gates. Because the lookup tables are
+shared across operations, the cost <em>amortizes</em>:</p>
+<blockquote class="q"><p>The extensive use of lookups leads to amortization — 2¹ single precision floating point (FP32)
+multiplications require 209 constraints, whereas 2¹⁵ FP32 multiplications require 64 constraints
+per operation.</p><cite><b>ZKLP (Ernstberger et al.)</b> · §1, Introduction</cite></blockquote>
+
+<p><strong>Sixty-four constraints for a bit-exact IEEE-754 single-precision multiply.</strong> Against 8,854
+Boolean gates for the naive version of the same operation. The "floats are infeasible" premise
+does not survive that sentence.</p>
+<p>And it gets sharper. ZKLP compares its float circuits not against other float circuits but against
+<em>fixed point</em> — and finds fixed point <strong>losing</strong>, by 15.9× in constraints for single precision and
+12.2× for double, because achieving comparable accuracy in fixed point demands so many bits. In
+that application, <strong>floating point is the cheaper circuit.</strong> The core trade of this whole document
+— "give up dynamic range, buy cheap arithmetic" — is not a law. It is a bet that can go the other
+way.</p>
+<p>ZKLP also makes the soundness argument I make in the overflow section above, and makes it harder:</p>
+<blockquote class="q"><p>with randomly generated test cases, fixed-point representation fails some tests whereas
+floating-point passes all. Even worse, this inconsistency can be exploited by adversaries to
+generate valid proofs for maliciously crafted statements, thereby breaking the soundness</p><cite><b>ZKLP (Ernstberger et al.)</b> · §1, Introduction</cite></blockquote>
+
+<p>That is not a precision complaint. That is: <strong>the fixed-point/float mismatch is an exploitable
+soundness gap</strong>, said out loud, by people who went looking.</p>
+<div class="debate"><h4>Is the field&#x27;s founding premise just wrong?</h4><p>Every zkML paper in this section justifies quantization by asserting that native floating point is
+infeasible in a circuit. That assertion is sourced, when it is sourced at all, to the <em>naive</em>
+gate-count — and it has been repeated across the literature for years without being rechecked.</p>
+<p>The oldest instance of it in this repo is the 2023 <a href="../papers/modulus-cost-of-intelligence.html">The Cost of Intelligence</a> report, which
+states the "fundamental incompatibility" of floats with a finite field as flat assertion — no
+citation, no measurement — and it has been passed down ever since. Worth noting too that Modulus's
+own field choice was <strong>not</strong> precision-driven at all: it picks Goldilocks because "elements within
+the Goldilocks field can be represented in 64 bits, resulting in faster arithmetic operations on
+standard hardware." The tidy <em>precision → bit width → field size</em> story that <a href="../papers/zkpytorch.html">zkPyTorch</a> tells
+(and that this page opened with) is a <strong>later rationalization</strong>. Historically, people picked the
+fast field and quantized to fit it.</p>
+<p>Two papers outside the zkML bubble have now beaten it: one by relaxing IEEE semantics to a
+relative-error bound, one by keeping full IEEE compliance and moving the work into lookup
+arguments. <strong>Not one system that proves a transformer cites either of them.</strong> <a href="../papers/range-arithmetic.html">Range-Arithmetic</a>
+lists <a href="../papers/garg-fp.html">Garg et al. (FP)</a> in its reference section without engaging with it, and that is the whole of the
+contact — <a href="../papers/deepprove.html">DeepProve</a>, <a href="../papers/zkgpt.html">zkGPT</a>, <a href="../papers/zkllm.html">zkLLM</a>, <a href="../papers/zkpytorch.html">zkPyTorch</a>, <a href="../papers/jolt-atlas.html">Jolt Atlas</a> and <a href="../papers/zip.html">ZIP</a> do not
+mention this line at all. See <a href="../numerics/bridge.html">the bridge</a> for the shape of the gap, which is stranger
+than a simple absence.</p>
+<p><strong>The honest position is not "zkML should use floats."</strong> For an LLM's <em>matmuls</em>, integer
+sum-check remains overwhelmingly cheaper — 64 constraints per multiply is wonderful next to 8,854
+and terrible next to a sum-check that proves a whole matrix product almost for free. The claim
+that survives is narrower and more useful: <strong>for the non-linear operators and the
+precision-critical seams — exactly the places this document has shown the cost actually lives —
+"floats are infeasible" is an inherited assumption that nobody in zkML has retested against the
+current state of the art.</strong> Somebody should.</p></div>
+
+<h3 id="zip-high-precision-without-paying-for-it">ZIP: high precision without paying for it</h3>
+<p><a href="../papers/zip.html">ZIP</a> (CCS '25) is the counter-thesis, and its trick is worth understanding exactly:</p>
+<ol>
+<li><strong>Offline</strong>, approximate the activation by a piecewise polynomial — GeLU gets 8 pieces of
+   degree 10 — and store the coefficients in a lookup table of just <strong>70 entries</strong>.</li>
+<li><strong>Online</strong>, the prover computes the activation <em>exactly, in IEEE-754 double</em>, and feeds <strong>that
+   exact value</strong> forward. The polynomial output is never used downstream — which is what stops
+   approximation error from compounding across depth. This is the key move.</li>
+<li><strong>Prove</strong> two things: that the correct, correctly-<em>ordered</em> block of coefficients was selected
+   (an extended Caulk lookup plus a private-interval range proof), and an <strong>approximation-soundness
+   relation</strong> binding the exact value $y$ to the polynomial $f(y')$:</li>
+</ol>
+<p>$$|y - f(y')| \;\le\; \delta\,|f(y')|$$</p>
+<p>enforced division-free by witnessing $l_1 = y - f(y')$, $l_2 = \delta f(y')$ and
+$z_3 = (l_1+l_2)(l_2-l_1)$, then proving $z_3 \ge 0$ — i.e. $l_1^2 \le l_2^2$. Non-negativity of a
+float is just "sign bit is zero or mantissa is zero", which is nearly free.</p>
+<p>The result: GeLU drops from ~6.8 million constraints to <strong>5,830</strong>, while the value flowing through
+the network is a genuine double. The cost of an activation is now decoupled from the <em>complexity</em>
+of that activation, which is why it generalizes to SeLU and ELU with no redesign. <strong>Quantization
+is a design choice made to fit the prover, not a law of nature.</strong></p>
+<h3 id="but-read-the-guarantee-carefully">But read the guarantee carefully</h3>
+<div class="audit"><span class="audit-h">ZIP proves a ball, not a value</span><p><strong>ZIP does not prove that $y$ is the correct IEEE-754 activation of $y'$.</strong> $y$ is a <em>witness</em>, and
+the only constraint binding it is the relative-error inequality above. What the proof establishes
+is that $y$ lies within a <strong>$\delta$-relative ball</strong> around a certified polynomial approximation of
+the true activation. An honest prover puts the exact double in that ball. A <strong>malicious</strong> prover
+may put anything in it.</p>
+<p>And the ball is not tight. ZIP's own experimental parameters: $\delta = 9\times10^{-4}$ for SeLU
+and ELU — but $\delta = 9\times10^{-2}$ for <strong>GeLU</strong>, its flagship. That is a <strong>9% per-activation
+relative-error budget available to an adversary.</strong> For comparison, bfloat16 — the "imprecise"
+format from the top of this page — has a machine epsilon of $\approx 7.8\times10^{-3}$, <em>an order
+of magnitude tighter</em> than the slack ZIP's GeLU proof permits.</p>
+<p><strong>A paper headlined "double precision" has, on its flagship activation, a soundness guarantee
+looser than bf16.</strong></p>
+<p>The comparison that sharpens this: ZIP's relative-error relation is <strong>Garg et al.'s</strong>, and Garg et
+al. set $\delta$ to <em>machine epsilon</em> — the tightest value the model admits, chosen precisely so
+the relaxation is invisible. ZIP inherits the machinery but not the parameter. Its $\delta$ is a
+piecewise-polynomial <em>approximation</em> bound, which is a different quantity from a per-gate rounding
+bound and legitimately larger — but the soundness consequence is identical in form and vastly
+larger in size.</p>
+<p>In fairness: this is not a bug, and the authors do not hide it. Their soundness theorem is stated
+with respect to $\hat{F}$ — the <em>approximated</em> network — and is honestly proved. The gap is between
+the colloquial claim ("IEEE-754-compliant inference") and what the constraint system enforces. The
+precision is a property of <strong>what the honest server computes</strong>, not of <strong>what the proof enforces</strong>,
+and a reader will not necessarily catch the difference.</p>
+<p>And it is not only the activations. ZIP's <strong>linear</strong> layers are not exactly bound either, in the
+configuration whose timings it advertises: they are checked by a randomized (Freivalds-style)
+linear combination <em>with a relative tolerance</em> to absorb IEEE-754 rounding. The paper is open that
+this is what buys the speed — proving "without RLC and thus preserving full numerical precision"
+takes roughly <strong>two to three times longer</strong> than the headline figures. So the advertised
+configuration is tolerance-bounded end to end: approximate activations <em>and</em> approximate linear
+layers.</p>
+<p>Whether the slack is <em>exploitable</em> — whether an adversary can steer a classification by nudging
+each activation within its ball, and whether the error compounds or cancels across layers — is
+<strong>not analyzed in the paper</strong>. It is an excellent research question, and it is the numerics
+analogue of the Fiat–Shamir situation: the cryptography is sound; the question is what statement
+it is sound <em>about</em>.</p></div>
+
+<h3 id="the-honest-summary">The honest summary</h3>
+<p>Four positions, and the field only knows about one of them:</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>What it proves</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Naive IEEE-754 emulation</strong></td>
+<td>bit-exact IEEE, incl. rounding</td>
+<td>~$10^6$ constraints/activation. Hopeless.</td>
+</tr>
+<tr>
+<td><strong>Relative-error floats</strong> (<a href="../papers/garg-fp.html">Garg et al. (FP)</a>)</td>
+<td>result within $\delta$ of exact; $\delta$ = machine epsilon</td>
+<td>~57×/236× better than naive (FP32/FP64)</td>
+</tr>
+<tr>
+<td><strong>Lookup-based exact floats</strong> (<a href="../papers/zklp.html">ZKLP</a>)</td>
+<td><strong>bit-exact IEEE, TestFloat-validated</strong></td>
+<td><strong>~64 constraints per FP32 multiply, amortized</strong></td>
+</tr>
+<tr>
+<td><strong>Integer quantization</strong></td>
+<td>the <em>quantized</em> network, assuming no overflow</td>
+<td>what everyone ships; cost moves into range checks</td>
+</tr>
+</tbody>
+</table>
+<p>The cost of floats did not disappear — it <strong>moved</strong>, exactly as the cost of quantization moved.
+Quantization pushed the bill from the arithmetic into the range checks at every rounding seam.
+Lookup-based float arithmetic pushes it into a shared table that amortizes. <strong>Neither is free;
+both are affordable; and only one of them is in this literature.</strong></p>
+<p><strong>"Floats are infeasible in a circuit" is no longer true, and the zkML literature has not
+noticed.</strong></p>
+<h2 id="the-design-space">The design space</h2>
+<p>Everything above collapses to five independent choices:</p>
+<ol>
+<li><strong>Where do you put the dynamic range?</strong> An exponent field (expensive per op), extra mantissa
+   bits (forces a big field), or nowhere and trust calibration (what everyone does).</li>
+<li><strong>How do you kill the arbitrary float scale?</strong> Integer multiplier + power-of-two shift
+   (<a href="../papers/deepprove.html">DeepProve</a>), or rational approximation + inequality (<a href="../papers/zkgpt.html">zkGPT</a>). Neither needs a division.</li>
+<li><strong>How often do you round?</strong> The actual cost driver. Fuse aggressively.</li>
+<li><strong>How do you get non-linearity?</strong> Lookup table (<a href="../papers/zkpytorch.html">zkPyTorch</a>, <a href="../papers/zkllm.html">zkLLM</a>, <a href="../papers/jolt-atlas.html">Jolt Atlas</a>),
+   polynomial approximation (<a href="../papers/zip.html">ZIP</a>), or restrict the model so you don't need one
+   (<a href="../papers/safetynets.html">SafetyNets</a>' quadratics).</li>
+<li><strong>Do you prove range, argue range, or assume range?</strong> Most of the field assumes. That is where
+   the bodies are buried.</li>
+</ol>
+<p>And one closing observation. <a href="../papers/safetynets.html">SafetyNets</a> — the oldest system here — has <strong>no rescale seam at
+all</strong>: quadratic activations are polynomial, so the whole network is one arithmetic circuit with
+no rounding anywhere. Its prover overhead over unverified execution is a few percent. Everything
+that came after pays three to six orders of magnitude more. That gap is not only the price of
+zero-knowledge and commitments, which SafetyNets does not provide. <strong>A large part of it is simply
+the price of rounding</strong> — the cost of insisting the model may be an arbitrary network rather than
+one the prover got to choose.</p>
+<h2 id="why-zk-cannot-borrow-mpc-s-shortcut">Why ZK cannot borrow MPC's shortcut</h2>
+<p>One more thing worth settling, because it looks like free money and is not.</p>
+<p>MPC has been rescaling fixed-point values for a decade, and it has a much cheaper trick: the
+<strong>probabilistic truncation</strong> of SecureML and ABY3, which is non-interactive and therefore far
+faster than an exact protocol. The obvious question is why ZK does not simply adopt it — especially
+since, as <a href="../numerics/bridge.html">the bridge</a> shows, ZK has <em>already</em> adopted plenty of other MPC numerics
+without saying so.</p>
+<p>The answer is in its failure mode, and it is not the one people assume. Probabilistic truncation
+is not "occasionally off by one". When it fails, it fails <em>badly</em> — a wraparound producing, as
+<a href="../papers/prob-truncation.html">Probabilistic truncation in PPML</a>'s analysis of these protocols puts it, <strong>"a large error"</strong> — with some small
+probability per operation.</p>
+<p>In MPC's usual threat model, a rare large error is an <em>accuracy</em> problem: it degrades the model,
+you bound the probability, you move on. <strong>In ZK it is a soundness problem</strong>, and a much worse one,
+because the prover is adversarial and gets to <em>choose the inputs</em>. A failure mode that occurs with
+small probability on random data is not rare at all when someone is hunting for it. Every
+structural advantage MPC gets from accepting a small error probability, ZK must forfeit — the
+adversary would simply steer into it.</p>
+<p>This is the cleanest illustration of the theme running through this whole page: <strong>the same
+arithmetic problem has different answers under different threat models</strong>, and numerics techniques
+do not transfer across that boundary for free.</p>
+<p>But do not over-read it. This is an argument about <em>one</em> technique, not a licence for the two
+columns to ignore each other — and the <a href="../numerics/bridge.html">bridge</a> page shows that the ones who bothered to
+look transferred a great deal. <a href="../papers/hao-et-al.html">Hao et al.</a> proves exponentials and reciprocal square roots in ZK
+using SIRNN's digit decomposition, SIRNN's Goldschmidt iteration, and SIRNN's parameter settings.
+Probabilistic truncation is the <em>exception</em> that the threat model forbids; it has been mistaken for
+the rule.</p>
+<h2 id="open-questions">Open questions</h2>
+<p>Ranked by how much I would want the answer.</p>
+<ol>
+<li><strong>Is bit width actually the expensive knob, or is it the number of seams?</strong> <a href="../papers/deepprove.html">DeepProve</a>'s
+   near-free precision increase says cost tracks the <em>count</em> of rounding seams, not their <em>width</em>.
+   If that generalizes, the field has been trading accuracy for a saving that was never there.
+   Directly testable, and the highest-value experiment here.</li>
+<li><strong>Can an adversarial input force an overflow?</strong> Most systems prove correctness <em>conditional on</em>
+   intermediates staying in range and never prove the condition. Outliers in transformers are
+   emergent and documented, not accidental. <a href="../papers/deepprove.html">DeepProve</a> and <a href="../papers/jolt-atlas.html">Jolt Atlas</a> at least <em>bound</em> the
+   accumulator; nobody asks whether an adversary can <em>reach</em> the bound.</li>
+<li><strong>Is <a href="../papers/zip.html">ZIP</a>'s $\delta$-ball exploitable?</strong> Nine percent of relative slack per GeLU, and no
+   analysis of whether it compounds or cancels across layers.</li>
+<li><strong>Has anyone retested "floats are infeasible" since <a href="../papers/zklp.html">ZKLP</a>?</strong> A bit-exact FP32 multiply for a
+   few dozen amortized constraints is a different world from the naive gate count the literature
+   still cites. No system that proves a transformer cites either float-SNARK line.</li>
+</ol>
+<div class="gap"><span class="gm">gap</span><div class="gap-body"><h5>It is not a third island — it is the seabed</h5><p>The obvious way to write this up is: <em>the zkML and MPC clusters are disconnected, and the
+float-in-ZK line is a third island adjacent to both and read by neither.</em> That is what we believed
+before the graph was rebuilt, and it is wrong.</p>
+<p>The numerics layer is not a third cluster. <strong>It is the one place the other two touch.</strong> All three
+nodes that both columns cite — SIRNN, Cheetah, and <a href="../papers/secfloat.html">SecFloat</a> — are MPC numerics primitives, and
+the ZK papers that reach for them are precisely the ones whose subject matter <em>is</em> arithmetic
+(<a href="../papers/garg-fp.html">Garg et al. (FP)</a>, <a href="../papers/zklp.html">ZKLP</a>), or whose engine is an MPC protocol (<a href="../papers/zkpot-garg.html">zkPoT (Garg et al.)</a>), or which prove
+operators rather than models (<a href="../papers/hao-et-al.html">Hao et al.</a>).</p>
+<p>What survives, and is worse than the island story: <strong>the borrowing happens entirely at the edges.</strong>
+Every system at the centre of the verifiability column — <a href="../papers/deepprove.html">DeepProve</a>, <a href="../papers/zkgpt.html">zkGPT</a>, <a href="../papers/zkllm.html">zkLLM</a>,
+<a href="../papers/zkpytorch.html">zkPyTorch</a>, <a href="../papers/jolt-atlas.html">Jolt Atlas</a>, <a href="../papers/zip.html">ZIP</a> — reaches into none of it, and justifies quantization with a
+claim about floating point that the floating-point specialists refuted years ago, in papers two
+citations away from work it already cites. The bridge exists. Nobody in the middle walks it.
+<a href="../numerics/bridge.html">Full argument, with the caveats it needs</a>.</p></div></div></div><div class="pager"><a href="../federated/systems.html">← previous<span>What each system actually proves</span></a><a class="next" href="../numerics/bridge.html">next →<span>The bridge nobody crosses</span></a></div></div></main>
+</div>
+<script src="../vendor/katex/katex.min.js"></script>
+<script src="../vendor/katex/contrib/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{delimiters:[
+  {left:"$$",right:"$$",display:true},
+  {left:"$",right:"$",display:false},
+  {left:"\\[",right:"\\]",display:true},
+  {left:"\\(",right:"\\)",display:false}],throwOnError:false});
+document.getElementById('burger').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+const f=document.getElementById('filter');
+f.oninput=()=>{
+  const q=f.value.toLowerCase().trim();
+  document.querySelectorAll('#nav a.nav').forEach(a=>{
+    a.classList.toggle('nav-hidden', !!q && !a.textContent.toLowerCase().includes(q));
+  });
+  document.querySelectorAll('#nav .navgroup').forEach(g=>{
+    let n=g.nextElementSibling, any=false;
+    while(n && !n.classList.contains('navgroup')){
+      if(n.classList.contains('nav') && !n.classList.contains('nav-hidden')) any=true;
+      n=n.nextElementSibling;
+    }
+    g.classList.toggle('nav-hidden', !!q && !any);
+  });
+};
+const t=document.getElementById('ptable-filter');
+if(t){t.oninput=()=>{
+  const q=t.value.toLowerCase().trim(); let n=0;
+  document.querySelectorAll('#ptable tbody tr').forEach(r=>{
+    const hit=!q||r.textContent.toLowerCase().includes(q);
+    r.classList.toggle('filtered',!hit); if(hit)n++;
+  });
+  document.getElementById('ptable-count').textContent=n+' shown';
+};}
+</script>
+</body>
+</html>
