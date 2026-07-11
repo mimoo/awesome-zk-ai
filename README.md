@@ -513,6 +513,103 @@ soundness/efficiency trade a deliberate design point, not an oversight.
 
 ---
 
+## Secure / private inference on transformers (2PC · MPC · HE)
+
+A **whole separate line** from everything above, and the easiest to confuse with it. These
+systems answer a different question: not *"prove the model ran correctly"* but *"run the model
+without either party seeing the other's secret."* A **client** holds the input, a **server**
+holds the weights, and they jointly compute inference so the prompt stays hidden from the
+server and the weights stay hidden from the client — using homomorphic encryption + secret
+sharing + oblivious transfer. It's the inference analog of [PriFT](#training-without-zk-proofs-adjacent-trust-models).
+
+**Three things make it orthogonal to the zkML atlas:**
+
+| | zkML (the atlas) | Secure inference (this line) |
+|---|---|---|
+| Guarantee | **Correctness** (a proof) | **Privacy** during computation |
+| Threat model | malicious prover | **semi-honest** counterparty — a malicious party can still compute the *wrong* function |
+| Bottleneck | prover compute / memory; cheap non-interactive verify | **communication** — hundreds of GB over many interactive rounds |
+| Scale reached | 8–13B | **BERT-class (~110M)** — 2PC comm cost caps it far lower |
+
+The anchor number that captures the whole line: **Iron needs 280.99 GB of communication and
+216 minutes for a single BERT-base (110M) inference** (reported by BOLT). No proof is produced;
+you can't hand the result to a third party and have them trust it.
+
+| System | Venue | Model | Approach | Result | PDF |
+|---|---|---|---|---|---|
+| [Iron](https://proceedings.neurips.cc/paper_files/paper/2022/hash/64e2449d74f84e5b1a5c96ba7b3d308e-Abstract-Conference.html) | NeurIPS '22 | BERT (Tiny–Large) | Hybrid HE/MPC; compact-packing HE matmul | 3–14× less comm than SIRNN | ✅ NeurIPS |
+| [CipherGPT](https://eprint.iacr.org/2023/1147) | ePrint '23 | **GPT** | sVOLE matmul + spline GELU + secure top-K sampling | 6.2× matmul, 1.8× GELU vs SOTA | ✅ read |
+| [BOLT](https://eprint.iacr.org/2023/1893) | IEEE S&P '24 | BERT-base | MPC + HE, ML-level opts | **10.91× less comm**, 4.8–9.5× faster than Iron | ✅ [encrypto.de](https://encrypto.de/papers/PZMZS24.pdf) |
+| [Nimbus](https://arxiv.org/abs/2411.15707) | NeurIPS '24 | BERT-base | Outer-product matmul encoding + input-distribution poly-approx | 2.7–4.7× over SOTA; 0.08% acc loss | ✅ arXiv |
+| [Bootstrapping…](https://eprint.iacr.org/2026/1255) | ePrint '26 | BERT | **FHE** (non-interactive, "NISTI") | 349.5 s, 16.1 MB / 256-batch | ✅ read |
+
+### Per system
+
+**[Iron](https://proceedings.neurips.cc/paper_files/paper/2022/hash/64e2449d74f84e5b1a5c96ba7b3d308e-Abstract-Conference.html)**
+— Hao, H. Li, H. Chen, Xing, Xu, T. Zhang (UESTC / NTU), NeurIPS '22. The paper that *started*
+private transformer inference. Hybrid HE/MPC: a custom HE matmul with a compact-packing trick
+(√m× less communication than Cheetah's matrix-vector approach, ~8× on transformers), and
+SIRNN-based OT protocols for Softmax/GELU/LayerNorm. Numerically precise, so it preserves
+plaintext accuracy, and it hides *every* layer's intermediates (unlike THE-X, which leaks
+non-linear-layer inputs to the client — Iron explicitly critiques that). It's also the
+reference the rest improve on: 280.99 GB / 216 min for one BERT-base inference.
+
+**[CipherGPT](https://eprint.iacr.org/2023/1147)** — Hou, J. Liu, J. Li, Y. Li, Lu, Hong, Ren
+(Zhejiang / Ant), ePrint '23. The **GPT** member, and the one that's genuinely interesting for
+*us*: it's the only paper in this line that tackles **autoregression and sampling**. Its sVOLE
+matmul is customized for generation — each response word is one inference producing an
+*unbalanced* matmul, and it combines them over subfield-VOLE. Its GELU is **spline-based** (one
+LUT to pick an interval, then a per-interval linear function), beating both the multi-step
+(Iron/SIRNN) and high-degree-polynomial (BOLT) approaches on precision (7.4×). And it gives the
+**first secure top-K *sampling* protocol**. That's the exact capability the zkML side lacks —
+recall [Jolt Atlas](./docs/index.html#/op/certify) proves a single forward pass with no decode
+or sampling, while CipherGPT builds bespoke 2PC protocols for word-by-word generation and
+stochastic top-K decode. 6.2× matmul speedup / 4.1× bandwidth over SOTA.
+
+**[BOLT](https://eprint.iacr.org/2023/1893)** — Pang, Zhu, Möllering, Zheng, Schneider (CMU /
+Berkeley / TU Darmstadt), IEEE S&P '24. MPC + HE with ML-level optimizations across matmul and
+the non-linears; **10.91× less communication and 4.8–9.5× faster than Iron**, comparable
+accuracy to float. [Open source](https://github.com/Clive2312/BOLT). It's the paper that pins
+the Iron anchor number quoted above.
+
+**[Nimbus](https://arxiv.org/abs/2411.15707)** — Z. Li, K. Yang, Tan, Lu, Wu, X. Wang, Yu, et
+al. (SJTU / Ant / Northwestern), NeurIPS '24. The freshest 2PC result. Two ideas: a new matmul
+encoding from an **outer-product insight** (2.9–12.5× over SOTA linear-layer protocols), and a
+**low-degree polynomial approximation for GELU/Softmax that exploits the observed input
+distribution** (2.9–4.0× over SOTA poly-approx, 0.08% accuracy loss). 2.7–4.7× end-to-end over
+SOTA on BERT-base.
+
+**[Bootstrapping is All You Need](https://eprint.iacr.org/2026/1255)** — Xiao, Ouyang, H. Zhang,
+J. Zhang, J. Liu (Zhejiang), ePrint '26 — **the one you first linked, and it's a different
+animal: FHE, not 2PC.** It calls the setting *NISTI* (Non-Interactive Secure Transformer
+Inference): the client encrypts under CKKS, the server evaluates on ciphertext, no interaction.
+Bootstrapping is the dominant cost (66.8% of runtime in the prior SOTA), so their *Functional
+Bootstrapping* fuses operations into each bootstrap step — including a **functional S2C** that
+folds linear layers (`y = xW + b`) into the slot-to-coefficient transform so they cost nothing
+separately — plus a trigonometric-minimax (Remez) approximation for better worst-case precision
+on non-linears. 349.5 s/query and **16.1 MB** (amortized over 256 inputs), 1.9× faster / 3× less
+comms than SOTA. That 16 MB — versus the 2PC systems' *hundreds of GB* — is the whole FHE trade:
+no interaction, paid for with heavy homomorphic compute. (Its benchmarked transformer uses DyT /
+Dynamic Tanh in place of LayerNorm.)
+
+**The cross-paradigm parallel worth keeping:** the *hard operators are the same in both worlds*.
+**Softmax, GELU, LayerNorm** are the expensive non-linears everywhere — costly lookups/range-
+checks in zkML, costly OT / polynomial-approximation / bootstrapping here — while matmul is
+"easy." Nimbus's input-distribution-aware poly-approx and CipherGPT's spline GELU are the MPC
+mirrors of the quantization and table-sizing tricks zkML uses on the very same operators.
+
+> **PDF availability (you asked):** all five are now read from primary PDFs. **Iron, BOLT,
+> Nimbus** came from open mirrors (NeurIPS / encrypto.de / arXiv). **CipherGPT** (eprint
+> 2023/1147) and **Bootstrapping** (eprint 2026/1255) were **eprint-Cloudflare-blocked to my
+> fetcher** — you dropped them into `~/Downloads` and I read them from there. Every entry is now
+> `pdf_available: true`, `numbers_source: primary`.
+
+None of this is in the interactive [operator atlas](./docs/index.html) — same reason as opML,
+TEEs and sampling: it's a different paradigm (privacy, not verifiable operators), so it has no
+per-operator column. It lives here and in `papers.yml` under `secure_inference_2pc`.
+
+---
+
 ## Surveys
 
 - **[A Survey of Zero-Knowledge Proof Based Verifiable Machine Learning](https://arxiv.org/abs/2502.18535)**

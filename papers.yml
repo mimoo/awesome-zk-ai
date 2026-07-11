@@ -1234,6 +1234,212 @@ private_training_no_proofs:
     authors_verified: false
 
 # ============================================================================
+# SECURE / PRIVATE INFERENCE ON TRANSFORMERS (2PC / MPC / HE) -- NOT verifiability
+#
+# A whole separate line from the zkML atlas. These systems let a CLIENT (holds the input)
+# and a SERVER (holds the model weights) jointly run inference so that neither learns the
+# other's secret -- the client's prompt stays hidden from the server, the weights stay hidden
+# from the client. The guarantee is PRIVACY DURING COMPUTATION, achieved with homomorphic
+# encryption + secret sharing + oblivious transfer. It is the INFERENCE analog of
+# private_training_no_proofs (PriFT).
+#
+# Orthogonal to everything else in this file, and easy to confuse:
+#   uses_zk: false               -- no proof is produced.
+#   verifiable: false            -- almost all are SEMI-HONEST (honest-but-curious). A
+#                                   malicious party can still compute the WRONG function; you
+#                                   get privacy, not correctness. (zkML gives correctness, not
+#                                   privacy-from-a-counterparty.)
+#   bottleneck: COMMUNICATION    -- the defining cost. Two parties exchange hundreds of GB over
+#                                   many interactive rounds. Iron needs 280.99 GB and 216 min
+#                                   for ONE BERT-base inference (per BOLT). Opposite profile to
+#                                   zkML (compute/memory-bound prover, cheap non-interactive
+#                                   verify).
+#   scale: BERT-class (~110M)    -- encoder models, not 8-13B. 2PC comm cost caps model size
+#                                   far below what zkML reaches. (CipherGPT does GPT-2-scale.)
+#
+# The genuinely useful cross-paradigm parallel: the HARD OPERATORS ARE THE SAME. Softmax,
+# GELU, LayerNorm are the expensive non-linears in BOTH worlds -- costly lookups/range-checks
+# in zkML, costly OT / polynomial-approximation protocols here. Matmul is "easy" in both.
+#
+# DO NOT plot these next to zkML: different guarantee (privacy vs correctness), different cost
+# axis (communication vs prover time), different threat model (semi-honest counterparty vs
+# malicious prover).
+# ============================================================================
+
+secure_inference_2pc:
+  - id: iron
+    name: Iron
+    title: "Iron: Private Inference on Transformers"
+    url: https://proceedings.neurips.cc/paper_files/paper/2022/hash/64e2449d74f84e5b1a5c96ba7b3d308e-Abstract-Conference.html
+    pdf: https://proceedings.neurips.cc/paper_files/paper/2022/file/64e2449d74f84e5b1a5c96ba7b3d308e-Paper-Conference.pdf
+    venue: NeurIPS 2022
+    date: 2022-11
+    year: 2022
+    authors: [Meng Hao, Hongwei Li, Hanxiao Chen, Pengzhi Xing, Guowen Xu, Tianwei Zhang]
+    authors_verified: true
+    affiliation: UESTC / Nanyang Technological University
+    uses_zk: false
+    verifiable: false
+    security_model: semi-honest 2PC (client-server)
+    approach: >-
+      Hybrid HE/MPC. Custom HE-based matmul with a compact packing technique (sqrt(m)x less
+      communication than Cheetah's matrix-vector approach, ~8x for transformers). Non-linear
+      Softmax / GELU / LayerNorm via SIRNN-based OT protocols with bespoke optimizations.
+    numbers_source: primary  # read the NeurIPS PDF, 2026-07-11
+    pdf_available: true  # NeurIPS proceedings mirror (eprint would be blocked)
+    benchmarks:
+      - models: [BERT-Tiny, BERT-Medium, BERT-Base, BERT-Large]
+        task: GLUE
+        vs_prior: "3-14x less communication, 3-11x less runtime vs SIRNN; up to 2 orders of magnitude vs MP-SPDZ"
+        accuracy: "numerically precise -- preserves plaintext model accuracy"
+    notes: >-
+      The paper that initiated private transformer inference. Hides intermediate results of ALL
+      layers (unlike THE-X, which leaks non-linear-layer inputs to the client). The reference
+      point the others improve on: BOLT reports Iron at 280.99 GB / 216 min for BERT-base.
+
+  - id: ciphergpt
+    name: CipherGPT
+    title: "CipherGPT: Secure Two-Party GPT Inference"
+    url: https://eprint.iacr.org/2023/1147
+    pdf: https://eprint.iacr.org/2023/1147.pdf
+    venue: IACR ePrint 2023/1147
+    date: 2023-07
+    year: 2023
+    authors: [Xiaoyang Hou, Jian Liu, Jingyu Li, Yuhan Li, Wen-jie Lu, Cheng Hong, Kui Ren]
+    authors_verified: true  # read from the PDF (user-provided), 2026-07-11
+    affiliation: Zhejiang University / Ant Group
+    uses_zk: false
+    verifiable: false
+    security_model: semi-honest 2PC
+    approach: >-
+      First secure 2PC GPT inference. Three custom protocols: (1) sVOLE-based (subfield VOLE)
+      matrix multiplication customized for GPT's autoregressive generation -- each response
+      word is one inference producing an UNBALANCED matmul, and they combine these into a
+      single unbalanced matmul over sVOLE (efficient when n >> k); (2) SPLINE-based GELU --
+      split the GELU curve into intervals, one LUT to find the interval, then a per-interval
+      linear function y=ax+d via multiply-then-truncate, avoiding the error accumulation of
+      multi-step (SIRNN/Iron) and high-degree-polynomial (BOLT) approaches; (3) shuffling-based
+      top-K selection + the FIRST secure top-K SAMPLING protocol.
+    numbers_source: primary  # read the PDF
+    pdf_available: true  # user provided /Users/david/Downloads/2023-1147.pdf
+    benchmarks:
+      - component: matrix multiplication
+        vs_sota: "6.2x speedup, 4.1x bandwidth reduction"
+      - component: GELU (spline-based)
+        vs_sota: "1.8x runtime, 2.5x communication, 7.4x precision"
+    notes: >-
+      The GPT-focused member of the line -- and uniquely, the one that handles AUTOREGRESSION
+      and SAMPLING. Its secure top-K sampling is the first of its kind. This is the exact
+      capability the zkML side (Jolt Atlas) lacks: recall Jolt Atlas proves a single forward
+      pass with no decode/sampling, whereas CipherGPT builds bespoke 2PC protocols for
+      word-by-word generation and stochastic top-K decode. See the docs' certify/argmax pages.
+
+  - id: bolt
+    name: BOLT
+    title: "BOLT: Privacy-Preserving, Accurate and Efficient Inference for Transformers"
+    url: https://eprint.iacr.org/2023/1893
+    pdf: https://encrypto.de/papers/PZMZS24.pdf  # open mirror; eprint PDF is blocked
+    venue: IEEE S&P 2024
+    date: 2024-05
+    year: 2024
+    authors: [Qi Pang, Jinhao Zhu, Helen Möllering, Wenting Zheng, Thomas Schneider]
+    authors_verified: true
+    affiliation: CMU / UC Berkeley / TU Darmstadt
+    uses_zk: false
+    verifiable: false
+    security_model: semi-honest 2PC (MPC + HE)
+    approach: "Efficient matmul + non-linear protocols with ML-level optimizations. Improves on Iron."
+    open_source: true  # github.com/Clive2312/BOLT
+    numbers_source: primary  # read the encrypto.de PDF
+    pdf_available: true
+    benchmarks:
+      - models: [BERT-base]
+        vs_iron: "10.91x less communication; 4.8-9.5x faster inference across network settings"
+        accuracy: "comparable to floating-point"
+    notes: "States the concrete Iron anchor: 280.99 GB communication and 216 minutes for one BERT-base (110M) inference under a WAN setting."
+
+  - id: nimbus
+    name: Nimbus
+    title: "Nimbus: Secure and Efficient Two-Party Inference for Transformers"
+    url: https://eprint.iacr.org/2025/2250
+    arxiv: https://arxiv.org/abs/2411.15707
+    pdf: https://arxiv.org/pdf/2411.15707  # arxiv mirror; eprint blocked
+    venue: NeurIPS 2024
+    date: 2024-11
+    year: 2024
+    authors: [Zhengyi Li, Kang Yang, Jin Tan, Wen-jie Lu, Haoqi Wu, Xiao Wang, Yu Yu, Derun Zhao, Yancheng Zheng, Minyi Guo, Jingwen Leng]
+    authors_verified: true
+    affiliation: SJTU / Shanghai Qizhi / State Key Lab of Cryptology / Ant Group / Northwestern
+    uses_zk: false
+    verifiable: false
+    security_model: semi-honest 2PC
+    approach: >-
+      Linear layer: a new 2PC matmul paradigm + encoding from an OUTER-PRODUCT insight
+      (2.9-12.5x over SOTA). Non-linear: low-degree polynomial approximation for GELU/Softmax
+      that exploits the observed INPUT DISTRIBUTION (2.9-4.0x over SOTA polynomial approx).
+    numbers_source: primary  # read the arxiv PDF
+    pdf_available: true
+    benchmarks:
+      - models: [BERT-base]
+        vs_sota_2pc: "2.7-4.7x end-to-end improvement across network settings"
+        accuracy: "0.08% average accuracy loss vs non-2PC inference"
+    notes: >-
+      The freshest 2PC result. Its input-distribution-aware polynomial approximation is the
+      MPC-world mirror of the quantization/table-sizing tricks zkML uses for the same
+      operators (GELU, Softmax).
+
+  - id: bootstrapping-fhe
+    name: "Bootstrapping is All You Need"
+    title: "Bootstrapping is All You Need: Secure Transformer Inference via Improved CKKS Functional Bootstrapping"
+    url: https://eprint.iacr.org/2026/1255
+    pdf: https://eprint.iacr.org/2026/1255.pdf
+    venue: IACR ePrint 2026/1255
+    date: 2026-06-14
+    year: 2026
+    authors: [Pan Xiao, Rending Ouyang, Heng Zhang, Jiawen Zhang, Jian Liu]
+    authors_verified: true  # read from the PDF (user-provided), 2026-07-11
+    affiliation: State Key Laboratory of Blockchain and Data Security, Zhejiang University
+    uses_zk: false
+    verifiable: false
+    security_model: FHE (CKKS), single-party, NON-interactive -- NOT 2PC. They call the setting NISTI.
+    terminology: "NISTI = Non-Interactive Secure Transformer Inference (client encrypts input under FHE, server evaluates on ciphertext, returns ciphertext)."
+    approach: >-
+      DIFFERENT sub-approach from the 2PC ones above: pure FHE over CKKS. Bootstrapping is the
+      main NISTI bottleneck (66.8% of runtime in the SOTA). Their Functional Bootstrapping (FBS)
+      FUSES as many operations as possible into each bootstrap step, cutting the prescribed
+      multiplicative depth (which is what drives ciphertext size / cost). Three pieces:
+      (1) a TRIGONOMETRIC minimax approximation for FBS (a trigonometric Remez algorithm; better
+      worst-case L-infinity precision on non-linear layers than the Fourier/L2 SOTA);
+      (2) FUNCTIONAL S2C -- fuse linear layers (y=xW and y=xW+b) into the slot-to-coefficient
+      transform inside FBS, so linear layers cost nothing separately;
+      (3) batch-S2C + interleaved packing / lazy key switching / hoisting.
+    numbers_source: primary  # read the PDF
+    pdf_available: true  # user provided /Users/david/Downloads/2026-1255.pdf
+    benchmarks:
+      - models: [BERT-based]
+        proving_time_s: 349.5
+        proving_time_note: "end-to-end per query, amortized over 256 inputs (batched)"
+        communication_mb: 16.1
+        vs_sota: "1.9x faster (349.5s vs 662.3s), 3x less communication (16.1MB vs 48.3MB)"
+    notes: >-
+      It is FHE (non-interactive, single-party on ciphertext), not 2PC like the others. Its tiny
+      communication (16 MB vs the 2PC systems' hundreds of GB) is the whole point of FHE -- it
+      trades interaction/communication for heavy homomorphic compute. Note the transformer it
+      benchmarks uses DyT (Dynamic Tanh) in place of LayerNorm. Same goal as the 2PC systems
+      (private inference), different cryptographic route.
+
+# Adjacent secure-inference work seen while surveying (NOT read; do not cite numbers):
+secure_inference_to_review:
+  - {title: "Cheetah: Lean and Fast Secure Two-Party Deep Neural Network Inference", venue: "USENIX Sec 2022", note: "The matmul baseline Iron improves on."}
+  - {title: "SIRNN: A Math Library for Secure RNN Inference", venue: "IEEE S&P 2021", note: "Iron's non-linear protocols build on this."}
+  - {title: "BumbleBee: Secure Two-party Inference Framework for Large Transformers", url: "https://eprint.iacr.org/2023/1678", note: "2PC, larger transformers."}
+  - {title: "SHAFT: Secure, Handy, Accurate and Fast Transformer Inference", venue: "NDSS 2025", url: "https://www.ndss-symposium.org/wp-content/uploads/2025-2287-paper.pdf"}
+  - {title: "CipherPrune: Efficient and Scalable Private Transformer Inference", url: "https://arxiv.org/abs/2502.16782", year: 2025}
+  - {title: "THE-X: Privacy-Preserving Transformer Inference with HE", venue: "ACL Findings 2022", note: "Weaker privacy -- leaks non-linear-layer inputs to the client (Iron critiques this)."}
+  - {title: "SecureGPT: Multi-Party Privacy-Preserving Transformer Inference in GPT", venue: "IEEE TIFS 2024"}
+  - {title: "MPCache: MPC-Friendly KV Cache Eviction for Private LLM Inference", url: "https://arxiv.org/abs/2501.06807", note: "The 2PC world's answer to the KV-cache problem."}
+
+# ============================================================================
 # SOUNDNESS & ATTACKS
 #
 # The systems above are only as good as the arguments underneath them. This section tracks
@@ -1700,7 +1906,29 @@ surveys:
       DeepProve "54-158x faster than EZKL" and "not likely privacy preserving", EZKL "65x faster
       than RISC Zero". Numbers taken from here are tagged provenance: "ICME blog (partisan)".
 
-# Seen in the literature, not yet read. Do not cite numbers from these until read.
+  - id: modulus-cost-of-intelligence
+    name: "The Cost of Intelligence"
+    title: "The Cost of Intelligence: Proving Machine Learning Inference with Zero-Knowledge"
+    url: https://eprint.iacr.org/2026/1063
+    pdf: https://eprint.iacr.org/2026/1063.pdf
+    venue: "Modulus Labs whitepaper v1.2 (eprint 2026/1063)"
+    date: 2023-01-31  # written Jan 2023; eprint number assigned 2026
+    year: 2023
+    authors: [Ryan Cao, Nick Cosby, Vishruti Ganesh, Ende Shen, Daniel Shorr, Benjamin Wilson]
+    authors_verified: true
+    kind: benchmark  # a proof-SYSTEM comparison, not an ML-proving framework and not an LLM prover
+    covers: [inference]
+    notes: >-
+      NOT an LLM prover and NOT plottable on the LLM throughput graph -- excluded on purpose.
+      Two reasons: (1) it benchmarks MLPs (500k-18M params, 275M-22B mult-adds, 10-500 layers),
+      no transformers, no tokens; (2) it compares proof BACKENDS (Groth16, Gemini, Winterfell
+      via Cairo, Halo2, Plonky2, zkCNN), a different axis from this file's ML-proving frameworks
+      (DeepProve/zkLLM/...). Hardware: AMD EPYC 7R32 (c4ad.16xlarge), 128 GB RAM. Findings:
+      Plonky2 is the fastest prover (~5x Halo2 on the largest MLP) via FRI + Goldilocks, but
+      ~2x the peak memory; GKR-based zkCNN scales best on both time and memory even unoptimized;
+      Plonky2 recursive proofs ~70 kB at ~100-bit security. Motivates Modulus's "Remainder"
+      system. Useful as a proof-backend scaling reference and for the zkCNN cross-check, not as
+      a data point in the LLM comparison. Written 2023-01; the 2026 eprint number is recent.
 to_review:
   # Named in the survey's Table VII timeline but not yet pulled:
   - {title: "SafetyNets: Verifiable Execution of Deep Neural Networks on an Untrusted Cloud", date: 2017-06, category: inference, note: "Oldest entry in the survey timeline; interactive proofs, no ZK."}
