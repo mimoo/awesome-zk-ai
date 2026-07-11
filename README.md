@@ -510,6 +510,20 @@ spot-checks** to bound hardware-compromise risk. ZK used where it's cheap rather
 everywhere. [opp/ai](https://arxiv.org/abs/2402.15006) splits differently — zkML for the
 privacy-sensitive submodel, opML for the rest.
 
+**[Ritual](https://docs.ritualfoundation.org/)** — this section's thesis as a shipping product.
+Ritual Chain (testnet, chain ID 1979, ~350 ms blocks, testnet RITUAL token — no mainnet date) is
+an L1 with `EVM++`: 16 compute precompiles a contract can call directly, including LLM inference
+(`0x0802`, runs open-weight GLM-4.7), classical/ONNX (`0x0800`), **FHE** inference (`0x0807`), and
+**ZK** proving (`0x0806`). Its verification root is **not** ZK — it is `TEE-EOVMT`: precompile work
+runs off-chain in TEEs (Intel TDX), and each result is bound by **remote attestation** registered
+in an on-chain `TEEServiceRegistry`; the block builder rejects any result lacking a valid, unexpired
+attestation. No optimistic challenge window, no committee — pure hardware attestation. ZK is *one
+precompile among sixteen* (and even it runs the prover **inside a TEE**), with the zk path built on
+[EZKL](https://github.com/zkonduit/ezkl) — a prover this repo already tracks. So a production
+decentralized-AI chain makes trusted hardware the base layer and treats zk/FHE as opt-in paths: the
+clearest real-world confirmation that zkML is still too expensive to be the default for LLM
+inference. (Status and node counts are from Ritual's own docs — verify before quoting.)
+
 **When is ZK actually the right tool?** When the verifier is adversarial or anonymous, when the
 model or the input must stay private, when verification must be non-interactive and permanent
 (on-chain), or when no hardware root of trust is acceptable. Otherwise, one of the rows above
