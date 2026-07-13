@@ -6,7 +6,7 @@ lede: >-
   Six cryptographic approaches are in play. Each one was chosen because it is good at
   something a neural network does a lot of, and each one is bad at something else the
   network also does. The trade is never hidden -- but it is rarely stated.
-papers: [safetynets, zkcnn, zkllm, zkgpt, zkpytorch, deepprove, spagkr, zkml-kang, ezkl, artemis, jolt-atlas, mystique, lu-et-al, zktorch, zen, vcnn, zip, hao-et-al, nanozk, bionetta]
+papers: [safetynets, zkcnn, zkllm, zkgpt, zkpytorch, deepprove, spagkr, zkml-kang, ezkl, artemis, jolt-atlas, mystique, lu-et-al, zktorch, zen, vcnn, zip, hao-et-al, nanozk, bionetta, zator]
 status: draft
 ---
 
@@ -282,6 +282,24 @@ extension of Mira.
 heterogeneous pile of operators rather than one uniform circuit. It attacks proof size
 directly — the thing PLONKish is good at and GKR is not — without giving up per-operator
 specialization.
+
+**Where it came from, and the tax it pays.** The idea is older than the paper. [[zator]] — a
+2023 hackathon project, no paper, no review — folded a per-layer step circuit with Nova and
+proved a 512-layer network, deeper than anything else in this file, two years before ZKTorch
+made the approach respectable. It is worth knowing about for one reason: it is the only system
+here that pays the *homogeneity tax* in the open. A folding scheme can only fold a step function
+that is the same every time, and a model is not the same every time — so Zator's backbone is
+five hundred and ten **identical** convolution layers, chosen to be convolutions because a dense
+layer's weight matrix is ruinous merely to *hash* into the running commitment. Even then the
+head and tail layers do not fit the step, and the system ships three proofs the verifier must
+chain by hand. Every folding system inherits that bill. ZKTorch pays it in a compiler that
+decomposes a heterogeneous graph into basic blocks — and in the seven of those blocks that have
+no accumulation support at all, which is exactly why its benchmarks never sample a token.
+
+Zator also settles, accidentally, a question the rest of the section keeps open. It is the
+control experiment for *depth*: recursion genuinely does dissolve it, the folding overhead per
+step really is negligible, and the network it delivered still classifies handwritten digits.
+**Depth was never the binding constraint — width is** — and no amount of folding touches width.
 
 **What it is bad at.** Now that we have read the paper's own tables, the answer is visible:
 autoregression. Every LLM row it reports is a single forward pass over a one- or two-token

@@ -809,10 +809,36 @@ This is the cleanest illustration of the theme running through this whole page: 
 arithmetic problem has different answers under different threat models**, and numerics techniques
 do not transfer across that boundary for free.
 
+### And the two truncations sit side by side in the same literature
+
+We made that argument for a long time without reading the papers it is about. Both are now in the
+corpus, and they turn out to be a matched pair — which is better than the argument deserved.
+
+**[[cheetah]] is the probabilistic one, and it is explicit.** It *deliberately* keeps a 1-bit
+truncation error with probability $\tfrac12$, discarding only the "harsh" error, and it buys
+$13\ell$ bits of communication where a faithful protocol costs
+$\lambda(\ell + f + 2) + 19\ell + 14f$. That is the MPC bargain, stated in the open: accept a
+bounded benign error, pay far less. And it is exactly the bargain ZK must refuse, because in ZK the
+prover chooses the input and a coin that lands badly half the time is not a rare event — it is a
+lever.
+
+**[[sirnn]] is the exact one — and it is also cheap.** All four of its truncation flavours (logical
+shift, arithmetic shift, truncate-and-reduce, C-style division by a power of two) compute the wrap
+and borrow terms *exactly*. Nothing in the paper fails with any probability. And
+truncate-and-reduce costs about $\lambda(s+1)$ bits — roughly **4.5× less than a garbled circuit**.
+
+So the MPC world did not only have the shortcut ZK cannot take. **It also had the exact protocol,
+and the exact protocol is fast.** That is precisely the one the ZK papers borrowed, which is why the
+borrowing was possible at all — and it is why the shortcut is the *exception*, not the rule.
+
+**Probabilistic truncation is the one technique the threat model genuinely forbids. It has been
+mistaken for the whole relationship.**
+
 But do not over-read it. This is an argument about *one* technique, not a licence for the two
 columns to ignore each other — and the [bridge](./bridge/) page shows that the ones who bothered to
 look transferred a great deal. [[hao-et-al]] proves exponentials and reciprocal square roots in ZK
-using SIRNN's digit decomposition, SIRNN's Goldschmidt iteration, and SIRNN's parameter settings.
+using [[sirnn]]'s digit decomposition, [[sirnn]]'s Goldschmidt iteration, and [[sirnn]]'s parameter
+settings — citing it **five times in its body**.
 Probabilistic truncation is the *exception* that the threat model forbids; it has been mistaken for
 the rule.
 
@@ -837,13 +863,34 @@ Ranked by how much I would want the answer.
 4. **Has anyone retested "floats are infeasible" since [[zklp]]?** A bit-exact FP32 multiply for a
    few dozen amortized constraints is a different world from the naive gate count the literature
    still cites. No system that proves a transformer cites either float-SNARK line.
-5. **Does a polynomial network escape the rescale seam, or only postpone it?** [[safetynets]]'
-   few-percent overhead is the whole basis for calling everything since "the price of rounding" —
-   and [[bionetta]] argues that a degree-$d$ activation inflates precision by $\rho d$ and forces
-   the seam back at $\approx b$ constraints a cut. If Bionetta is right, SafetyNets' number is an
-   artifact of shallowness and the floor of this field is much higher than we have been saying.
-   One experiment settles it: scale the depth of a quadratic network and find where the cuts
-   become unavoidable.
+5. ~~**Does a polynomial network escape the rescale seam, or only postpone it?**~~ **Answered — and
+   the answer was in an MPC paper the whole time.** [[safetynets]]' few-percent overhead is the
+   whole basis for calling everything since "the price of rounding", and [[bionetta]] argued that a
+   degree-$d$ activation inflates precision by $\rho d$ and forces the seam back. We asked for one
+   experiment: scale the depth of a quadratic network and find where it breaks.
+
+   **[[delphi]] ran it in 2020.** Not as a numerics experiment — as a *training* experiment, because
+   Delphi wanted quadratic activations for a completely different reason (they cost 192× less online
+   communication than a garbled circuit). What it found:
+
+   :::quote{src="Delphi" sec="§5.1, Adapting NAS for DELPHI's planner"}
+   Prior work [Moh+17; Gil+16; Gho+17; Cho+18] and our own experiments indicate that networks that
+   use quadratic approximations are challenging to train and deploy: the quadratic activations cause
+   the underlying gradient descent algorithm to diverge, resulting in poor accuracy.
+   :::
+
+   `[Gho+17]` **is SafetyNets.** Delphi needed gradient clipping, ReLU6, and a "gradual activation
+   exchange" annealing schedule just to make quadratic networks converge at all — and *even then* it
+   runs a neural architecture search to keep **most** activations as ReLUs, because it cannot afford
+   to replace them.
+
+   So the all-quadratic network **does not train**. SafetyNets' famous ~5% overhead is a number that
+   exists at a depth and width nobody would deploy. **The price of rounding is not optional. It is
+   what you pay the moment the network is big enough to be worth anything** — and the floor of this
+   field is higher than this page has been saying.
+
+   That the answer sat for six years in a privacy-column paper cited by nine of our own PDFs is the
+   [bridge](./bridge/) page's entire thesis, delivered as a punchline.
 
 :::gap  It is not a third island — it is the seabed
 The obvious way to write this up is: *the zkML and MPC clusters are disconnected, and the

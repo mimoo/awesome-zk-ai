@@ -7,8 +7,57 @@ lede: >-
   proving an iterative, stochastic, data-dependent search for that function -- and then
   proving that the function you ended up with is the one you are showing people. Every
   system in this cell survives by refusing to prove part of that.
-papers: [kaizen, zkdl, zkpot-garg, optimum-vicinity, verilora, zkboost, veriml, zkmlaas, summer, zkprov, artemis]
+papers: [pol, pol-adversarial, pol-broken, kaizen, zkdl, zkpot-garg, optimum-vicinity, verilora, zkboost, veriml, zkmlaas, summer, zkprov, artemis]
 status: reviewed
+---
+
+## Why this cell exists
+
+Start with the paper that is *not* cryptographic, because every system below is arguing with it and
+until July 2026 this SoK did not contain it.
+
+**[[pol]]** (Jia et al., IEEE S&P 2021) proves training without any cryptography at all. Log your
+checkpoints and your batch indices; the verifier re-executes the $Q$ **largest** weight updates per
+epoch and checks they reproduce. Valid gradient steps are small, so an adversary faking a cheaper run
+must introduce error, and error is loudest in the big steps. Elegant, cheap, and deployed.
+
+Its security — *no adversary can forge a proof more cheaply than honestly training* — is **never
+proved.** It is offered as **Conjecture 1**, and the authors say plainly they are "not aware of a
+mechanism to prove those formally."
+
+It was then broken twice.
+
+**[[pol-adversarial]]** (S&P '22) fakes a training step by *optimizing the data*: exactly as you would
+craft an adversarial example, gradient-descend on the input batch until it "generates" the stolen
+weights. **[[pol-broken]]** (EuroS&P '23) — written largely by the *original PoL team* — does much
+better, and much worse. Its infinitesimal-update attack interpolates the checkpoints and then logs a
+learning rate of ~0, so every update is smaller than the verification threshold and the difference
+between logged and replayed is trivially below it. Cost: **no training at all** — one floating-point
+operation per parameter, bounded by a single forward pass. Its blindfold attack then defeats the
+top-$Q$ heuristic by making exactly $Q$ real updates with a huge learning rate, so the verifier's
+"check the biggest steps" rule lands on precisely the $Q$ honest ones and never looks at the fakes.
+
+And here is why the two breaks belong in a cryptography SoK. **Both conclude, independently, that the
+fix is cryptography** — and one of them prices it:
+
+:::quote{src="Zhang et al." sec="§V, Countermeasures"}
+This mechanism is valid, but it will introduce an overwhelming overhead.
+:::
+
+That sentence is about SNARKs. It is the cell you are reading.
+
+:::gap  The scheme is unproven, not disproven — and the difference matters
+[[pol-broken]] is careful in a way its citers are not. It does **not** show that PoL's guarantee is
+false; it shows that it is **unprovable with current understanding**: *"one cannot develop a provably
+robust PoL verification mechanism without further understanding of optimization in deep learning."*
+Its own experiments find that data-ordering attacks and synthesized data both **fail** to reach the
+target weights from an independent initialization — so knowledge of the final weights does appear
+essential to a spoofer.
+
+This is the same soundness-versus-statement distinction that runs through the entire SoK, and here it
+runs in the *defender's* favour for once.
+:::
+
 ---
 
 A proof of training (zkPoT) is supposed to discharge a sentence like this:

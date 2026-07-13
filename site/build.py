@@ -609,21 +609,39 @@ DEFAULT_COLS = [
     ("context_window", "Context"),
     ("tokens_per_minute", "Tok/min"),
     ("proving_time_s", "Prove (s)"),
+    ("inference_latency_s", "Infer (s)"),
     ("proof_size_mb", "Proof (MB)"),
     ("verification_time_s", "Verify (s)"),
     ("communication_mb", "Comm (MB)"),
+    ("network", "Network"),
     ("accuracy", "Accuracy"),
 ]
 
 
+def dig(d, k: str):
+    """Resolve a dotted key ('quantization.bits') against a nested dict.
+
+    `cols=` accepts dotted paths -- a flat .get() would look up a literal
+    'quantization.bits' key, miss, and render an em-dash for every row, which reads
+    as 'no paper states a bit width' when in fact several do."""
+    cur = d
+    for part in k.split("."):
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(part)
+        if cur is None:
+            return None
+    return cur
+
+
 def cell(b: dict, p: Paper, k: str) -> str:
-    v = b.get(k, None)
+    v = dig(b, k)
     if k == "params":
         return fmt_params(v)
     if k == "model" and v is None:
         v = b.get("models") or p.data.get("model")
     if v is None:
-        v = p.data.get(k)
+        v = dig(p.data, k)
     if v is None:
         return '<span class="na">—</span>'
     return fmt_num(v)
@@ -685,6 +703,11 @@ def headline(p: Paper):
             return f"{fmt_num(b['tokens_per_minute'])} tok/min", b.get("model")
         if b.get("proving_time_s") is not None:
             return f"{fmt_num(b['proving_time_s'])} s to prove", b.get("model") or b.get("models")
+        # FHE and 2PC systems emit no proof. Rendering their latency as "s to prove" asserts a
+        # proof object that does not exist -- the exact conflation the privacy section exists
+        # to prevent.
+        if b.get("inference_latency_s") is not None:
+            return f"{fmt_num(b['inference_latency_s'])} s to infer", b.get("model") or b.get("models")
     return None, None
 
 
@@ -711,6 +734,11 @@ def sc_chart_throughput(ctx: Ctx) -> str:
         fam = guess_family(p)
         for b in p.data.get("benchmarks") or []:
             if not isinstance(b, dict):
+                continue
+            # A simulated throughput is not a measurement. Plotting DeepProve's 1855 TPM
+            # (16 workers, modelled, "we leave the full-fledged implementation as future work")
+            # beside single-machine measured rows would invent a frontier nobody reached.
+            if b.get("tokens_per_minute_source") == "simulated":
                 continue
             n, t = num(b.get("params")), num(b.get("tokens_per_minute"), lo=True)
             if not n or not t:
@@ -821,7 +849,7 @@ def sc_chart_timeline(ctx: Ctx) -> str:
             # A paper may report a RANGE (e.g. [147, 4710]). Plotting its midpoint would
             # invent a measurement nobody made, so take the low end and say so in the caption.
             secs = num(b.get("proving_time_s"), lo=True)
-            tpm = num(b.get("tokens_per_minute"))
+            tpm = None if b.get("tokens_per_minute_source") == "simulated" else num(b.get("tokens_per_minute"))
             if secs is None and tpm:
                 secs = 60.0 / tpm
             if not secs:
@@ -965,9 +993,20 @@ def sc_chart_citations(ctx: Ctx) -> str:
     svg = render_dot(build_dot())
     crossing = len(crossing_edges())
     n_edges = sum(len(v) for v in CITES.values())
+    # The bare count is true and misleading on its own. Both crossing edges are citations about
+    # NUMERICS, not about cryptography -- one is a bibliography entry with no body mention, the
+    # other is a privacy paper citing a ZK paper for its activation function without noticing it is
+    # a ZK paper. A reader who sees "2" and stops has learned the opposite of the finding.
+    qualifier = (
+        " Neither is a cryptographic citation &mdash; both are about arithmetic, and one of them "
+        "does not know what it is citing. "
+        if crossing
+        else " "
+    )
     caption = (
         f'<p style="font-size:13px;color:#6f7d86;margin-top:10px">{n_edges} edges across the corpus. '
-        f"<b>{crossing}</b> of them join the verifiability literature to the privacy literature. "
+        f"<b>{crossing}</b> of them join the verifiability literature to the privacy literature."
+        f"{qualifier}"
         f'Full graph: <a href="{ctx.link("graph/index.html")}">the citation graph</a>.</p>'
     )
     if not svg:

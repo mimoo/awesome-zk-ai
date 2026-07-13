@@ -7,9 +7,31 @@ lede: >-
   They prove nothing at all about whether the answer is right. That is a different
   guarantee from the one the rest of this atlas is about, and the two are routinely
   conflated.
-papers: [iron, ciphergpt, bolt, nimbus, bootstrapping-fhe, deepprove, zkgpt, jolt-atlas]
+papers: [iron, ciphergpt, bolt, nimbus, bootstrapping-fhe, cheetah, delphi, sigma, puma, mosformer, deepprove, zkgpt, zkllm, jolt-atlas]
 status: reviewed
 ---
+
+:::gap  This page was wrong about the ceiling, and the error was a reading-list error
+Until July 2026 this section held five papers. All five were **2PC**. All five were **BERT-class**.
+From that sample this SoK concluded, in print, that private inference *caps out at BERT-class while
+the proving column reaches 8–13B* — and built a whole cost argument on it.
+
+It does not cap out at BERT. Three papers we did not have:
+
+- **[[sigma]]** (PoPETs '24) runs **Llama2-13B** — the same model [[zkllm]] proves — with a 37.6 s
+  online phase. It is **2PC**. Function secret sharing, on a GPU. Our corpus contained no FSS papers
+  at all.
+- **[[puma]]** (2023) runs **LLaMA-7B** in 200 seconds and 1.79 GB. It is **3PC**, honest-majority.
+- **[[mosformer]]** (CCS '25) gets **malicious** security on BERT and GPT-2. Also 3PC.
+
+The true statement is narrower and duller than the one we published: **dishonest-majority 2PC with no
+trusted dealer caps out at BERT-class.** That is a fact about a *trust model*, not about privacy. Add
+a third non-colluding party, or a dealer for the correlated randomness, and the same literature goes
+to 13B — which is exactly where the verifiability column tops out.
+
+Neither extra assumption is free, and the rest of this page is about what they cost. But "privacy is
+stuck at BERT" was a statement about our reading list.
+:::
 
 Nearly everything in the verifiability column of the 2x2 produces an artefact a stranger can check
 — the exceptions are the designated-verifier, interactive systems, whose transcript is bound to one
@@ -94,12 +116,27 @@ make proving expensive in [[deepprove]] and [[zkgpt]] are what make malicious se
 here. The page on non-linearities in this section says why that is not a coincidence.
 
 :::gap  Nobody has built the both-and system at transformer scale
-Maliciously-secure private transformer inference exists only by adding a party: Mosformer, cited
-by [[bootstrapping-fhe]], is the first maliciously-secure *three-party* framework, and three-party
-means an extra non-collusion assumption. In the two-party client/server setting that four of the
-five systems here target, malicious security is unimplemented. And no system anywhere in this repo
-gives the *client* privacy against the server that computes on its input *and* a proof of
-correctness a third party can check. The 2x2's two columns have not been added together.
+Maliciously-secure private transformer inference exists **only by adding a party**, and we can now
+say exactly what that costs, because we have read the paper.
+
+[[mosformer]] (CCS '25) is malicious, **3PC, honest-majority, with abort** — three non-colluding
+servers, at most one corrupted, and a detected cheat kills the protocol rather than being corrected.
+Within that model it runs BERT-base and GPT-2, and no prior maliciously-secure protocol could run
+either model *at all* (Privformer is limited to a vanilla transformer; Falcon is a CNN framework).
+
+The number worth carrying is **the cost of malicious security over its own semi-honest variant**:
+BERT-base online, 59.47 s against 20.09 s, and 4.60 GB against 1.15 GB. **Three to four times — not
+the order of magnitude the folklore assumes.** Its malicious online phase even beats the *semi-honest*
+2PC state of the art ([[bolt]], BumbleBee, SHAFT) on the same benchmark.
+
+The catch is the one this whole section keeps failing to price: that is an **online** number, and
+Mosformer's offline phase is a further **547 s and 67 GB** for malicious BERT-base, where BOLT and
+BumbleBee report *zero* offline. Compare totals, not columns.
+
+**In the dishonest-majority two-party setting that four of the five original systems here target,
+malicious security remains unimplemented.** That much survives. And no system anywhere in this repo
+gives the *client* privacy against the server that computes on its input **and** a proof of
+correctness a third party can check. The 2x2's two columns still have not been added together.
 :::
 
 ## Where the line has actually gone furthest

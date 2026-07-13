@@ -79,7 +79,14 @@ sections:
       2PC, MPC and FHE transformer inference. Hides the data or the model from the
       counterparty. Proves nothing about correctness.
     cell: private-infer
-    papers_from: [secure_inference_2pc, secure_inference_to_review]
+    # secure_inference_3pc added 2026-07-13, and the reason is the finding. This section held
+    # five papers, all 2PC, all BERT-class, and from that sample the SoK concluded that private
+    # inference "caps out at BERT-class". It does not. It caps out at BERT-class *in 2PC without
+    # a dealer*. The 3PC honest-majority branch (PUMA, Mosformer) and the FSS/GPU branch (Sigma)
+    # were never in the corpus, and they reach LLaMA-7B and Llama2-13B respectively. A category
+    # named `secure_inference_2pc` holding every private-inference paper is how that happened, so
+    # the split is now in the data model rather than in a footnote.
+    papers_from: [secure_inference_2pc, secure_inference_3pc, secure_inference_to_review]
 
   - key: private-training
     dir: private-training

@@ -34,12 +34,84 @@ citations:
     - zkml-kang   # "[Che+24] ZKML: An Optimizing System..."; benchmarked in Table 4
     - zkpytorch   # "[Xie+25]"; "look forward to testing it in the future, yet currently it is
                   # not available for public use (as of December 2025)"
+  # ---------------------------------------------------------------------------------------
+  # THE TWO CROSSING EDGES. Read this before you believe the headline.
+  #
+  # Adding cheetah and delphi as first-class papers (2026-07-13) creates the first edges in
+  # this corpus that cross between the verifiability and privacy columns. validate.py's
+  # tripwire will fire. It is SUPPOSED to fire. Here is the human look it demands.
+  #
+  # Neither edge is a cryptographic citation. Both are about NUMERICS, which is exactly what
+  # the bridge page predicts, and the second one is a better piece of evidence for the thesis
+  # than the absence it replaces.
+  #
+  #   1. hao-et-al -> cheetah  (verify -> privacy)
+  #      BIBLIOGRAPHY ONLY. Cheetah is reference [30] and appears ZERO times in hao-et-al's
+  #      body. Contrast SIRNN, reference [47], which appears FIVE times in the body and is
+  #      load-bearing (digit decomposition, the exponential protocol, and the Goldschmidt
+  #      initial approximation). hao-et-al is also the one verifiability paper that proves
+  #      OPERATORS rather than models -- already flagged on the bridge page as an edge case.
+  #
+  #   2. delphi -> safetynets  (privacy -> verify)  <-- the interesting one
+  #      A privacy paper citing a verifiability paper, which the bridge page says never
+  #      happens. It happens. But look at WHAT FOR: Delphi cites SafetyNets TWICE in the body,
+  #      both times as prior work on whether QUADRATIC ACTIVATIONS train well. Not once for
+  #      verifiability. Delphi's body contains ZERO occurrences of "verifiable", "integrity",
+  #      "zero-knowledge", "proof of correctness" or "malicious server".
+  #      Delphi does not know it is citing a verifiability paper. It is citing an ML result.
+  #
+  # So the finding does not die -- it sharpens. The two columns still do not read each other
+  # AS CRYPTOGRAPHY. Where they touch, they touch at the numerics, and they touch without
+  # noticing. See content/numerics/bridge.md.
+  # ---------------------------------------------------------------------------------------
   bolt:
     - cheetah
     - iron
     - secfloat
     - sirnn
     - the-x
+  # Cheetah (USENIX Sec '22). Promoted from an `external:` node to a real paper. It is a 2PC
+  # inference SYSTEM, not a numerics library, so it belongs in the privacy column -- filing it
+  # anywhere else to protect the headline would be the exact artifact the tripwire exists to catch.
+  cheetah:
+    - sirnn
+    - delphi
+  # Delphi (USENIX Sec '20). Cited by NINE of our PDFs -- the largest bibliography hole we had.
+  delphi:
+    - safetynets   # "[Gho+17] ... SafetyNets" -- cited in the BODY, twice, about quadratic activations
+  # PUMA (NDSS '24). 3PC. The paper that shows the BERT ceiling is a 2PC ceiling, not a privacy one.
+  puma:
+    - cheetah
+    - delphi
+    - iron
+  # Sigma (PoPETs '24). Function secret sharing on GPU. Reaches deepest into the MPC canon of anything
+  # in this corpus -- and, like every privacy paper, cites nothing from the verifiability column.
+  sigma:
+    - cheetah
+    - delphi
+    - iron
+    - secfloat
+    - sirnn
+    - the-x
+  # Mosformer (CCS '25). Maliciously secure 3PC. Cites the entire semi-honest privacy column and
+  # not one verifiability paper.
+  mosformer:
+    - bolt
+    - bumblebee
+    - ciphergpt
+    - iron
+    - nimbus
+    - puma
+    - sigma
+    - the-x
+  # Proof-of-Learning (S&P '21) and its two breaks. The training cell's missing ancestor.
+  # Note pol -> safetynets is verify -> verify (both are verifiability): NOT a crossing edge.
+  pol:
+    - safetynets
+  pol-adversarial:
+    - pol
+  pol-broken:
+    - pol
   bootstrapping-fhe:
     - bolt
     - bumblebee
@@ -136,12 +208,29 @@ citations:
     - safetynets
     - vcnn
     - zkdt
+  # zip: hand-verified against its bibliography and a full-text scan, 2026-07-13. The three edges
+  # into the numerics shelf below were MISSING, and they are the whole of the contact between the
+  # transformer-proving cluster and the float-in-ZK line. zip -> zklp is not a citation, it is a
+  # DEPENDENCY: ZIP's linear layers ARE ZKLP's circuits.
   zip:
+    - archer-ieee  # "[3] Archer, Atapoor, Smart. The cost of IEEE arithmetic in secure
+                   # computation." Cited twice in the body: Sec 4.1 for the FP64 gate counts
+                   # ("15637 and 44899 Boolean gates for double precision [3]"), and Sec 5 as the
+                   # gadget source for the "Baseline (w/AG)" it benchmarks against.
+    - garg-fp      # "[27] Garg, Jain, Jin, Zhang. Succinct zero knowledge for floating point
+                   # computations." "we adopt the relative error model from [27]" -- ZIP's
+                   # approximation-soundness relation IS Garg's model, lifted from a float gate to
+                   # a whole activation.
     - mystique
     - safetynets
     - vcnn
     - zkcnn
     - zkllm
+    - zklp         # "[20] Ernstberger et al. Zero-Knowledge Location Privacy via Accurate
+                   # Floating-Point SNARKs." LOAD-BEARING: "For linear layers, ZIP directly
+                   # leverages the existing technique from [20]", and BOTH of ZIP's benchmark
+                   # tables carry the footnote "All linear operations are proved via [20]."
+                   # Every proving time ZIP reports is partly a ZKLP number.
   zkgpt:
     - gkr
     - jolt
@@ -157,6 +246,13 @@ citations:
     - vcnn
     - zkcnn
   zklp:
+    - archer-ieee  # "[21] Archer, Atapoor, Smart, 'The cost of ieee arithmetic in secure
+                   # computation', LATINCRYPT 2021." Cited in Sec 1, Sec 5.1 ("FP64 addition and
+                   # multiplication require 15637 and 44899 boolean gates respectively [21]") and
+                   # Sec 6.
+    - garg-fp      # "[23] Garg, Jain, Jin, Zhang, 'Succinct zero knowledge for floating point
+                   # computations', CCS 2022." Sec 5.1: "Garg et. al [23] provide the
+                   # state-of-the-art succinct ZKP for floating-point operations".
     - mystique
     - secfloat
   zkml-kang:
@@ -193,6 +289,20 @@ citations:
     - zkcnn
     - zkllm
 
+  # Zator has no PDF and no bibliography -- these edges are hand-read out of the project
+  # README (github.com/lyronctk/zator), which cites both by name in its opening paragraph as
+  # the prior art it is reacting to: "notable projects such as EZKL and work by D. Kang et al
+  # have been able to snark models as complex as a 50-layer MobileNetv2". Recorded as citations
+  # because they are exactly that; flagged here because the SOURCE is a README, not a paper,
+  # and `citegraph.py` (which scans PDFs) can neither find nor re-derive them.
+  #
+  # Note what is NOT here: nothing cites Zator. It is a leaf. zktorch, the paper that made
+  # folding-for-ML respectable, does not cite it -- unsurprising for an unpublished hackathon
+  # project, but it means the accumulation line's own prior art is invisible to the graph.
+  zator:
+    - ezkl        # "notable projects such as [EZKL]"
+    - zkml-kang   # "work by [D. Kang et al]", linked to arXiv 2210.08674
+
 # External building blocks: cited BY our corpus but not part of it.
 external:
   gkr: GKR
@@ -200,7 +310,12 @@ external:
   lasso: Lasso
   twist-shout: Twist & Shout
   expander: Expander
-  cheetah: Cheetah
-  sirnn: SIRNN
   the-x: THE-X
   bumblebee: BumbleBee
+  # cheetah and sirnn were HERE until 2026-07-13, and that is the whole story of this commit.
+  # They are two of the three nodes the bridge page's headline finding rests on ("exactly three
+  # nodes are cited by both columns, and all three are MPC numerics") -- and we had never read
+  # either of them. They were `external:` stubs, which is also what kept them from ever counting
+  # as a crossing edge. They are now real papers: sirnn under numerics_primitives (it is a math
+  # library, like secfloat, and the neutral shelf is where it belongs), cheetah under
+  # secure_inference_2pc (it is an inference system, and the privacy column is where it belongs).

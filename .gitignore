@@ -14,3 +14,6 @@ script-pre-bionetta.md
 .podcast-parts/
 .podcast-cut/
 .podcast-rev/
+podcast.mp3
+
+.DS_Store

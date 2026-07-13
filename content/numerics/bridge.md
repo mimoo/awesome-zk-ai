@@ -11,13 +11,33 @@ papers: [garg-fp, zklp, archer-ieee, secfloat, prob-truncation, hao-et-al, zkpot
 status: reviewed
 ---
 
-The headline finding of this SoK's citation graph has survived every enlargement of the corpus:
-**no paper in the verifiability column cites any paper in the privacy column, or the reverse.**
-Not once. Two literatures, working the two halves of the same 2x2, on the same models, fighting
-the same three operators, publishing at the same venues, with no edge between them.
+For most of this SoK's life the headline finding was stated as an absolute: **no paper in the
+verifiability column cites any paper in the privacy column, or the reverse. Not once.**
 
-That is still true. But it was never the whole shape, and the numerics section is what makes the
-rest of it visible.
+**On 2026-07-13 that stopped being true, and the way it stopped being true is better than the
+finding it replaced.**
+
+We finally read the two papers the finding had always rested on — [[sirnn]] and [[cheetah]] — which
+had been sitting in the graph as `external:` stubs, unread, for the entire life of the project. (That
+is its own indictment and it is dealt with below.) Promoting them to real papers created exactly
+**two** crossing edges, and the validator's tripwire fired, as it was built to.
+
+Neither edge is a cryptographic citation. Both are about **numerics** — which is what this page has
+been arguing all along, and now it is arguing it with evidence instead of with an absence.
+
+| Crossing edge | Direction | What it actually is |
+|---|---|---|
+| [[hao-et-al]] → [[cheetah]] | verify → privacy | **Bibliography only.** Cheetah is reference [30] and appears **zero** times in hao-et-al's body. (Contrast [[sirnn]], reference [47]: **five** body citations, load-bearing.) And hao-et-al is the one verifiability paper that proves *operators* rather than models — already flagged here as an edge case. |
+| [[delphi]] → [[safetynets]] | **privacy → verify** | The interesting one. A privacy paper citing a verifiability paper — **twice, in the body** — and **not for verifiability.** It cites SafetyNets as prior evidence about whether *quadratic activations train well*. Delphi's body contains **zero** occurrences of "verifiable", "integrity", "zero-knowledge" or "proof of correctness". |
+
+Read that second row again. **Delphi does not know it is citing a verifiability paper.** It is citing
+an ML result about activation functions, and the fact that the result happens to live inside a zkML
+paper is invisible to it.
+
+So the finding does not die. It sharpens, into something you can actually defend:
+
+> **The two literatures do not read each other as cryptography.** Where they touch — and they do
+> touch — they touch at the **numerics**, and they touch *without noticing*.
 
 {{ chart:citations }}
 
@@ -28,9 +48,21 @@ Rebuild the graph and ask a different question — not "does A cite B", but "is 
 
 | Shared node | What it is | Cited by (privacy) | Cited by (verifiability) |
 |---|---|---|---|
-| **SIRNN** (S&P '21) | an OT-based math library for secure inference: digit decomposition, exponential, reciprocal, reciprocal square root | [[iron]], [[bolt]], [[ciphergpt]], [[nimbus]] | [[hao-et-al]], [[zkpot-garg]] |
-| **Cheetah** (USENIX '22) | the lean 2PC matmul that the whole private-inference line improves on | [[iron]], [[bolt]], [[ciphergpt]], [[nimbus]], [[bootstrapping-fhe]] | [[hao-et-al]] |
+| **[[sirnn]]** (S&P '21) | an OT-based math library for secure inference: digit decomposition, exponential, reciprocal, reciprocal square root | [[iron]], [[bolt]], [[ciphergpt]], [[nimbus]] | [[hao-et-al]], [[zkpot-garg]] |
+| **[[cheetah]]** (USENIX '22) | the lean 2PC matmul that the whole private-inference line improves on | [[iron]], [[bolt]], [[ciphergpt]], [[nimbus]], [[bootstrapping-fhe]] | [[hao-et-al]] |
 | **[[secfloat]]** (S&P '22) | accurate IEEE-754 floating point under 2PC | [[bolt]] | [[zkpot-garg]], [[zklp]] |
+
+:::gap  We argued from three papers for a year and had read one of them
+Until July 2026, [[sirnn]] and [[cheetah]] were `external:` nodes — names in a YAML file, with no
+PDF, no entry, and no page. The single most-quoted claim in this repo rested on three papers, and we
+had read exactly one of them ([[secfloat]]).
+
+It is worth being blunt about what that means. The finding turned out to be *right*, and reading the
+papers made it sharper rather than weaker. But it was right by luck, and the `external:` mechanism —
+which exists so you can name a building block without studying it — had quietly become a way of
+holding load-bearing evidence at arm's length. **A node your headline depends on is not a building
+block.** It is a paper you owe a reading.
+:::
 
 Add the fourth-order case and the picture completes: [[garg-fp]] — a *zero-knowledge* paper, CCS
 '22 — takes its floating-point cost baseline from [[archer-ieee]], which is an *MPC* paper, and

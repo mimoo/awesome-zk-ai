@@ -153,6 +153,7 @@ unsubstituted `METHOD` placeholder — treat with suspicion.
 | [Bionetta](https://arxiv.org/abs/2510.06784) 🔁 | Rarimo · Dec 2025 | MobileNetV2 | — | 24.5 s (**23 s on an iPhone**) | **0.88 KB** | 18 ms |
 | [Bionetta](https://arxiv.org/abs/2510.06784) 🔁 | Rarimo · Dec 2025 | ResNet18 | — | 14.1 s (**13.6 s on an iPhone**) | **0.88 KB** | 15 ms |
 | [SafetyNets](https://arxiv.org/abs/1706.10268) 🔓 | NeurIPS '17 | FcNN-3-Quad (TIMIT) | — | **+5% over plain execution**§ | 8 KB | 8–82× faster than local exec |
+| [Zator](https://github.com/lyronctk/zator) 📏 | *(no paper)* · Apr 2023 | 512-layer conv net (MNIST) | — | 26 967 s *(backbone only)* | — | 24.4 s |
 
 🔁 **Inverted threat model — do not read this row as beating the rows above it.** Bionetta proves a
 **public** model on a **private** input, client-side. Because the weights are public they compile
@@ -169,6 +170,17 @@ verification keys reach 37 MB, and verification takes **seconds to tens of secon
 settles on-chain. Notably, ddkang/zkml — the *other* Halo2 system, same hardware, same models —
 verifies in 12–23 ms with 5–7 KB proofs. The two most-deployed PLONKish toolchains do not have the
 same verifier profile and the literature treats them as one row.
+
+📏 **Depth, not size — and that is the finding.** Zator folds one layer at a time with Nova, so
+it proved a network *deeper than most production models* in 2023, two years before ZKTorch made
+folding-for-ML respectable. It is on MNIST, it took the better part of a working day, and it
+reports no accuracy at all. Read the row as the control experiment: **recursion really does
+dissolve depth** — the folding overhead is ~10k constraints per step, negligible — **and the
+field still could not prove a useful model, because the cost lives in the *width* of each layer
+and folding does nothing about width.** Two further caveats: the proving time is for the 510-layer
+backbone only (head and tail are separate proofs, never timed), and the network is 510 *identical*
+convolution layers because Nova can only fold a homogeneous step — the homogeneity tax, paid in
+the open. No paper, no review, no author list; treat every figure as a blog claim.
 
 🔓 **Not zero-knowledge** — SafetyNets buys *integrity only*; the model and input are not hidden.
 § The paper reports proving cost as *overhead over unverified execution*, and never states
@@ -641,13 +653,30 @@ sharing + oblivious transfer. It's the inference analog of [PriFT](#training-wit
 | | zkML (the atlas) | Secure inference (this line) |
 |---|---|---|
 | Guarantee | **Correctness** (a proof) | **Privacy** during computation |
-| Threat model | malicious prover | **semi-honest** counterparty — a malicious party can still compute the *wrong* function |
-| Bottleneck | prover compute / memory; cheap non-interactive verify | **communication** — hundreds of GB over many interactive rounds |
-| Scale reached | 8–13B | **BERT-class (~110M)** — 2PC comm cost caps it far lower |
+| Threat model | malicious prover | **semi-honest** counterparty — a malicious party can still compute the *wrong* function. (Exception: **Mosformer**, CCS '25, is malicious-secure — by adding a third non-colluding party.) |
+| Bottleneck | prover compute / memory; cheap non-interactive verify | **communication** — but see below; this is a *2PC* bottleneck, not a privacy one |
+| Scale reached | 8–13B | **8–13B** — Sigma runs Llama2-13B, PUMA runs LLaMA-7B ⚠ |
 
-The anchor number that captures the whole line: **Iron needs 280.99 GB of communication and
-216 minutes for a single BERT-base (110M) inference** (reported by BOLT). No proof is produced;
-you can't hand the result to a third party and have them trust it.
+⚠ **This row said "BERT-class (~110M)" until July 2026, and it was wrong.** The error was a
+reading-list error: every private-inference paper in the corpus was 2PC and BERT-class, and we
+generalized from the sample. The true statement is narrower and duller — **dishonest-majority 2PC
+with no trusted dealer** caps out at BERT-class. Change the trust model and the ceiling goes away:
+
+- **[Sigma](https://petsymposium.org/popets/2024/popets-2024-0107.pdf)** (PoPETs '24) runs
+  **Llama2-13B** — the same scale zkLLM proves — with a **37.6 s online phase and 18.9 GB** online
+  communication. It is **2PC**, via function secret sharing on a GPU. *But:* the preprocessing is
+  **419 GB of FSS keys**, taking 357 s just to transfer, and it needs a **trusted dealer**. The real
+  wall-clock is ~11× the advertised figure.
+- **[PUMA](https://arxiv.org/abs/2307.12533)** runs **LLaMA-7B** in 200 s / 1.79 GB — **3PC**,
+  honest-majority. (And the "five minutes" of its title appears in no table; the closest rows are
+  3.3 and 6.1 minutes.)
+
+The old anchor still stands as a statement about *its own* trust model: **Iron needs 280.99 GB and
+216 minutes for a single BERT-base inference.** Sigma does BERT-base in **1.72 s and 0.99 GB**. Four
+years, same threat-model family, four orders of magnitude — which is the real reason to stop quoting
+Iron as though it were the state of the art.
+
+Either way, no proof is produced; you can't hand the result to a third party and have them trust it.
 
 | System | Venue | Model | Approach | Result | PDF |
 |---|---|---|---|---|---|

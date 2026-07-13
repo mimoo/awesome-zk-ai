@@ -5,6 +5,9 @@
 #     Never fill a null with a guess -- the point of this file is to be plottable.
 #   - `tokens_per_minute.source: reported` = printed in the paper as a throughput figure.
 #     `tokens_per_minute_source: derived`  = computed by us as 60 / seconds_per_token.
+#     `tokens_per_minute_source: simulated` = the paper MODELS or extrapolates the number
+#                                  instead of measuring a running system. Never plot it beside
+#                                  measured rows; the charts in site/build.py skip it.
 #     Derived numbers are NOT comparable to reported ones without care: a single
 #     forward-pass proving time is not the same thing as sustained decode throughput.
 #   - `context_window` is the sequence length actually used in the benchmark, not the
@@ -94,7 +97,8 @@ inference:
         s = a / (2^(b-1) - 1) with a = max(|x_max|, |x_min|); activations clamped to [-a, a].
         Mixed precision: residual layers use a larger bit length. Outlier smoothing via
         orthonormal rotation X*W = (X*M)(M^T*W), with M absorbed into the previous layer's
-        weights. Unlike zkGPT/zkTorch, scale factors are NOT restricted to powers of two.
+        weights. Scale factors are NOT restricted to powers of two -- a restriction DeepProve
+        levels at zkTorch specifically, NOT at zkGPT. See conflict_flag.
       rescale_mechanism: >-
         PRIMARY, Sec 4.3.2. y = floor( (Quant(2^f * eps) * x + 2^(f+delta-1)) / 2^(f+delta) )
         - 2^(q-1). The arbitrary float scale eps is fixed-point-encoded as the integer
@@ -119,14 +123,30 @@ inference:
         proved UNCLAMPED, the ONNX Clamp op is an unproven passthrough (// TODO: Clamp), and the
         tanh/erf/sigmoid clamps are prover-side assert!s over unconstrained advice.
       conflict_flag: >-
-        UNRESOLVED. DeepProve asserts that zkGPT/zkTorch restrict scale factors to powers of two.
-        zkGPT's own text does NOT support this: zkGPT Sec 2.1/4.1 computes
-        qz = round((C1/C2) * qx * qy) where C1, C2 are Q-bit integers "obtained by searching",
-        approximating the arbitrary float ratio Sx*Sy/Sz -- an arbitrary rational, not a power of
-        two. Both systems in fact support arbitrary float scales; they differ in HOW (DeepProve:
-        integer multiplier + power-of-two shift; zkGPT: rational C1/C2 enforced by a double
-        inequality, no division at all). Treat DeepProve's characterization of prior work with
-        care. See docs/numerics.md.
+        UNRESOLVED -- and MIND THE ATTRIBUTION. DeepProve makes TWO DIFFERENT criticisms, one per
+        system. They must not be merged, and this field previously merged them.
+        (a) zkTorch gets the powers-of-two charge. DeepProve Sec 6, p.14: "the use of scaling
+        factors is limited to powers-of-2, which incurs greater precision loss than the flexible
+        quantization approach adopted in DeepProve." But zkTorch's OWN paper never says this --
+        "powers-of-two" does not occur anywhere in it. zkTorch states only that "any layer that
+        multiplies two numbers must have a rescaling at some point after that layer to correct for
+        the scale factor" (Sec 5) and that it uses "the similar scaling techniques proposed in
+        ZKML" (Sec 6). So DeepProve's characterisation of zkTorch is inherited from ZKML or read
+        off zkTorch's code, and is UNVERIFIABLE from zkTorch's text. Recorded, not resolved.
+        (b) zkGPT gets a DIFFERENT charge -- not powers of two. DeepProve Sec 6, p.14: "Similar to
+        zkTorch, zkGPT uses fixed-point multiplication with scaling factors for quantization ...
+        using a fixed scaling factor without clamping can lead to situations where the values
+        generated during inference are too large to be looked up, thus forcing a larger lookup
+        table to commit." The charge is FIXED SCALE + NO CLAMPING (lookup-table blowup). The
+        "similar to zkTorch" clause asserts similarity in USING fixed-point scale factors, not in
+        restricting them to powers of two. zkGPT's own text is consistent with an arbitrary scale:
+        Sec 2.1/4.1 computes qz = round((C1/C2) * qx * qy) with C1, C2 Q-bit integers "obtained by
+        searching", approximating the float ratio Sx*Sy/Sz -- an arbitrary rational. The systems
+        differ in HOW (DeepProve: integer multiplier + power-of-two shift; zkGPT: rational C1/C2
+        enforced by a double inequality, no division at all).
+        CORRECTED 2026-07-13: this field previously said DeepProve accuses "zkGPT/zkTorch" jointly
+        of powers-of-two. It does not. That merge propagated into content/numerics/index.md and
+        content/zk-inference/quantization.md.
       accuracy_retention:
         metric: [cosine_similarity, perplexity]
         dataset: Wikitext-2  # first 256 tokens of 25 documents; perplexity over first 255 logit rows
@@ -164,7 +184,24 @@ inference:
         proving_time_s: null
         tokens_per_minute: 174
         tokens_per_minute_source: reported
-        tokens_per_minute_note: "BaseFold, secondary machine. HyperKZG on the same machine: 146 TPM; primary machine: 127 TPM."
+        tokens_per_minute_note: >-
+          BaseFold, secondary machine. HyperKZG on the same machine: 146 TPM; primary machine:
+          127 TPM.
+          WHAT THE METRIC ACTUALLY MEANS -- the paper states no formula, but Table 2 fixes it:
+          TPM = SEQUENCE LENGTH / prove-time-in-minutes (512/2.94 = 174; 256/1.46 = 175;
+          128/0.85 = 151; 64/0.57 = 112). The numerator is the WHOLE sequence -- PROMPT tokens
+          plus generated tokens -- because DeepProve proves ONE forward pass over the
+          concatenated sequence (Sec 3.1: "It just feeds the entire sequence of input and output
+          tokens into the model at once, essentially performing a single inference step").
+          THIS IS NOT A DECODE RATE. DeepProve concedes it (Sec 1.2): plaintext GPT-2 does 71.4
+          TPS "for prompts with 128 input and 128 output tokens (sequence length 256), compared
+          to 3 TPS for our prover" -- 175 TPM / 60 = 2.9 TPS -- and adds that "for other queries
+          with the same total sequence length but much smaller output token size, plaintext
+          inference achieves more than 2K TPS", i.e. DeepProve's own TPM does not move when
+          almost none of those 256 tokens are actually generated. The input/output split of the
+          benchmarked sequences is NEVER STATED, so this figure cannot be renormalised to a
+          per-generated-token rate, and it is not commensurable with a system that proves
+          decoding.
         proof_size_mb: [7, 27]
         verification_time_s: 1.2
         verification_time_note: >-
@@ -182,18 +219,42 @@ inference:
         verification_time_s: 3.7
         verification_time_note: "Sec. 1.2 says ~4 s; abstract's range tops out at 3.7 s."
         peak_ram_gb: 96.27  # BaseFold, primary machine, seq 512; HyperKZG needs 147 GB
-      - model: GPT-2 (distributed prover)
+      - model: GPT-2 (distributed prover, 16 workers)
         params: 124000000
         context_window: 512
         proving_time_s: null
-        tokens_per_minute: 1855
-        tokens_per_minute_source: reported
-        proof_size_mb: null
+        tokens_per_minute: 1855  # Table 6: 16 workers + 1 coordinator, seq 512, BaseFold
+        tokens_per_minute_source: simulated
+        tokens_per_minute_note: >-
+          NOT MEASURED. The distributed prover is SIMULATED, not built. Sec 5: "We simulate the
+          performance of distributed DeepProve on 8 and 16 workers and a coordinator using our
+          secondary machine configuration as the engineering effort to set up a distributed
+          environment is non-trivial. We measure the maximum time to prove any chunk and add the
+          time to transfer each individual proof back to the coordinator, assuming a LAN
+          connection at 1 Gb/s." Table 6 is captioned "Simulated performance of distributed
+          DeepProve", and the subsection closes: "We leave the full-fledged implementation of
+          distributed DeepProve as future work." The abstract's "17 machines" = 16 workers + 1
+          coordinator. 10.64x over the 174.32 single-machine TPM at the same sequence length.
+          Same sequence-length-not-decode-rate caveat as the rows above. DO NOT PLOT on the
+          single-machine frontier.
+          CORRECTED 2026-07-13: was tagged `reported`, which is what a measured number is called.
+        proof_size_mb: 53.81  # stated in prose: "53.81MB for 16 workers" (43.2 MB for 8)
         verification_time_s: null
 
   - id: jolt-atlas
     name: Jolt Atlas
-    claim_kind: pass  # single forward pass
+    claim_kind: full  # NOT STATED by the paper -- see claim_kind_note
+    claim_kind_note: >-
+      CORRECTED 2026-07-13 (was `pass  # single forward pass`). Verified against the PDF: the
+      strings "forward pass", "token", "sequence length", "autoregressive" and "prompt" do not
+      occur ANYWHERE in the paper. Sec 6.2 (GPT-2) is two sentences plus a table, and nothing in
+      it says what the ~38 s covers. `pass` was a claim the paper does not make, and it
+      contradicted this entry's own benchmarks[GPT-2].tokens_per_minute_note, which already
+      admitted "it is unknown whether this is one forward pass or a full generation". Per the
+      vocabulary at the top of this file, an unstated token count is `full` -- an ambiguity,
+      recorded as one. (The claim that the PROVER only ever does one pass is separately
+      supported, but by the SOURCE CODE, not the paper -- see content/zk-inference/
+      jolt-atlas-from-source.md.)
     title: "Jolt Atlas: Verifiable Inference via Lookup Arguments in Zero Knowledge"
     url: https://arxiv.org/abs/2602.17452
     pdf: https://arxiv.org/pdf/2602.17452
@@ -237,8 +298,21 @@ inference:
         There is NO perplexity or task-accuracy number for any model in this paper.
     notes: >-
       Proves ONNX tensor operations directly instead of emulating a CPU, so there is no
-      RISC-V trace. Zero-knowledge via the BlindFold technique -- the only system here that
-      actually hides the witness. Targets memory-constrained / on-device proving: prefix-suffix
+      RISC-V trace. Zero-knowledge via the BlindFold technique: Sec 2 organises the proof "using
+      BlindFold to hide the witness", and Sec 3 gives the construction (Pedersen-hidden sumcheck
+      messages + Nova-style folding with a random satisfying instance).
+      CORRECTED 2026-07-13: this note previously called Jolt Atlas "the only system here that
+      actually hides the witness". That is FALSE, and this file's own entries refute it. zkLLM
+      proves zero-knowledge with a simulator (Theorem 7.4) and hides the model parameters; ZEN is
+      Groth16 and its schemes "leak no information of either the neural network model or the
+      sensitive user input"; zkml-kang inherits "all security properties of halo2, including
+      zero-knowledge"; mystique and hao-et-al both carry uses_zk: true. If anything Jolt Atlas is
+      the WEAKEST of these on paper -- the PDF contains no theorem, no simulator and no security
+      proof, and Table 3's stage breakdown shows no BlindFold/folding line item, so it is not even
+      clear the ~38 s includes the ZK overhead. The real contrast is zkGPT, which DEFERS
+      zero-knowledge ("The zero-knowledge property can be incorporated into the protocol by using
+      masking polynomials", Sec 4) -- so what zkGPT measures is not a ZK protocol.
+      Targets memory-constrained / on-device proving: prefix-suffix
       decomposition of lookup tables cuts peak prover memory from O(|T|) to ~O(|T|^(1/C)),
       which is how a 125M-parameter model proves inside 16 GB.
       CORRECTION (2026-07-10): a previous note here said Sec. 6.2 "contains no measurements".
@@ -443,9 +517,27 @@ inference:
     repo: https://github.com/jvhs0706/zkllm-ccs2024
     numbers_source: primary
     quantization:
-      bits: null  # fixed-point; exact width not confirmed
+      bits: null  # genuinely not stated by the paper -- see bits_note
+      bits_note: >-
+        The paper never gives a bit width. What it gives (Sec 8) is a SCALING FACTOR: "we
+        consistently set the scaling factor for both data embedding and model parameters at
+        2^16", with K=5 tlookups of size 2^16 each for the zkAttn softmax input, whose cumulative
+        scaling factor reaches 2^64. A scale factor is NOT a bit width; do not convert one into
+        the other to fill this null.
       scheme: "Fixed-point. zkAttn explicitly avoids bit-decomposition and polynomial approximation of softmax."
-      accuracy_retention: null
+      accuracy_retention: >-
+        REPORTED -- and more completely than any other LLM prover in this file. Table 1 prints C4
+        perplexity, floating-point vs quantized, for all eight models: OPT-125M 26.56 -> 26.65,
+        OPT-350M 22.59 -> 22.66, OPT-1.3B 16.07 -> 16.12, OPT-2.7B 14.34 -> 14.37, OPT-6.7B
+        12.71 -> 12.73, OPT-13B 12.06 -> 12.07, LLaMa-2-7B 7.036 -> 7.049, LLaMa-2-13B
+        6.520 -> 6.528. The delta shrinks monotonically with model size. Sec 8 states it in
+        prose: "the increase of perplexity is less than 0.1, and the impact diminishes to less
+        than 0.01 as the sizes of the models scale to 13B." Separately, Sec 8 bounds the zkAttn
+        approximation itself: "an approximate total L1 error of 10^-2 on the output, a level
+        comparable to the rounding error induced by half-precision floating points used in
+        state-of-the-art LLMs."
+        CORRECTED 2026-07-13: this field said `null` -- which in this file means "the paper does
+        not report this" -- and that was false. content/papers/zkllm.md had already flagged it.
       note: >-
         zkLLM's own framing is the cleanest statement of the tradeoff: to match float accuracy,
         fixed-point methods need LARGE bit widths, which force operations over LARGE finite
@@ -1052,7 +1144,20 @@ inference:
         Table 7 gives FP vs quantized accuracy for all six models; deltas are small but non-zero,
         and non-monotone (the largest model's quantized accuracy comes out ABOVE its FP accuracy).
         Note the abstract's "no accuracy loss" is relative to ZEN-vanilla, not to floating point.
-      note: "The other direct measurement of what quantization buys, independent of SpaGKR."
+      note: >-
+        NOT a measurement of what quantization buys. WITHDRAWN 2026-07-13: this note previously
+        read "The other direct measurement of what quantization buys, independent of SpaGKR",
+        which contradicted the speedup_note directly above it. Both sides of the 5.43x-22.19x
+        ratio are the SAME 8-bit quantized network. ZEN-vanilla is "a straight-forward
+        implementation of existing full quantization scheme [JKC+18]" (Sec 1.2; Sec 4.1 is titled
+        "Baseline: ZEN-vanilla"), and the inefficiencies ZEN attacks in it are sign checks and
+        bit-decomposed division -- CIRCUIT-ENCODING costs. There is no floating-point column in
+        Table 3, and there could not be one: R1CS has no floats. So the ratio measures ZEN's
+        R1CS-friendly encoding (sign-bit grouping, remainder-based verification, stranded
+        encoding), NOT bit width, and it is NOT comparable to spagkr's speedup_from_quantization,
+        which is a bit-width effect.
+        CONFLICT INSIDE THE PAPER on the average of that same range: the abstract and Sec 6.4 say
+        "15.35x on average"; Sec 1.2 says "14.27x on average". Both recorded; unresolved.
     notes: >-
       One of the first optimizing compilers for verifiable NNs, and the first to argue that the
       NETWORK, not the prover, is the thing to optimize -- its backend is off-the-shelf Groth16.
@@ -1487,6 +1592,110 @@ inference:
           it is not a protocol result -- most of it is that Bionetta's model is public, so its
           weights are circuit constants and its linear layers cost nothing.
 
+  - id: zator
+    name: Zator
+    title: "Zator: Verified inference of a 512-layer neural network using recursive SNARKs"
+    url: https://github.com/lyronctk/zator
+    venue: Open-source project, Hack Lodge (no paper)
+    date: 2023-04
+    year: 2023
+    authors:
+      - Lyron Co Ting Keh
+      - Varun Shenoy
+    authors_verified: false
+    authors_note: >-
+      No paper and no author list in the repository. The GitHub org is lyronctk; the example
+      proofs are hosted in a gist owned by varunshenoy; the README acknowledges Dan Boneh
+      (advising), Nalin Bhardwaj (Nova-Scotia), Srinath Setty (Nova) and Cathie So (circuit
+      library) as advisors, NOT as authors. Recorded as unverified: attribute the work to the
+      project, not to a name, unless you can confirm it.
+    proof_system: >-
+      Nova (folding / IVC) composed with Spartan. One R1CS step circuit per network layer,
+      folded N times into a single relaxed R1CS instance; that one instance is then proven
+      succinctly with Spartan. Circuits written in circom, compiled to Nova via Nova-Scotia.
+      Recursion overhead is the folding step itself: ~10k constraints per step.
+    uses_zk: true
+    hardware: AWS instance, no GPU (instance type not stated).
+    numbers_source: blog
+    numbers_note: >-
+      Every figure comes from the project README (there is no paper and no peer review). The
+      benchmark table is the BACKBONE ONLY -- 510 folded convolution layers. The head and tail
+      layers are proven separately and their proving times are never reported, so no number
+      here is an end-to-end cost for the advertised 512-layer network.
+    objectives:
+      - inference
+    quantization:
+      bits: null
+      scheme: >-
+        Scale factors and floor division applied to weights and activations during training.
+        Negative numbers handled by splitting the field at floor(p/2). Bit width never stated.
+      accuracy_retention: null
+      note: >-
+        The README calls the quantization error "a significant limitation of the network we
+        snarked" and reports no accuracy at all -- not a delta, not an absolute. The model is
+        trained on MNIST. Take the correctness claim as "the circuit proves what the quantized
+        network computed", with no evidence offered about what that network is worth.
+    notes: >-
+      THE FIRST FOLDING-FOR-ML SYSTEM, and the ancestor of the accumulation line that zktorch
+      now occupies. April 2023, a week-long Hack Lodge project, no paper. It is in this file
+      because it is the cleanest natural experiment in the corpus on a question the later
+      folding papers assume away: what does it cost to make a neural network HOMOGENEOUS
+      enough to fold?
+
+      The answer is: you have to design the network around the prover, and Zator does it
+      openly. Nova can only fold a repeated step, so the backbone is 510 IDENTICAL convolution
+      layers -- convolutions and not dense layers, because a 784x784 dense weight matrix costs
+      ~350M constraints just to HASH it (MiMC, 220 rotations) before you have proven a single
+      multiplication. That is the homogeneity tax, quantified, and it is why the backbone of
+      the deepest network anyone had snarked was a stack of clones. Even then it does not
+      fully close: head and tail cannot be parameterized like the backbone, so the system
+      emits THREE proofs and the verifier must chain them through their public outputs.
+      SuperNova (heterogeneous steps) was unimplemented at the time; Mira-style accumulation,
+      which is what zktorch uses to fold a real model graph, is the descendant that fixes this.
+
+      WHAT THE BENCHMARK ACTUALLY SHOWS, AND IT IS NOT WHAT THE HEADLINE SAYS. The headline is
+      depth: 512 layers, "as deep or deeper than the majority of production AI models", 2.5B
+      total constraints. The table underneath it is 7.5 hours of proving for MNIST. Read the
+      two together and the lesson is that DEPTH WAS NEVER THE BINDING CONSTRAINT -- recursion
+      does dissolve it, exactly as advertised, and the field still could not prove a real model
+      afterwards, because the cost lives in the WIDTH of each layer and folding does nothing
+      about that. A 2023 project proving a deeper network than anything in this file, on a
+      dataset nobody has cared about since 2012, is the whole point.
+
+      THE FOLD IS NOT THE COST. Going from 1 layer/step to 3 layers/step -- i.e. cutting the
+      number of folds by 3x -- makes proving SLOWER (26,967s -> 30,227s), while verification
+      degrades from 24.4s to 62.7s because the final Spartan proof is over a 3x bigger step
+      circuit. The ~10k-constraint folding overhead really is negligible against the per-layer
+      circuit; there is no win available on that axis. Also worth stating plainly: 24 seconds
+      to verify. Nothing here settles on-chain.
+    benchmarks:
+      - model: 510-layer conv backbone (MNIST), 1 layer/step
+        params: null
+        layers: 510
+        recursive_steps: 510
+        constraints: 2500000000
+        constraints_note: 2.5B total constraints is the README's figure for the full 512-layer network.
+        proving_time_s: 26966.8
+        verification_time_s: 24.4
+        proof_size_mb: null
+      - model: 510-layer conv backbone (MNIST), 2 layers/step
+        params: null
+        layers: 510
+        recursive_steps: 255
+        proving_time_s: 29082.0
+        verification_time_s: 47.7
+        proof_size_mb: null
+      - model: 510-layer conv backbone (MNIST), 3 layers/step
+        params: null
+        layers: 510
+        recursive_steps: 170
+        proving_time_s: 30226.8
+        verification_time_s: 62.7
+        proof_size_mb: null
+        note: >-
+          Fewer folds, more proving time, and 2.6x the verifier time. The folding overhead is
+          not what you are paying for.
+
   - id: range-arithmetic
     name: Range-Arithmetic
     title: "Range-Arithmetic: Verifiable Deep Learning Inference on an Untrusted Party"
@@ -1555,8 +1764,16 @@ numerics_primitives:
   # NOT ML systems. These are the arithmetic building blocks underneath zkML: how you represent a
   # real number in a circuit at all. They matter because the entire zkML literature justifies
   # quantization by asserting that native floating point is "infeasible" in a circuit -- and these
-  # two papers, which NO zkML system in this file cites, show that it is not.
-  # See content/zk-inference/numerics.md.
+  # papers show that it is not.
+  # CORRECTED 2026-07-13: this comment used to say these are papers "which NO zkML system in this
+  # file cites". That is FALSE, and the exception is the most interesting edge in the corpus: ZIP
+  # cites garg-fp (adopting its relative-error model wholesale), cites archer-ieee, and DEPENDS on
+  # zklp -- "For linear layers, ZIP directly leverages the existing technique from [20]", with both
+  # of its benchmark tables footnoted "All linear operations are proved via [20]." Half of ZIP's
+  # circuit IS zklp, so every proving time ZIP reports is partly a zklp number. The correct claim
+  # is narrower: the TRANSFORMER-PROVING systems (deepprove, zkgpt, zkllm, zkpytorch, jolt-atlas)
+  # do not cite this shelf. ZIP is the sole bridge, and it is a load-bearing one.
+  # See content/numerics/ (index.md, bridge.md).
   - id: garg-fp
     name: Garg et al. (FP)
     title: "Succinct Zero Knowledge for Floating Point Computations"
@@ -1645,7 +1862,9 @@ numerics_primitives:
       shared tables amortize across operations.
       HEADLINE: 2^1 FP32 multiplications cost 209 constraints each; 2^15 FP32 multiplications cost
       *64 constraints per operation*. Compare the naive IEEE-754 emulation cost the paper itself
-      tabulates (Sec 6): FP32 2,456 gates/add and 8,854 gates/mul; FP64 15,637/add and 44,899/mul.
+      quotes (Sec 5.1, in the prose paragraph headed "Comparison With Other Works" -- it is NOT a
+      table, and it is not Sec 6; Sec 6 is Related Works and prints no figures at all):
+      FP32 2,456 gates/add and 8,854 gates/mul; FP64 15,637/add and 44,899/mul.
       Those same four figures are independently quoted by ZIP (from Mystique and from
       Archer-Atapoor-Smart, LATINCRYPT'21) -- two primary sources in agreement.
       THE INVERSION: ZKLP's IEEE-754 FLOAT circuits use 15.9x FEWER constraints than an unoptimized
@@ -1662,6 +1881,102 @@ numerics_primitives:
       is the non-linear operators and the precision-critical seams -- which is exactly where zkML's
       cost actually lives. Nobody in zkML has tested this.
     benchmarks: []
+
+  - id: sirnn
+    name: SIRNN
+    title: "SiRnn: A Math Library for Secure RNN Inference"
+    url: https://eprint.iacr.org/2021/459
+    pdf: https://arxiv.org/pdf/2105.04236
+    venue: IEEE S&P 2021
+    date: 2021-05-10
+    year: 2021
+    authors:
+      - Deevashwer Rathee
+      - Mayank Rathee
+      - Rahul Kranti Kiran Goli
+      - Divya Gupta
+      - Rahul Sharma
+      - Nishanth Chandran
+      - Aseem Rastogi
+    authors_verified: true
+    affiliation: Microsoft Research
+    approach: 2PC, semi-honest -- LUT + Goldschmidt iteration for math functions, mixed bit-widths, digit decomposition
+    open_source: true
+    repo: https://github.com/mpc-msri/EzPC
+    numbers_source: primary
+    # FILED HERE, NOT IN THE PRIVACY COLUMN, AND THE CHOICE IS DELIBERATE.
+    # SIRNN is a MATH LIBRARY -- its title says so -- and numerics_primitives is this file's neutral
+    # shelf for the arithmetic substrate that BOTH columns consume. SecFloat, by the same first
+    # author, is already here. Filing SIRNN under secure_inference_2pc instead would reclassify the
+    # shared substrate as "the privacy column" and mechanically turn every ZK paper that borrows its
+    # arithmetic (hao-et-al, zkpot-garg) into a crossing edge -- which is a filing artifact, not a
+    # discovery. See validate.py check 10 and the comment in citation-graph.yml.
+    notes: >-
+      ONE OF THE THREE NODES THIS SOK'S HEADLINE FINDING RESTS ON, AND WE HAD NEVER READ IT. The
+      bridge page has been arguing for months that "the only three papers cited by both columns are
+      SIRNN, Cheetah and SecFloat, and all three are MPC numerics." We held SecFloat. SIRNN and
+      Cheetah were names in a graph. Both are now read.
+
+      What it is: specialized 2PC protocols for the math functions a network actually needs --
+      exponential, sigmoid, tanh, reciprocal, and reciprocal square root -- built on a single
+      paradigm. Use a LOOKUP TABLE for a good initial approximation, then refine with GOLDSCHMIDT'S
+      ITERATIONS. Support that with DIGIT DECOMPOSITION (split an l-bit value into l/d digits so you
+      can index several small tables instead of one huge one, ~5x cheaper than garbled circuits) and
+      MIXED BIT-WIDTHS (do not force every variable to 64 bits just because one operation needs it).
+
+      Read that paragraph again and then read the zkML papers. Digit decomposition into small
+      lookup tables, refined by an iterative approximation, with bit-widths chosen per operator.
+      That is hao-et-al's exponential protocol, its reciprocal-square-root protocol, and its
+      hyperparameters -- hao-et-al cites SIRNN five times in its BODY and inherits its iteration
+      counts and lookup bit-lengths outright. It is also, in different vocabulary, what DeepProve
+      and zkGPT rediscovered from first principles four years later.
+
+      AND ITS MOTIVATION IS ZKPYTORCH'S CAUSAL CHAIN, WRITTEN IN 2021 IN MPC VOCABULARY: "the
+      requirement of a high bitwidth even in one operation, coupled with the requirement of uniform
+      bitwidths, raises the bitwidths of all variables and operations throughout an inference task,
+      resulting in a communication blowup." Replace "communication blowup" with "field size" and you
+      have the argument the numerics page opens with, four years early.
+
+      THE FACT THAT SETTLES AN ARGUMENT ON THE NUMERICS PAGE: SIRNN'S TRUNCATION IS EXACT. All four
+      of its truncation flavours -- logical shift, arithmetic shift, truncate-and-reduce, and
+      C-style division by a power of two -- compute the wrap/borrow terms exactly. There is no
+      "fails with small probability" anywhere in the paper, and truncate-and-reduce costs
+      ~lambda(s+1) bits, ROUGHLY 4.5x LESS than a garbled circuit. So the MPC world did not only
+      have the cheap-but-probabilistic truncation that ZK cannot borrow; it also had the exact one,
+      and the exact one is the one that is cheap. Our claim that "probabilistic truncation is the
+      exception that has been mistaken for the rule" now has its primary source.
+    quantization:
+      bits: null
+      bits_note: >-
+        The whole point is that there is no single bit width -- mixed, non-uniform bit-widths are
+        the contribution. Formally verified against GNU MPFR at bit-width 16 by exhaustive testing.
+      scheme: >-
+        Fixed-point, exact truncation (four flavours). Math functions via LUT initial approximation
+        + Goldschmidt iterations. Precision is reported as ULP error, not as an accuracy delta:
+        exponential 3 ULP, sigmoid 3, tanh 4, reciprocal square root 4. "Intel's SVML also provides
+        math implementations with 4 ULP error."
+      accuracy_retention: >-
+        "SIRNN has no loss in model accuracy." Its foil: SecureML/ABY2.0's 3-piece linear spline
+        sigmoid carries 1547 ULPs of error and drops Google-30 keyword-spotting accuracy from 84.4%
+        to 60.95%. Cheap approximations of the non-linearities are how you destroy a model, and this
+        is the cleanest measurement of it anywhere in the corpus.
+    benchmarks:
+      - model: Google-30 (keyword spotting RNN)
+        params: null
+        proving_time_s: 49.6
+        communication_mb: 450
+        note: >-
+          Against a uniform-64-bit ABY baseline: 3337 s and 259 GB. 67x faster, 574x less
+          communication. The 423x in the abstract is the per-instance communication ratio for
+          reciprocal square root against MP-SPDZ (6 KB vs 2535 KB).
+      - model: Heads (SCUT Head, CNN+RNN)
+        params: null
+        proving_time_s: 409.7
+        communication_mb: 85500
+        note: >-
+          ~3 million sigmoid/tanh calls and 2700 reciprocal-square-roots. The ABY baseline is
+          intractable ("hundreds of terabytes"). First secure implementation of this model; no prior
+          2PC work supported rsqrt at all.
 
   - id: secfloat
     name: SecFloat
@@ -1804,6 +2119,155 @@ testing:
   # where they are recorded with `objectives: [inference, testing]`.
 
 training:
+  # -----------------------------------------------------------------------------------------
+  # READ THE FIRST THREE ENTRIES BEFORE THE REST. They are why this category exists.
+  #
+  # Proof-of-Learning (Jia et al., S&P '21) is the NON-cryptographic proof of training: log your
+  # checkpoints, let a verifier replay the most expensive segments. Every zkPoT below positions
+  # against it, and until 2026-07-13 this SoK did not contain it.
+  #
+  # It was then broken twice. And BOTH attack papers conclude, independently, that the fix is
+  # cryptography -- one naming SNARKs explicitly and pricing them as "overwhelming overhead".
+  # That is the origin story of this cell, and it was missing from the file.
+  # -----------------------------------------------------------------------------------------
+
+  - id: pol
+    name: Proof-of-Learning
+    title: "Proof-of-Learning: Definitions and Practice"
+    url: https://arxiv.org/abs/2103.05633
+    pdf: https://arxiv.org/pdf/2103.05633
+    venue: IEEE S&P 2021
+    date: 2021-03-09
+    year: 2021
+    authors:
+      - Hengrui Jia
+      - Mohammad Yaghini
+      - Christopher A. Choquette-Choo
+      - Natalie Dullerud
+      - Anvith Thudi
+      - Varun Chandrasekaran
+      - Nicolas Papernot
+    authors_verified: true
+    affiliation: University of Toronto / Vector Institute / University of Wisconsin-Madison
+    approach: Non-cryptographic. Log training checkpoints + batch indices; verifier replays the largest updates.
+    uses_zk: false
+    open_source: true
+    repo: https://github.com/cleverhans-lab/Proof-of-Learning
+    numbers_source: primary
+    notes: >-
+      The founding paper of proof-of-training, and the one every zkPoT in this category is
+      implicitly arguing with. The prover logs a tuple (W, I, H, A): model weights every k-th step,
+      the indices of the batch used at each step, signatures of those data points, and the
+      hyperparameters. The verifier checks the initialization was drawn from the claimed
+      distribution (a Kolmogorov-Smirnov test), then re-executes the Q LARGEST weight updates per
+      epoch and fails if the replayed weights differ from the logged ones by more than a slack
+      parameter delta.
+
+      Why only the largest updates? Because valid gradient-descent updates are small, so an
+      adversary faking a cheaper run must introduce estimation error, and error shows up most
+      visibly in the big steps. It is a genuinely elegant heuristic.
+
+      THE SECURITY OF THE WHOLE SCHEME IS A CONJECTURE, AND THE PAPER SAYS SO. Property 2 -- that no
+      adversary can produce a valid proof more cheaply than honestly training -- is never proved.
+      What is offered instead is Conjecture 1: "Inverting a training sequence using numerical root
+      finding methods will always be at least as computationally expensive as training, given the
+      same model." The authors are explicit that they are "not aware of a mechanism to prove those
+      formally". Two papers then went and broke it: see pol-adversarial and pol-broken.
+
+      The other limitations are candid and worth carrying: verification requires handing the
+      training DATA to the verifier; storage is the whole checkpoint history; and the success
+      probability "degrades multiplicatively with each usage", which bounds how long a chain of
+      PoLs can get.
+
+  - id: pol-adversarial
+    name: PoL Adversarial Examples
+    title: "\"Adversarial Examples\" for Proof-of-Learning"
+    url: https://arxiv.org/abs/2108.09454
+    pdf: https://arxiv.org/pdf/2108.09454
+    venue: IEEE S&P 2022
+    date: 2022-04-05
+    year: 2022
+    authors: [Rui Zhang, Jian Liu, Yuan Ding, Zhibo Wang, Qingbiao Wu, Kui Ren]
+    authors_verified: true
+    affiliation: Zhejiang University
+    approach: Attack. Spoofs a PoL by crafting adversarial data batches that "generate" the stolen weights.
+    uses_zk: false
+    numbers_source: primary
+    notes: >-
+      THE FIRST BREAK, and the idea is lovely. To fake a training step you need a data batch whose
+      gradient carries you from one logged checkpoint to the next. So OPTIMIZE THE DATA. Exactly as
+      you would craft an adversarial example -- gradient descent on the input rather than on the
+      weights -- the attacker synthesizes a batch that makes an update land on the stolen final
+      model. The attack explicitly exploits an assumption from the original paper: that the
+      adversary "has full access to the training dataset and can modify it".
+
+      Cost: honest training of their ResNet-20/CIFAR-10 target is 78,000 gradient computations.
+      Attack II needs 31 gradient computations per faked step, so it wins whenever the faked run is
+      shorter than ~2,516 steps; Attack III amortizes over the checkpoint interval and wins below
+      ~251,600. Empirically the spoof passes verification, reproduces with LOWER error than the real
+      proof, is SMALLER than the real proof, and works from a non-overlapping dataset on strictly
+      weaker hardware than the victim's.
+
+      What it kills: Property 2. The paper is blunt that Jia et al. "did not provide a proof to back
+      their claim."
+
+      AND ITS PROPOSED FIX IS THIS ENTIRE SOK. Section V lists verifiable computation -- citing
+      SNARKs and STARKs by name -- as the sound alternative, and then prices it in one sentence:
+      "This mechanism is valid, but it will introduce an overwhelming overhead." That is the zkPoT
+      cell, named and costed by an attack paper in 2022.
+
+  - id: pol-broken
+    name: PoL is More Broken Than You Think
+    title: "Proof-of-Learning is Currently More Broken Than You Think"
+    url: https://arxiv.org/abs/2208.03567
+    pdf: https://arxiv.org/pdf/2208.03567
+    venue: IEEE EuroS&P 2023
+    date: 2023-04-17
+    year: 2023
+    authors:
+      - Congyu Fang
+      - Hengrui Jia
+      - Anvith Thudi
+      - Mohammad Yaghini
+      - Christopher A. Choquette-Choo
+      - Natalie Dullerud
+      - Varun Chandrasekaran
+      - Nicolas Papernot
+    authors_verified: true
+    affiliation: University of Toronto / Vector Institute / Microsoft Research / Google Research
+    approach: Attack. Two structurally-correct spoofs that defeat the threshold and the top-Q heuristic.
+    uses_zk: false
+    open_source: true
+    repo: https://github.com/cleverhans-lab/practical-attacks-against-pol
+    numbers_source: primary
+    notes: >-
+      THE SECOND BREAK, and note the author list -- this is largely the ORIGINAL PoL TEAM breaking
+      their own scheme, which is the most honest thing in this file.
+
+      Two attacks, both cheaper and more robust than the first break. The INFINITESIMAL UPDATE
+      ATTACK simply linearly interpolates the checkpoints between the initialization and the stolen
+      final model, then logs a learning rate of ~0 so that every update is smaller than the
+      verification threshold delta. Reproduced and logged updates are both negligible, so their
+      difference is negligible, so verification passes. Cost: NO TRAINING AT ALL -- one floating-point
+      operation per parameter per step, upper-bounded by a single forward pass, against the previous
+      break's ~31 gradient computations per step. The BLINDFOLD TOP-Q ATTACK defeats the other half
+      of the scheme: make exactly Q genuinely-valid updates per epoch with a large learning rate so
+      they have the largest magnitudes, interpolate everything else, and the verifier's "check the Q
+      biggest updates" heuristic lands on precisely the Q real ones, every time, and never inspects
+      the fakes.
+
+      It is also a correction of pol-adversarial: that paper's Attack 1 is "not reproducible"
+      (neither team could make it work), and its Attack 2 assumed the attacker controls k and delta,
+      which "should be set by the verifier and is thus out of the attacker's control". So the first
+      break was real but weaker than advertised, and the scheme is worse than either paper thought.
+
+      THE CONCLUSION IS WHY THIS PAPER IS IN THE SOK: "We conclude that one cannot develop a provably
+      robust PoL verification mechanism without further understanding of optimization in deep
+      learning." And the way out, in their words: "One possible solution to circumvent these
+      fundamental limits in ML theory and our understanding of optimization, is to rely more on
+      cryptography." Both attack papers arrive at the same door. Everything else in this category is
+      what is behind it.
+
   - id: kaizen
     name: Kaizen
     title: "Zero-Knowledge Proofs of Training for Deep Neural Networks"
@@ -1896,7 +2360,16 @@ training:
     authors_verified: false
     hardware: 24x Intel Xeon E5-262, 8x V100 GPUs, 128 GB RAM
     numbers_source: survey
-    notes: "Sampling-based: proves a random subset of epochs/iterations rather than all of them."
+    notes: >-
+      Sampling-based, but on WEIGHTS, not iterations. CORRECTED 2026-07-13: this note used to say
+      "proves a random subset of epochs/iterations rather than all of them" -- that is VeriML, not
+      zkMLaaS. Per the ZKP-VML survey (our ONLY source; we hold no zkMLaaS PDF), zkMLaaS runs a
+      two-round challenge-response in which the provider "submits commitments for all intermediate
+      weights updated during each training iteration and data sampling epoch", after which "the ML
+      client randomly selects a subset of these intermediate weights, and the service provider
+      must generate corresponding proofs." The survey credits it with "approximately 273x
+      reduction in proof-generation overhead" via random sampling + im2col + Freivalds-based
+      matrix verification.
     benchmarks:
       - model: Logistic regression
         proving_time_s: 2.2
@@ -2382,6 +2855,259 @@ private_training_no_proofs:
 # ============================================================================
 
 secure_inference_2pc:
+  - id: sigma
+    name: Sigma
+    title: "Sigma: Secure GPT Inference with Function Secret Sharing"
+    url: https://doi.org/10.56553/popets-2024-0107
+    pdf: https://petsymposium.org/popets/2024/popets-2024-0107.pdf
+    venue: "PoPETs 2024(4), pp. 61-79"
+    date: 2024-07-01
+    year: 2024
+    authors:
+      - Kanav Gupta
+      - Neha Jawalkar
+      - Ananta Mukherjee
+      - Nishanth Chandran
+      - Divya Gupta
+      - Ashish Panwar
+      - Rahul Sharma
+    authors_verified: true
+    affiliation: Microsoft Research / University of Maryland / IISc
+    approach: Function secret sharing (FSS) in the preprocessing model, GPU-accelerated
+    threat_model: >-
+      2PC, SEMI-HONEST, static, IN THE PREPROCESSING MODEL WITH A TRUSTED DEALER -- and that last
+      clause is the one that matters. The online phase is genuinely two-party and dishonest-majority;
+      but the correlated randomness (the FSS keys) is generated by a trusted third party, which
+      Sigma chooses out of three options it lists. So it is not a peer of iron/bolt/cheetah, which
+      need no dealer, and it is not a peer of puma/mosformer, whose third party is untrusted-but-one-
+      of-three. It is its own trust model and this SoK previously had no slot for it.
+      Malicious security is explicitly future work.
+    open_source: true
+    repo: https://github.com/mpc-msri/EzPC/tree/master/GPU-MPC/experiments/sigma
+    numbers_source: primary
+    hardware: >-
+      2 machines, LAN 9.4 Gbps / 0.05 ms ping. Each: NVIDIA A6000 (46 GB), AMD EPYC 7742, 1 TB RAM.
+      All models at sequence length 128. Precision f = 12.
+    notes: >-
+      THE PAPER THAT BREAKS THE "PRIVACY CAPS AT BERT" CLAIM FROM INSIDE 2PC. Sigma runs
+      Llama2-13B -- the same scale zkLLM proves in the verifiability column -- with a 37.59 s
+      online phase and 18.90 GB of online communication. Iron, which this SoK uses as the anchor
+      for the whole privacy column, needs 280.99 GB and 216 minutes for one BERT-base. Sigma does
+      BERT-base in 1.72 s and 0.99 GB.
+
+      The mechanism is a different branch of the field that our corpus contained NONE of: function
+      secret sharing, moved onto a GPU. Its two ideas are worth having. First, faithful (non-local)
+      truncation protocols in FSS -- it explicitly rejects CrypTen's local truncations as known-
+      insecure. Second, LUT-shrinking by domain knowledge: rather than Pika's 2^50 table, it
+      observes that delta(x) = ReLU(x) - GeLU(x) is zero outside (-4, 4), so a 256-ENTRY table
+      suffices for GeLU over 50-bit values. SiLU gets 1024 entries. That is the same "exploit the
+      operator's actual range" move the zkML lookup papers make, arrived at independently.
+
+      WHAT TO DISTRUST, AND IT IS THE HEADLINE. THE ADVERTISED NUMBERS ARE ONLINE-ONLY AND THE
+      PREPROCESSING IS ENORMOUS. Llama2-13B needs 419.01 GB OF FSS KEYS, 40.57 s to generate them,
+      and 356.61 s just to TRANSFER them over the same 9.4 Gbps LAN -- against the 37.59 s online
+      figure on the cover. Real wall-clock is roughly 435 s, about 11x the advertised number.
+      Llama2-7B: 255.41 GB of keys, 217.37 s of transfer, 23.09 s online. The keys are one-shot and
+      shape-specific; there is no amortization story for a second query.
+
+      Also: CrypTen OOMs on 7B and 13B, so the models the title is about have NO BASELINE AT ALL --
+      the 12-19x speedup range is measured on the models nobody cares about. And Table 4 reports
+      BERT-base/MRPC at 87.25% secure vs 84.31% plaintext, i.e. the encrypted version scores THREE
+      POINTS BETTER than the model it is emulating, on a 408-example validation set. That is noise,
+      and it is in the table that is supposed to demonstrate faithfulness.
+
+      Single forward pass only. The strings "KV cache", "autoregressive" and "decoding" do not
+      appear. Generating N tokens means N full runs, each with a fresh key set -- so at 419 GB of
+      keys per run, generation is not a thing this system does.
+    quantization:
+      bits: null
+      bits_note: >-
+        Not a single bit width: Sigma runs each model at a bespoke ring size chosen per model
+        (37 bits for BERT-tiny, 50 for BERT-base/large and GPT2, 51 for GPT-Neo, 48 for Llama2),
+        with fixed-point precision f = 12. The "effective bitwidth" analysis is one of its
+        contributions.
+      accuracy_retention: >-
+        Measured as task accuracy vs 32-bit float PyTorch. Llama2-7B Lambada 69.92% vs 70.17%;
+        Llama2-13B 72.99% vs 73.14%; GPT-Neo 57.81% vs 57.46%; BERT-base QNLI 91.63% vs 91.60%.
+        No perplexity is reported anywhere. BERT-base/MRPC comes out 2.94 points ABOVE plaintext,
+        which is a 408-sample artifact and is reported without comment.
+    benchmarks:
+      - model: Llama2-13B
+        params: 13000000000
+        context_window: 128
+        proving_time_s: 37.59      # ONLINE ONLY. 419 GB of keys and 356.61 s of transfer excluded.
+        communication_mb: 18900
+        accuracy: "72.99% Lambada (vs 73.14% fp32)"
+        note: >-
+          Online phase only. Preprocessing: 419.01 GB of FSS keys, 40.57 s to generate, 356.61 s to
+          transfer. True wall clock ~435 s. This is the largest model in the privacy column and it
+          is the same size as the largest model in the verifiability column (zkLLM's LLaMA-2-13B).
+      - model: Llama2-7B
+        params: 7000000000
+        context_window: 128
+        proving_time_s: 23.09
+        communication_mb: 12070
+        accuracy: "69.92% Lambada (vs 70.17% fp32)"
+        note: "Online only. 255.41 GB of keys; 217.37 s to transfer them. CrypTen cannot run this model."
+      - model: GPT-Neo
+        params: 1300000000
+        context_window: 128
+        proving_time_s: 7.19
+        communication_mb: 4030
+      - model: GPT-2
+        params: 124000000
+        context_window: 128
+        proving_time_s: 1.51
+        communication_mb: 820
+      - model: BERT-base
+        params: 110000000
+        context_window: 128
+        proving_time_s: 1.72
+        communication_mb: 990
+        note: >-
+          Compare the anchor this SoK has been quoting for three years: Iron, BERT-base, 280.99 GB
+          and 216 minutes. Sigma: 0.99 GB and 1.72 seconds online (16.84 GB of keys, 14.33 s to
+          transfer). Same model, same threat-model family, four years apart.
+      - model: BERT-large
+        params: 330000000
+        context_window: 128
+        proving_time_s: 4.44
+        communication_mb: 2640
+
+  - id: cheetah
+    name: Cheetah
+    title: "Cheetah: Lean and Fast Secure Two-Party Deep Neural Network Inference"
+    url: https://eprint.iacr.org/2022/207
+    pdf: https://www.usenix.org/system/files/sec22-huang-zhicong.pdf
+    venue: USENIX Security 2022
+    date: 2022-08-10
+    year: 2022
+    authors: [Zhicong Huang, Wen-jie Lu, Cheng Hong, Jiansheng Ding]
+    authors_verified: true
+    affiliation: Alibaba Group
+    approach: 2PC -- rotation-free coefficient-encoded HE for linear layers + silent OT (Ferret) for non-linear
+    threat_model: >-
+      2PC, SEMI-HONEST, dishonest majority (one of two corrupted). The client learns the network
+      ARCHITECTURE and the inference result, nothing else. No malicious security.
+    open_source: true
+    repo: https://github.com/Alibaba-Gemini-Lab/OpenCheetah
+    numbers_source: primary
+    hardware: "Alibaba Cloud, 2.70 GHz, 16 GB RAM. LAN ~384 MB/s, 0.3 ms RTT. WAN ~44 MB/s, 40 ms RTT."
+    objectives: [inference]
+    notes: >-
+      PROMOTED FROM AN `external:` GRAPH STUB TO A REAL PAPER, 2026-07-13, and that promotion is the
+      point. Cheetah is one of the THREE NODES this SoK's headline bridge finding rests on -- "the
+      only three papers cited by both columns are SIRNN, Cheetah and SecFloat" -- and we had never
+      read it. It was a name in a graph.
+
+      Its lasting contribution, and what every later paper in this section builds on: a ROTATION-FREE
+      homomorphic linear layer. By coefficient-encoding the convolution rather than using SIMD/CRT
+      packing, a whole CONV or FC becomes a SINGLE homomorphic polynomial multiplication -- no HE
+      rotations at all, which lets it drop the lattice dimension from 8192 to 4096 and accept secret
+      shares from Z_{2^l} for free. Iron, BOLT, BumbleBee and Nimbus all inherit this encoding.
+      Its second half is VOLE-style silent OT (Ferret) for comparison and truncation.
+
+      AND ITS TRUNCATION IS APPROXIMATE, ON PURPOSE. Cheetah keeps a 1-bit error with probability
+      1/2 and eliminates only the "harsh" error -- 13l bits of communication against CrypTFlow2's
+      faithful lambda(l+f+2) + 19l + 14f. This is the MPC bargain the numerics page is about, made
+      explicitly: accept a bounded, benign error and pay far less. In ZK the same trade is
+      unavailable, because the prover chooses the input. Cheetah is the cleanest primary source for
+      that contrast and we have been making the argument without it.
+    quantization:
+      bits: null
+      scheme: >-
+        Fixed-point over Z_{2^l}, f = 12 (f = 11 for the CIFAR nets). Truncation is deliberately
+        APPROXIMATE: a 1-bit error (probability 1/2) is retained, the harsh error is removed.
+      accuracy_retention: >-
+        No numeric delta reported. The paper says only that on ~1000 ImageNet images Cheetah
+        "outputs the same classification label as SCI_HE" for all of them.
+    benchmarks:
+      - model: ResNet50 (ImageNet)
+        params: 23000000
+        proving_time_s: 80.3     # LAN
+        communication_mb: 2300
+        note: "WAN: 134.7 s. Against CrypTFlow2's 295.7 s LAN / 29.2 GB -- 5.6x and 12.9x."
+      - model: DenseNet121
+        params: null
+        proving_time_s: 79.3
+        communication_mb: 2400
+      - model: SqueezeNet
+        params: null
+        proving_time_s: 16.0
+        communication_mb: 500
+
+  - id: delphi
+    name: Delphi
+    title: "Delphi: A Cryptographic Inference Service for Neural Networks"
+    url: https://eprint.iacr.org/2020/050
+    pdf: https://www.usenix.org/system/files/sec20-mishra_0.pdf
+    venue: USENIX Security 2020
+    date: 2020-08-12
+    year: 2020
+    authors:
+      - Pratyush Mishra
+      - Ryan Lehmkuhl
+      - Akshayaram Srinivasan
+      - Wenting Zheng
+      - Raluca Ada Popa
+    authors_verified: true
+    affiliation: UC Berkeley
+    approach: 2PC -- offline/online split, HE preprocessing for linear layers, GC + quadratic approximations for ReLU
+    threat_model: >-
+      2PC, SEMI-HONEST, dishonest majority. Client learns the architecture and the result. The
+      paper is unusually candid about a SECOND leak: because the NAS planner uses training data to
+      decide where quadratics go, "revealing the network architecture reveals some information
+      about the data ... at most l bits" (l = 32 for ResNet-32).
+    open_source: true
+    numbers_source: primary
+    hardware: >-
+      AWS c5.2xlarge, Intel Xeon 3.0 GHz, 16 GB RAM, 4 threads, client and server in us-west-1 and
+      us-west-2 (a cross-region WAN). BANDWIDTH AND LATENCY ARE NEVER STATED -- only the AWS
+      regions. For a paper whose whole cost model is communication, that is a real hole.
+    objectives: [inference]
+    notes: >-
+      THE LARGEST BIBLIOGRAPHY HOLE THIS SOK HAD: cited by NINE of the thirty PDFs we hold, and
+      absent from papers.yml entirely until 2026-07-13.
+
+      Two ideas, both of which the whole section still runs on. First, the OFFLINE/ONLINE SPLIT:
+      the server's weights are known before the client's input arrives, so all the homomorphic
+      encryption can be pushed into preprocessing and the online linear layer becomes plain
+      secret-shared arithmetic. Every offline/online accounting table in this section descends from
+      this paper. Second, the RELU BUDGET: use neural architecture search to decide WHICH ReLUs to
+      replace with quadratic approximations, because a quadratic costs 192x less online
+      communication and 10000x less online compute than a garbled circuit.
+
+      AND NOW THE REASON THIS PAPER MATTERS TO THE NUMERICS SECTION, WHICH IS NOT WHY IT IS FAMOUS.
+      Delphi is the ONE privacy-column paper that cites a verifiability-column paper. It cites
+      SafetyNets -- twice, in the body -- and NOT for verifiability. It cites it as prior evidence
+      about whether QUADRATIC ACTIVATIONS TRAIN WELL. Delphi's body contains ZERO occurrences of
+      "verifiable", "integrity", "zero-knowledge", "proof of correctness" or "malicious server".
+      It does not know it is citing a verifiability paper.
+
+      And its answer to the question is the one the SafetyNets-vs-Bionetta debate on the numerics
+      page needs: quadratic activations DO NOT TRAIN. "the quadratic activations cause the
+      underlying gradient descent algorithm to diverge, resulting in poor accuracy." Delphi had to
+      invent gradient clipping, ReLU6 and a "gradual activation exchange" annealing schedule just to
+      make them converge at all -- and even then it uses NAS to keep MOST activations as ReLUs.
+      SafetyNets' famous ~5% overhead comes from an all-quadratic network. Delphi is the paper that
+      tried to scale that idea and reported what happened.
+    quantization:
+      bits: null
+      scheme: "Fixed-point; online phase in a 32-bit prime field (chosen to fit a GPU)."
+      accuracy_retention: >-
+        NOT TABULATED -- reported only as curves (Figs. 7-9). Qualitatively: planner-produced
+        networks are "comparable to" the all-ReLU baselines (CIFAR-10 ~85-86%, CIFAR-100 ResNet-32
+        ~65-68% vs a ~68% baseline). Do not invent a delta from the figures.
+    benchmarks:
+      - model: ResNet-32 (CIFAR-100)
+        params: null
+        proving_time_s: 3.8       # ONLINE phase only
+        communication_mb: 60
+        note: >-
+          Online phase. Against GAZELLE's ~82 s and >560 MB: 22x and 9x. Preprocessing is a further
+          cost and on ReLU-heavy networks Delphi's preprocessing is WORSE than GAZELLE's, which the
+          paper says outright.
+
   - id: iron
     name: Iron
     title: "Iron: Private Inference on Transformers"
@@ -2406,11 +3132,28 @@ secure_inference_2pc:
       - models: [BERT-Tiny, BERT-Medium, BERT-Base, BERT-Large]
         task: GLUE
         vs_prior: "3-14x less communication, 3-11x less runtime vs SIRNN; up to 2 orders of magnitude vs MP-SPDZ"
-        accuracy: "numerically precise -- preserves plaintext model accuracy"
+        accuracy: "<=0.3% loss vs plaintext on BERT-Tiny (GLUE); +0.85% on MNLI"
+        accuracy_note: >-
+          MEASURED (Sec 5.3, Fig 6) -- and ONLY on BERT-TINY. There is no accuracy data for
+          BERT-Medium / Base / Large, which are the models everything downstream quotes. Verbatim:
+          "the accuracy loss does not exceed 0.3% over all datasets, and surprisingly, Iron
+          exceeds the plaintext baseline on MNLI by 0.85%." Fig 6's printed per-dataset deltas are
+          0.85% (MNLI), 0% and 0.27%. The frequently repeated "exactly" is SCALE-CONDITIONAL and
+          SINGLE-DATASET: "Iron with the scale of 12 exactly matches the accuracy of the plaintext
+          model [MRPC]. The accuracy loss is lower than 1% when the scale >= 6."
+          CORRECTED 2026-07-13: this field previously held only the ABSTRACT's claim ("all
+          protocols are numerically precise, which preserve the model accuracy of plaintext"),
+          which is a claim, not data -- and it is what licensed a page to assert that Iron
+          preserves accuracy "exactly" while reporting no accuracy data.
+        network: "LAN ONLY -- simulated, 377 MBps (~3 Gbps), 0.8 ms echo latency; AWS c5.9xlarge, Intel Xeon 8000 @ 3.6 GHz"
     notes: >-
       The paper that initiated private transformer inference. Hides intermediate results of ALL
-      layers (unlike THE-X, which leaks non-linear-layer inputs to the client). The reference
-      point the others improve on: BOLT reports Iron at 280.99 GB / 216 min for BERT-base.
+      layers (unlike THE-X, which leaks non-linear-layer inputs to the client).
+      THE ANCHOR EVERYONE QUOTES IS NOT IRON'S. "Iron at 280.99 GB / 216 min for BERT-base" is
+      BOLT'S RE-IMPLEMENTATION of Iron, measured under a WAN ({100 Mbps, 80 ms}) that Iron's own
+      authors never ran -- Iron measured a LAN only (Sec 5.1: "we simulate a LAN network setting,
+      where the bandwidth is 377 MBps and the echo latency is 0.8ms"), and Iron's paper prints no
+      numeric end-to-end communication figure anywhere. Attribute the number to BOLT, not to Iron.
 
   - id: ciphergpt
     name: CipherGPT
@@ -2436,12 +3179,63 @@ secure_inference_2pc:
       multi-step (SIRNN/Iron) and high-degree-polynomial (BOLT) approaches; (3) shuffling-based
       top-K selection + the FIRST secure top-K SAMPLING protocol.
     numbers_source: primary  # read the PDF
-    pdf_available: true  # user provided /Users/david/Downloads/2023-1147.pdf
+    pdf_available: true  # references/privacy-inference/ciphergpt.pdf
+    model: GPT-2
     benchmarks:
-      - component: matrix multiplication
-        vs_sota: "6.2x speedup, 4.1x bandwidth reduction"
-      - component: GELU (spline-based)
-        vs_sota: "1.8x runtime, 2.5x communication, 7.4x precision"
+      # RESTRUCTURED 2026-07-13. These rows previously carried only `component` and `vs_sota`,
+      # neither of which is in build.py's DEFAULT_COLS, and the entry had no top-level `model` --
+      # so CipherGPT rendered in the 2PC table as two entirely blank rows, and the paper's OWN
+      # headline number was nowhere in this file.
+      - model: GPT-2 (end-to-end, per generated token)
+        params: 117000000
+        inference_latency_s: 1180.9
+        inference_latency_note: >-
+          Table V Total: 1,180,933 ms (~20 min) to produce ONE token. "A comprehensive benchmark
+          for CipherGPT in generating a single response word; these are amortized results for the
+          generation of 256 response words; the input is a vector of 256 words." 12 transformer
+          decoders, embedding size 768. The paper's own verdict (Sec IX): "CipherGPT requires a
+          latency of 20 minutes and a bandwidth of 15 GB to produce a token. This level of cost is
+          currently impractical."
+        communication_mb: 15096.82
+        communication_note: "Table V Total = 15,096.82 MB (~15 GB) PER TOKEN, amortized over a 256-word response."
+        accuracy: "99.22% of outputs identical to plaintext GPT-2 (10,000 WikiText-103 sentences)"
+        accuracy_note: >-
+          Sec VIII-D: "99.22% of the outputs generated by CipherGPT are identical to the outputs
+          produced by GPT-original ... Even for the outputs that are different (78 out of 10 000),
+          each of these 'wrong' outputs still falls within the top-5 outputs." Top-K sampling was
+          disabled (K=1) for this comparison.
+        network: "LAN ONLY (3000 Mbps, 0.8 ms RTT), SINGLE THREAD; AWS c5.9xlarge, Xeon 8000 @ 3.6 GHz"
+      - model: GPT-2 (component -- matrix multiplication, sVOLE)
+        component: matrix multiplication
+        vs_sota: "vs BumbleBee: 5.8x runtime / 1.4x comm at t=256 words; 6.2x / 4.1x only at t=1024"
+        vs_sota_note: >-
+          The abstract's "up to 6.2x speedup and 4.1x bandwidth reduction" is the t=1024 figure --
+          "up to" is doing the work. At t=256, the paper's own "reasonable number of iterations",
+          Sec VIII-D gives: "the amortized runtime for our protocol is 1 462ms, 2.3x speedup over
+          Iron, 6.4x speedup over Bolt and 5.8x speedup over BumbleBee; the amortized
+          communication for our protocol is 8.2MB, 3.7x reduction over Iron, 3.0x reduction over
+          Bolt and 1.4x reduction over BumbleBee." The gain is a function of how many response
+          words are preprocessed together.
+        network: "LAN only (3000 Mbps, 0.8 ms RTT), single thread"
+      - model: GPT-2 (component -- GELU, spline)
+        component: GELU (spline-based)
+        vs_sota: "vs BOLT: 1.8x runtime, 2.5x comm, 7.4x precision. But communication REGRESSES vs Bolt+/BumbleBee."
+        vs_sota_note: >-
+          Table IV, GELU over a 2^20-length vector of 37-bit elements: Iron 694 s / 12,225 MB;
+          Bolt 55.61 s / 1,962.23 MB; Bolt+ (Bolt with BOLE) 52.22 s / 559.28 MB; BumbleBee
+          73.52 s / 641.02 MB; CipherGPT 30.56 s / 764.96 MB. The headline "2.5x less
+          communication" is measured against PLAIN BOLT ONLY -- against Bolt+ (559.28 MB) and
+          BumbleBee (641.02 MB), CipherGPT's GELU uses MORE communication, and the runtime win
+          falls to 1.7x ("Compared with Bolt+, we still achieves a 1.7x speedup"). The PRECISION
+          win is unambiguous and is the real result: maximal ULP error 5, vs Bolt's 37 (7.4x) and
+          BumbleBee's 73 (14.6x).
+        network: "LAN only (3000 Mbps, 0.8 ms RTT), single thread"
+      - model: GPT-2 (component -- top-K selection)
+        component: top-K (K=100 from a 50,257-entry vocabulary vector)
+        inference_latency_s: 3.281
+        communication_mb: 136.1
+        vs_sota: "8.8x speedup, 14.8x less communication vs a Bitonic sorting network"
+        network: "LAN only (3000 Mbps, 0.8 ms RTT), single thread"
     notes: >-
       The GPT-focused member of the line -- and uniquely, the one that handles AUTOREGRESSION
       and SAMPLING. Its secure top-K sampling is the first of its kind. This is the exact
@@ -2469,9 +3263,27 @@ secure_inference_2pc:
     pdf_available: true
     benchmarks:
       - models: [BERT-base]
+        params: 110000000
+        communication_mb: 25740  # 25.74 GB with word elimination (Table 3, "end-to-end" row)
+        communication_note: >-
+          Table 3, end-to-end: BOLT w/ W.E. 25.74 GB over 10,901 rounds; BOLT w/o W.E. 59.61 GB
+          over 10,509 rounds; Iron (BOLT's re-implementation) 280.99 GB over 13,663 rounds.
+          Sec 7.4.3: "with W.E., BOLT has more than 2x communication improvement compared to BOLT
+          w/o W.E. (25.74 GB vs. 59.61 GB)."
         vs_iron: "10.91x less communication; 4.8-9.5x faster inference across network settings"
         accuracy: "comparable to floating-point"
-    notes: "States the concrete Iron anchor: 280.99 GB communication and 216 minutes for one BERT-base (110M) inference under a WAN setting."
+        network: "LAN (3 Gbps, 0.8 ms RTT) + FOUR WAN settings {100Mbps,40ms} {100Mbps,80ms} {200Mbps,40ms} {200Mbps,80ms}; Linux tc; 2x AWS c6i.16xlarge, 64 vCPU, 32 threads"
+    notes: >-
+      SOURCE OF THE IRON ANCHOR EVERYONE QUOTES -- and it is BOLT'S OWN RE-IMPLEMENTATION of Iron,
+      not Iron's self-report: "our implementation of Iron requires 280.99 GB communication for an
+      end-to-end inference, taking 216 minutes for an end-to-end inference on the BERT-base model
+      (110 M parameters) under one of the WAN settings (100 Mbps, 80 ms)" (Sec 1). Iron itself only
+      ever measured a LAN.
+      BOLT is candid that the NETWORK is the axis doing the work: for Linear 1 it is 45.7x faster
+      than Iron under {100 Mbps, 40 ms} but only 2.3x faster under {3 Gbps, 0.8 ms} (Sec 7.5.1) --
+      the same protocol pair, the same claim, a 20x different ratio, decided by nothing but the
+      simulated link. Any cross-system speedup in this cell that does not name a network setting
+      is uninterpretable.
 
   - id: nimbus
     name: Nimbus
@@ -2496,8 +3308,28 @@ secure_inference_2pc:
     pdf_available: true
     benchmarks:
       - models: [BERT-base]
-        vs_sota_2pc: "2.7-4.7x end-to-end improvement across network settings"
+        vs_sota_2pc: "2.7-4.7x (abstract, corroborated by Sec 5.2) / 2.7-5.9x (introduction) end-to-end vs BumbleBee"
+        vs_sota_note: >-
+          CONFLICTING SOURCES INSIDE THE PAPER, both recorded per this file's contract.
+          Abstract: "Nimbus improves the end-to-end performance of BERTbase inference by
+          2.7x ~ 4.7x across different network settings." Introduction, contributions bullet 3:
+          "Compared with the SOTA work BumbleBee [26] ... we improve the end-to-end performance of
+          secure two-party inference by 2.7x ~ 5.9x." The evaluation (Sec 5.2) prints both
+          baselines separately and shows where the intro's 5.9x came from: "the overall runtime is
+          4.8x ~ 5.9x faster than Iron and 2.7x ~ 4.7x faster than BumbleBee." The introduction
+          appears to splice BumbleBee's LOWER bound with Iron's UPPER bound. Sec 5.2 corroborates
+          the ABSTRACT; the introduction's figure is recorded, not silently dropped.
+        vs_iron: "4.8-5.9x faster (Sec 5.2)"
+        scope_note: >-
+          Sec 5.2's "end-to-end" is the latency of ONE TRANSFORMER BLOCK, not the full 12-layer
+          BERT-base: "we present the end-to-end latency of one Transformer block under LAN and WAN
+          network settings in Figure 6." Appendix F.1, across hidden sizes 768/1024/2048 and
+          sequence lengths 1/32/128, gives a wider range again: "our method outperforms
+          [BumbleBee] by a magnitude of 1.9x to 7.6x on sequence lengths 32 and 128. The speedup
+          is minor on sequence 1 with 1.2x to 2.1x."
+        communication: "60% reduction vs BumbleBee (introduction); NO absolute GB total is stated anywhere in the PDF"
         accuracy: "0.08% average accuracy loss vs non-2PC inference"
+        network: "LAN (3 Gbps, 1 ms ping) and WAN (400 Mbps, 10 ms ping), simulated with Linux tc; two nodes, 64 vCPUs, 128 GB"
     notes: >-
       The freshest 2PC result. Its input-distribution-aware polynomial approximation is the
       MPC-world mirror of the quantization/table-sizing tricks zkML uses for the same
@@ -2531,19 +3363,271 @@ secure_inference_2pc:
     numbers_source: primary  # read the PDF
     pdf_available: true  # user provided /Users/david/Downloads/2026-1255.pdf
     benchmarks:
-      - models: [BERT-based]
-        proving_time_s: 349.5
-        proving_time_note: "end-to-end per query, amortized over 256 inputs (batched)"
+      # THIS SYSTEM EMITS NO PROOF (uses_zk: false / verifiable: false). The 349.5 s is an
+      # ENCRYPTED-INFERENCE LATENCY. It lived under `proving_time_s` until 2026-07-13, which made
+      # site/build.py render the headline "349.5 s to prove" for a system that proves nothing --
+      # exactly the conflation the private-inference section exists to prevent.
+      # Do not resurrect proving_time_s here.
+      - models: [BERT-base (BERT-DyT -- LayerNorm replaced by Dynamic Tanh, distilled from BERT)]
+        inference_latency_s: 349.5
+        inference_latency_note: >-
+          End-to-end FHE inference latency. Sec 6: "Our framework takes 349.5s to complete the
+          entire inference, which is 1.9x faster than MOAI." Table 4 ("Runtime breakdown amortized
+          over 256 inputs") sums to exactly 349.5 s across homomorphic evaluation steps only --
+          there is no commit, no prove and no verify anywhere in the paper. Seq len 128; 12
+          layers, 12 heads, hidden 768, FFN 3072; "each query is processed with a batch size of
+          256 sequences". Intel Xeon Platinum 8358 @ 2.60 GHz, 64 cores; OpenFHE v1.5.1 + OpenMP.
         communication_mb: 16.1
-        vs_sota: "1.9x faster (349.5s vs 662.3s), 3x less communication (16.1MB vs 48.3MB)"
+        communication_note: "per query, amortized over 256 inputs (Sec 6 / Fig 5)"
+        accuracy: "-1.73 / -0.57 / -0.98 points vs plaintext BERT on RTE / SST-2 / MRPC"
+        accuracy_note: >-
+          MEASURED, Table 3, and previously unrecorded. Plaintext BERT and BERT-DyT are identical
+          (71.12 / 93.00 / 86.76); encrypted BERT-DyT gives 69.39 / 92.43 / 85.78. The paper's
+          gloss: "our framework introduces virtually no additional accuracy loss." Both error
+          sources (the DyT substitution AND the CKKS approximation) are folded into that column.
+        network: "n/a -- non-interactive FHE. The 16.1 MB is a one-shot ciphertext upload/download, not an interactive transcript."
+        vs_sota: "1.9x faster (349.5s vs 662.3s), 3x less communication (16.1MB vs 48.3MB) -- vs MOAI"
     notes: >-
       It is FHE (non-interactive, single-party on ciphertext), not 2PC like the others. Its tiny
-      communication (16 MB vs the 2PC systems' hundreds of GB) is the whole point of FHE -- it
-      trades interaction/communication for heavy homomorphic compute. Note the transformer it
-      benchmarks uses DyT (Dynamic Tanh) in place of LayerNorm. Same goal as the 2PC systems
-      (private inference), different cryptographic route.
+      communication -- 16.1 MB against BOLT's 25.74 GB (with word elimination) or 59.61 GB
+      (without), BOLT Table 3 -- is roughly a 1,600x gap, and that is the whole point of FHE: it
+      trades interaction and communication for heavy homomorphic compute.
+      CAUTION on the shorthand "the 2PC systems' hundreds of GB", which this note used to assert:
+      in this cell that is true of exactly ONE figure, Iron's 280.99 GB -- and that figure is
+      BOLT's RE-IMPLEMENTATION of Iron under a WAN, not Iron's own self-report (Iron's paper
+      prints no numeric end-to-end communication total at all; its Fig 4 is a log-scale bar chart
+      with ratio annotations only). BOLT itself is at tens of GB, and CipherGPT reports ~15 GB per
+      generated token. The true comparison is stronger than the false one, so there is no reason
+      to keep the false one.
+      Note the transformer it benchmarks uses DyT (Dynamic Tanh) in place of LayerNorm. Same goal
+      as the 2PC systems (private inference), different cryptographic route.
 
 # Adjacent secure-inference work seen while surveying (NOT read; do not cite numbers):
+secure_inference_3pc:
+  # THREE-PARTY, HONEST-MAJORITY private inference. This category did not exist until 2026-07-13,
+  # and its absence was the single largest hole in this SoK. Every private-inference paper we held
+  # was 2PC and BERT-class, so we concluded the privacy column tops out at BERT. It does not. It
+  # tops out at BERT *in dishonest-majority 2PC*. Add a third non-colluding party and the same
+  # literature reaches LLaMA-7B (puma) and gets MALICIOUS security on BERT and GPT-2 (mosformer).
+  # The extra party is a real and substantial trust assumption -- it is not a free lunch, and the
+  # 2PC ceiling is a true statement about 2PC. But "privacy caps at BERT" was a statement about
+  # our reading list, not about the field.
+
+  - id: puma
+    name: PUMA
+    title: "PUMA: Secure Inference of LLaMA-7B in Five Minutes"
+    url: https://arxiv.org/abs/2307.12533
+    pdf: https://arxiv.org/pdf/2307.12533
+    venue: "arXiv:2307.12533v3 (preprint, Sep 2023); later published in Security and Safety, 2025"
+    venue_note: >-
+      The PDF we hold is the arXiv preprint and its header says only "A Preprint". A web search
+      confidently told us this was NDSS 2024. It is not -- Crossref resolves the published version
+      to the journal *Security and Safety* (2025). Recorded because the wrong venue was one search
+      away and we nearly took it.
+    date: 2023-09-26
+    year: 2023
+    authors:
+      - Ye Dong
+      - Wen-jie Lu
+      - Yancheng Zheng
+      - Haoqi Wu
+      - Derun Zhao
+      - Jin Tan
+      - Zhicong Huang
+      - Cheng Hong
+      - Tao Wei
+      - Wenguang Chen
+    authors_verified: true
+    affiliation: Ant Group
+    approach: 3PC secret sharing (2-out-of-3 replicated), semi-honest, honest majority
+    threat_model: >-
+      3PC, SEMI-HONEST, HONEST MAJORITY -- at most one of three non-colluding computing parties is
+      corrupted. Model owner and client secret-share the weights and the input to P0/P1/P2; the
+      result is reconstructed to the client. This is a materially stronger trust assumption than
+      the 2PC systems in this SoK (iron, ciphergpt, bolt, nimbus, cheetah), which tolerate a
+      dishonest majority, and PUMA picks it explicitly because it "has the highest concrete
+      efficiency". Do not put a 3PC latency next to a 2PC latency without saying so.
+      Out of scope by the paper's own statement: "PUMA cannot defend against attacks based on
+      inference results".
+    open_source: true
+    repo: https://github.com/secretflow/spu
+    numbers_source: primary
+    hardware: >-
+      BERT/GPT-2 rows: 3x Alibaba Cloud ecs.g7.8xlarge, 32 vCPU, 128 GB RAM, ~5 Gbps, ~1 ms RTT.
+      LLaMA-7B row: 3x ecs.r7.32xlarge, 128 threads, 1 TB RAM, 20 GB bandwidth, 0.1 ms RTT.
+      THE HEADLINE ROW IS ON DIFFERENT, FAR BEEFIER HARDWARE THAN EVERYTHING ELSE IN THE PAPER.
+    notes: >-
+      THE PAPER THAT SHOWS THE BERT CEILING IS A 2PC CEILING. Iron needs 280.99 GB and 216 minutes
+      for one BERT-base inference; PUMA does LLaMA-7B, sixty times the parameters, in 200 seconds
+      and 1.79 GB. Nothing about privacy forbids scale. What forbids scale is dishonest-majority
+      two-party computation.
+
+      Technique: piecewise low-degree polynomial approximations fitted with numpy.polyfit for GeLU
+      (4 pieces, split at -4/-1.95/3) and SiLU; a clipped Taylor "negExp" for softmax that shifts
+      every exponent input negative and replaces n divisions with one reciprocal and n multiplies;
+      a secure Embedding protocol that builds the one-hot vector inside MPC (so unmodified
+      HuggingFace checkpoints load); and a LayerNorm that computes sigma^-1/2 once and broadcasts.
+      Accuracy is genuinely preserved on the models where it is measured -- GLUE accuracy within
+      0.011 of plaintext, GPT-2 perplexity within 0.02.
+
+      WHAT TO DISTRUST, and there is a lot.
+      (1) THE TITLE'S NUMBER IS IN NO TABLE. Abstract says "around 5 minutes to generate 1 token".
+      Table 6 says 200.473 s (3.3 min) for 8 input tokens and 1 output token, and 364.527 s (6.1
+      min) for 2 output tokens. Three framings of one measurement, and the one on the cover is
+      not the one in the table.
+      (2) The LLaMA-7B prompts are FOUR AND EIGHT TOKENS. No realistic prompt length is ever run
+      on LLaMA-7B, and softmax cost is superlinear in sequence length.
+      (3) No numeric accuracy or perplexity is reported for LLaMA-7B at all. The evidence is one
+      prompt in an appendix, "with fixed randomness".
+      (4) No KV cache is described anywhere. Going from 1 to 2 output tokens costs 1.82x, which is
+      close to a full re-run of the forward pass.
+      (5) Efficiency gains SHRINK with sequence length: at GPT-2 with 256 inputs, PUMA's
+      communication is 0.936x MPCFormer's, i.e. WORSE than the baseline it beats everywhere else.
+      (6) No WAN numbers. The LLaMA row assumes a 20 GB/s datacenter link.
+    quantization:
+      bits: null
+      scheme: "Fixed-point over the ring Z_{2^64}, 18-bit fractional part."
+      accuracy_retention: >-
+        GLUE (Bert-Base/RoBERTa-Base/Bert-Large): accuracy difference vs plaintext does not exceed
+        0.011 on any dataset. Perplexity (Wikitext-103, GPT2-Base/Medium/Large): within 0.02.
+        LLaMA-7B: NOT REPORTED. That is the row the title is about.
+    benchmarks:
+      - model: LLaMA-7B
+        params: 7000000000
+        context_window: 8   # eight input tokens. Yes, really.
+        proving_time_s: 200.473   # (8 input, 1 output). NOT the "five minutes" of the title.
+        communication_mb: 1794    # 1.794 GB
+        accuracy: null
+        note: >-
+          The headline row. (4 in, 1 out) = 122.004 s / 0.907 GB; (8 in, 1 out) = 200.473 s /
+          1.794 GB; (8 in, 2 out) = 364.527 s / 3.857 GB. Measured on 3x 128-thread / 1 TB RAM
+          machines over a 20 GB/s link.
+      - model: Bert-Base
+        params: 110000000
+        context_window: 128
+        proving_time_s: 33.913
+        communication_mb: 10773   # 10.773 GB
+      - model: Bert-Large
+        params: 340000000
+        context_window: 128
+        proving_time_s: 73.720
+        communication_mb: 27246
+      - model: GPT2-Base
+        params: 117000000
+        context_window: 32
+        proving_time_s: 15.506
+        communication_mb: 3774
+      - model: GPT2-Large
+        params: 774000000
+        context_window: 32
+        proving_time_s: 54.154
+        communication_mb: 11952
+
+  - id: mosformer
+    name: Mosformer
+    title: "Mosformer: Maliciously Secure Three-Party Inference Framework for Large Transformers"
+    url: https://eprint.iacr.org/2025/1510
+    pdf: https://eprint.iacr.org/2025/1510.pdf
+    venue: ACM CCS 2025
+    date: 2025-10-13
+    year: 2025
+    authors:
+      - Ke Cheng
+      - Yuheng Xia
+      - Anxiao Song
+      - Jiaxuan Fu
+      - Wenjie Qu
+      - Yulong Shen
+      - Jiaheng Zhang
+    authors_verified: true
+    affiliation: Xidian University / National University of Singapore
+    approach: 3PC replicated secret sharing, MALICIOUS security with abort, honest majority
+    threat_model: >-
+      3PC, MALICIOUS, SECURITY WITH ABORT, HONEST MAJORITY -- at most one of three non-colluding
+      servers is corrupted, and a corrupted server may deviate arbitrarily. NOT robust / not
+      guaranteed output delivery: a detected cheat aborts the protocol. NOT dishonest-majority
+      2PC. Every one of those qualifiers is load-bearing before you cite this against anyone.
+      Malicious security is obtained in three layers: verifiable DPF key checks in the offline
+      phase, redundant three-party execution of the online comparison (so RSS consistency detects
+      tampering), and MAC-based consistency checks deferred to the end of each encoder/decoder
+      block (16 rounds, ~5% of runtime).
+    open_source: true
+    repo: https://github.com/XidianNSS/Mosformer
+    numbers_source: primary
+    hardware: >-
+      3 servers, AMD Ryzen 9 9950X (16 cores), 128 GB RAM. 16 threads for matmul, single-threaded
+      elsewhere. Table 8 network: LAN 1 Gbps / 0.5 ms, WAN 400 Mbps / 4 ms. Table 9 network is
+      DIFFERENT (5 Gbps / 0.4 ms LAN, 400 Mbps / 40 ms WAN, borrowed from Ditto). Do not merge the
+      two tables.
+    notes: >-
+      THE PAPER THAT CLOSES THE "NOBODY HAS MALICIOUS SECURITY AT TRANSFORMER SCALE" GAP -- and it
+      closes it by adding a party, exactly as this SoK predicted it would have to. Read the
+      threat_model field before quoting anything here.
+
+      Its real claim to the record is narrower and more interesting than "first maliciously secure
+      transformer inference": NO PRIOR MALICIOUS PROTOCOL COULD RUN BERT OR GPT-2 AT ALL. Privformer
+      is limited to the vanilla transformer of Vaswani et al.; Falcon is a CNN framework. So the
+      malicious-vs-malicious comparison (5.3x over Privformer, 3.4x over a Falcon the authors
+      extended themselves) is run on a 45M-parameter vanilla transformer, NOT on BERT or GPT-2. The
+      BERT/GPT-2 rows have no malicious baseline to beat because there was none.
+
+      THE RESULT THAT SHOULD EMBARRASS THE SEMI-HONEST LINE. Mosformer's MALICIOUS online phase
+      beats the SEMI-HONEST 2PC state of the art on its own benchmark: BERT-base LAN online 59.47 s
+      / 4.60 GB against BOLT's 533.4 s / 59.61 GB, BumbleBee's 184.86 s / 6.40 GB and SHAFT's
+      171.31 s / 10.46 GB. Stronger security, faster online phase.
+
+      THE CATCH, and it is the whole catch: THAT IS AN ONLINE NUMBER AND THE OFFLINE PHASE IS
+      ENORMOUS. Malicious BERT-base costs a further 547.66 s and 67.35 GB of preprocessing on LAN
+      (1339.14 s / WAN), because the VDPF correlated randomness has to come from somewhere. BOLT,
+      BumbleBee, PUMA and Ditto report ZERO offline. SHAFT reports 39.36 s / 4.92 GB. Comparing
+      Mosformer's online column against a system with no offline column is not a comparison. The
+      honest total for malicious BERT-base on LAN is ~607 s and ~72 GB.
+
+      The cost of malicious security over its own semi-honest variant is the clean number, and the
+      paper lets you compute it: BERT-base LAN online 59.47 s vs 20.09 s (~3.0x) and 4.60 GB vs
+      1.15 GB (4.0x). Three to four times, not the order of magnitude folklore assumes.
+
+      Accuracy: with modulus conversion on, up to 2.4% degradation (WikiText-103 perplexity 37.5 ->
+      38.4; QNLI -1.7 points). Without it, under 0.4%. The paper's own conclusion is worth the
+      price of admission: "running modern large language models under cryptographic settings
+      remains impractical at present."
+    quantization:
+      bits: null
+      scheme: >-
+        Operation-aware modulus conversion -- different rings for different operators. Linear layers
+        in Z_{2^64} (16-bit precision), softmax and reciprocal-sqrt in Z_{2^32} (12-bit), ReLU/GELU
+        in Z_{2^16} (6-bit). Claimed 30% runtime and 25% communication saving over a single ring.
+        This is the MPC analogue of mixed-precision quantization, and it costs accuracy: see below.
+      accuracy_retention: >-
+        WITH modulus conversion: QNLI -1.7%, RTE -1.6%, STS-B -1.0%, WikiText-103 perplexity +2.4%.
+        WITHOUT it: QNLI -0.4%, RTE -0.6%, STS-B -0.9%, perplexity +0.3%. The efficiency win is
+        bought with accuracy, and the paper reports both, which is more than most.
+    benchmarks:
+      - model: BERT-base (malicious)
+        params: 110000000
+        context_window: 128
+        proving_time_s: 59.47     # LAN, ONLINE ONLY. Offline is a further 547.66 s.
+        communication_mb: 4600    # online only; offline is a further 67.35 GB
+        note: >-
+          Malicious, 3PC, LAN, ONLINE phase. The offline phase adds 547.66 s and 67.35 GB. Its
+          semi-honest variant is 20.09 s / 1.15 GB online. There is no prior maliciously-secure
+          system that can run this model at all.
+      - model: GPT2-base (malicious)
+        params: 124000000
+        context_window: 64
+        proving_time_s: 39.26
+        communication_mb: 3070
+        note: "Online only; offline adds 273.83 s / 33.67 GB. Semi-honest variant: 9.70 s / 0.45 GB."
+      - model: Vanilla Transformer (malicious)
+        params: 45000000
+        context_window: null
+        proving_time_s: null
+        communication_mb: null
+        note: >-
+          The ONLY model on which a malicious-vs-malicious comparison exists (5.3x over Privformer,
+          4.3x less communication). Privformer cannot run BERT; Falcon is a CNN framework. Absolute
+          latency for this row is reported only in Figure 2, not in a table -- so it is null here.
+
 secure_inference_to_review:
   - {title: "Cheetah: Lean and Fast Secure Two-Party Deep Neural Network Inference", venue: "USENIX Sec 2022", note: "The matmul baseline Iron improves on."}
   - {title: "SIRNN: A Math Library for Secure RNN Inference", venue: "IEEE S&P 2021", note: "Iron's non-linear protocols build on this."}
@@ -2699,7 +3783,14 @@ alternatives_to_zk:
       verifier will trust NVIDIA's attestation, ZK is a very expensive way to buy similar
       confidence. But the headline figure is not a general constant, it is the best corner of a
       cost surface, and the paper's own authors expect it to rise as the hardware gets more secure.
-      Deployed in production (e.g. Phala GPU TEEs on OpenRouter).
+    external_context: >-
+      NOT FROM THIS PAPER. The strings "Phala" and "OpenRouter" occur ZERO times in the PDF.
+      MOVED OUT OF `notes` 2026-07-13: the claim that Phala's GPU TEEs are offered for inference on
+      OpenRouter was sitting at the end of an otherwise entirely primary-sourced notes block, which
+      is precisely how a vendor claim gets laundered into a citation -- and it duly ended up
+      asserted in content/alternatives/tees.md as though this paper said it. The claim may well be
+      TRUE; it is simply not this paper's. Attribute it to phala.network / openrouter.ai directly,
+      or drop it.
 
   - id: proof-of-sampling
     name: Proof of Sampling
@@ -2740,21 +3831,41 @@ alternatives_to_zk:
       the confusion. zkML proves "THIS committed model produced THIS output on THIS input". PoQ
       establishes "SOME model produced an output that a BERT cross-encoder scored highly". Model
       substitution -- precisely the attack zkML exists to prevent -- is not prevented here, only
-      made unprofitable for a RATIONAL node by parameter tuning. The authors concede that a cheaper
-      model whose output is good enough is rewarded equally.
-      THE NUMBER THAT MATTERS, and it is theirs: the cross-encoder's correlation with GPT-4
-      ground-truth quality scores is only 0.12-0.35, and they admit "subtle differences on
-      accuracy" escape detection. The judge barely tracks the thing it is judging -- and a
-      verification scheme is only as sound as its verifier.
+      made unprofitable for a RATIONAL node by parameter tuning.
+      CORRECTED 2026-07-13 -- the previous note said "The authors concede that a cheaper model
+      whose output is good enough is rewarded equally." They concede no such thing; they claim the
+      OPPOSITE, and it is their central design goal. Sec 3.3: the reward function is built so that
+      "the node owner would not make more earnings by replacing F with a less powerful F'", and
+      Theorem 1 gives a threshold on alpha above which "there is no motivation for inference nodes
+      to deploy less accurate models from an economical perspective." The guarantee is ECONOMIC
+      and it rests on Hypothesis 1 (all adversaries are rational) and Hypothesis 2 ("There is no
+      domination in the model market") -- which ASSUMES the gap away rather than conceding it. It
+      is not soundness, but it is not a concession either. (Note also that Theorem 1's printed
+      statement -- "the inference node would always choose the most affordable model in the list"
+      -- contradicts its own proof and Sec 3.3; that looks like a typo in the paper.)
+      THE NUMBER THAT MATTERS, and it is theirs: Table 3 gives the Pearson correlation between the
+      cross-encoder score and GPT-4 ground-truth quality across five models as -0.06 to 0.35
+      (GPT3.5 0.12, GPT4 0.13, Mistral-7B 0.28, Mixtral-8x7b 0.35, Llama3-70b -0.06). On
+      Llama3-70b the judge is ANTI-CORRELATED with the thing it is judging. The previously recorded
+      range "0.12-0.35" silently dropped the negative value. The authors' own reading, verbatim
+      (Sec 6.1) -- the cross-encoder "is capable of capturing the missing of information in the
+      generative AI output. It is unable to identify the subtle difference on the accuracy of the
+      information itself." (The earlier paraphrase "subtle differences on accuracy" was quoted as
+      if verbatim and is not.) A verification scheme is only as sound as its verifier.
       Note the name: despite "Proof of", nothing is proven. No proof object, no soundness error,
       no extractor -- it is mechanism design plus a statistical judge. Filed under alternatives
       rather than inference for exactly that reason.
-      Cost is the genuine contribution, and it is near-zero: cross-encoder assessment takes
-      0.12-0.61 s on an A100 (3.7-20.5 s on CPU) and consensus settles in ~50 ms for k = 1..30
-      assessors. Evaluated on 100 SQuAD questions against GPT-3.5/4-turbo, Mistral-7B,
-      Mixtral-8x7B and Llama3-70B. Admitted limits: a single inference node only, NLP only (no
-      image generation), and the cross-encoders are off-the-shelf document-search models not
-      trained for this task.
+      Cost is the genuine contribution, and it is near-zero -- but READ TABLE 2 CAREFULLY. Its
+      latencies (0.12-0.61 s on A100, 3.7-20.5 s on CPU) are BATCH latencies for 1,000
+      query-response pairs, not per-assessment costs: "The latency is the average waiting time in
+      seconds when processing a batch containing 1,000 query-response pairs because batch
+      processing is way more efficient than processing one pair at a time." PER ASSESSMENT that is
+      ~0.12-0.6 MILLISECONDS on an A100 and ~4-21 ms on CPU (throughput 1,666-8,256/s GPU,
+      48-241/s CPU) -- the figures previously recorded here were off by ~1000x as per-assessment
+      costs. Consensus settles at ~50 ms regardless of k = 1..30 assessors (Fig 5). Evaluated on
+      100 SQuAD questions against GPT-3.5/4-turbo, Mistral-7B, Mixtral-8x7B and Llama3-70B.
+      Admitted limits: a single inference node only, NLP only (no image generation), and the
+      cross-encoders are off-the-shelf document-search models not trained for this task.
       Useful to this SoK as the far endpoint of the trust spectrum: the point where you stop
       verifying the computation entirely and start verifying the OUTPUT. Everything else on the
       alternatives page still checks, samples, or re-executes the actual inference.
@@ -2956,10 +4067,13 @@ surveys:
     authors_verified: true
     covers: [inference, testing, training]
     notes: >-
-      Survey, not a system. No original benchmarks -- do not plot. Its Table VII is a timeline
-      of 30 representative systems (2017.6 SafetyNets -> 2025.08 VeriLoRA); Tables IV, V and
-      VI give proving time / verification time / proof size for training, testing and
-      inference systems respectively, each with the hardware used. This file's
+      Survey, not a system. No original benchmarks -- do not plot. Its Table VII
+      ("Classification of representative ZKML systems by verification objective") CLASSIFIES 30
+      systems (2017.6 SafetyNets -> 2025.08 VeriLoRA) by Training / Testing / Inference, with Date
+      and Model columns. The TIMELINE is Figure 6, not Table VII -- CORRECTED 2026-07-13; the two
+      were fused, and content/surveys/index.md and content/papers/zkml-survey.md inherit the
+      error. Tables IV, V and VI give proving time / verification time / proof size for training,
+      testing and inference systems respectively, each with the hardware used. This file's
       `numbers_source: survey` entries are drawn from those tables.
 
   - id: zkp-decentralized-ml-survey
