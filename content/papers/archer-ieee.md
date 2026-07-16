@@ -1,5 +1,5 @@
 ---
-title: Archer et al. — the cost of IEEE arithmetic
+title: Archer et al., the cost of IEEE arithmetic
 paper: archer-ieee
 status: reviewed
 ---
@@ -30,7 +30,7 @@ real-number standard,"* which is a live research call and not a settled verdict.
 
 ## What it actually proves
 
-Nothing — it is MPC, and it produces no proof. There is no prover, no verifier, no soundness
+Nothing, it is MPC, and it produces no proof. There is no prover, no verifier, no soundness
 argument; the string "zero-knowledge" does not appear anywhere in the paper.
 
 What it *measures* is gate counts and wall-clock for three IEEE-754 double-precision operations under
@@ -51,14 +51,14 @@ state outright:
 > not the number of AND gates but the **depth** of the AND gates in the circuit.
 
 So even inside its own paper, the gate *count* is not the figure of merit. Transplanting a total gate
-count from garbled-circuit MPC into a claim about *SNARK constraint counts* — a completely different
-arithmetization, with a completely different cost model, over a large prime field rather than `F_2` —
+count from garbled-circuit MPC into a claim about *SNARK constraint counts*, a completely different
+arithmetization, with a completely different cost model, over a large prime field rather than `F_2`, 
 is a category error. The conclusion it is used to support (floats are expensive in a circuit) may well
 be right; this is simply not evidence for it in the form it is being used.
 
 **Two: the number that gets quoted is the largest of several defensible ones.** The figures that
 [[zip]] and [[zklp]] both reproduce for FP64 are the **AND + XOR + INV totals**, summed across the
-rows of Archer's table. Both secondhand quotes are arithmetically correct — we checked, and
+rows of Archer's table. Both secondhand quotes are arithmetically correct, we checked, and
 `papers.yml` records the derivation. But the AND-only cost, which is what most MPC and ZK settings
 actually pay for, is a few times smaller; and by Archer's own argument neither is the right metric
 for their engine.
@@ -66,7 +66,7 @@ for their engine.
 So when the zkML literature cites a five-figure gate count for a double-precision multiply as proof
 that floating point is hopeless, it is citing **the largest of several defensible numbers, from a
 cost model that does not apply, in support of a conclusion the source paper does not draw.** The
-conclusion may survive all of that — a few thousand AND gates is still enormous beside a field
+conclusion may survive all of that, a few thousand AND gates is still enormous beside a field
 multiply, and nothing here threatens sum-check on integer matmuls. But the figure deserves its
 asterisk, and it has never been given one.
 

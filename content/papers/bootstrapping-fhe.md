@@ -9,7 +9,7 @@ status: reviewed
 This is the one FHE paper in the privacy cluster, and the setting is genuinely different from the
 2PC systems around it. The client encrypts under CKKS, the server evaluates the whole transformer on
 ciphertext, and returns a ciphertext. **No interaction, no rounds, no client presence during
-inference.** The authors call it NISTI — non-interactive secure transformer inference — and it is
+inference.** The authors call it NISTI, non-interactive secure transformer inference, and it is
 the only entry in either column of this repo where the client can go offline.
 
 Bootstrapping dominates that setting, so the paper's thesis is: stop treating bootstrapping as
@@ -17,7 +17,7 @@ overhead and start **fusing useful work into it**. Three pieces:
 
 **A trigonometric minimax approximation for functional bootstrapping.** The prior state of the art
 approximates the target function with a Fourier series, which is optimal under L2 but does not
-minimize worst-case error — and worst-case error is what you care about when a single bad activation
+minimize worst-case error, and worst-case error is what you care about when a single bad activation
 can flip a classification. The classical Remez algorithm minimizes L∞ but only over a *polynomial*
 basis, and functional bootstrapping needs a *trigonometric* one. The paper proves a trigonometric
 minimax approximation exists and derives a trigonometric Remez algorithm to compute it. This is the
@@ -27,12 +27,12 @@ real contribution and it is a proper theorem.
 map. A transformer's linear layers are also linear maps. So *fold the weight matrix into the S2C
 transform* and the linear layers cost nothing separately. This is a lovely observation.
 
-**Batch-S2C, interleaved packing, lazy key switching, hoisting** — engineering.
+**Batch-S2C, interleaved packing, lazy key switching, hoisting**, engineering.
 
 ## What it actually proves
 
-Nothing — no proof, and no integrity guarantee of any kind. What it computes, privately and
-non-interactively, is **BERT-DyT** — not BERT.
+Nothing, no proof, and no integrity guarantee of any kind. What it computes, privately and
+non-interactively, is **BERT-DyT**, not BERT.
 
 :::quote{src="Bootstrapping is All You Need" sec="§6, Evaluation"}
 For our framework, we replace LayerNorm with Dynamic Tanh (DyT). We distill BERT-DyT from the
@@ -45,7 +45,7 @@ The other thing to be precise about: **both headline numbers are amortized over 
 inputs.** The runtime breakdown table says so in its caption; the communication figure says so in the
 abstract. No single-query (batch-1) latency or bandwidth is reported anywhere. The README currently
 sets this system's tiny communication figure against the 2PC systems' hundreds of gigabytes as
-"the whole FHE trade" — but those 2PC figures are *per inference*, and this one is per inference
+"the whole FHE trade", but those 2PC figures are *per inference*, and this one is per inference
 *amortized over 256*. FHE still wins the communication axis, and by a lot, but not by the margin
 that comparison implies, and a user sending one prompt cannot amortize over anything.
 
@@ -68,7 +68,7 @@ numbers:
 | **Total** | **349.5 s** | **662.3 s** |
 
 The single row corresponding to the operation they *replaced in the model* accounts for ~141 s of the
-~313 s total saving — roughly 45% of the entire speedup, from the one change the baseline was not
+~313 s total saving, roughly 45% of the entire speedup, from the one change the baseline was not
 allowed to make.
 
 And in the same table, **their GELU is over three times slower than the baseline's**. That regression
@@ -77,7 +77,7 @@ is printed and never discussed anywhere in the text.
 
 The paper's three cryptographic contributions may well be sound and useful. But the experiment as
 constructed cannot tell you what they are worth, because it never runs the new bootstrapping
-machinery on a LayerNorm network — the one ablation that would separate the cryptography from the
+machinery on a LayerNorm network, the one ablation that would separate the cryptography from the
 architecture surgery. This is [[bolt]]'s word-elimination problem in a different key: a real
 cryptographic contribution, and a headline number that quietly bundles a model change the baseline
 never receives.
@@ -86,8 +86,8 @@ never receives.
 framework "introduces virtually no additional accuracy loss, achieving nearly identical accuracy to
 BERT-DyT across all three datasets." The encrypted evaluation loses roughly a point on two GLUE tasks
 and nearly two points on the third (RTE). That is the **largest accuracy loss in the privacy
-cluster** — [[nimbus]] reports a fraction of a percent, [[iron]] under a third of a percent, [[bolt]]
-around one percent — and it is described as negligible.
+cluster**, [[nimbus]] reports a fraction of a percent, [[iron]] under a third of a percent, [[bolt]]
+around one percent, and it is described as negligible.
 
 **The distilled model reports accuracy identical to its teacher, to two decimal places, on all three
 datasets.** Across test sets of 277, 872 and 408 examples, replacing LayerNorm with Dynamic Tanh and

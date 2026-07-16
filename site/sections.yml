@@ -148,7 +148,7 @@ sections:
     dir: landscape
     title: The landscape
     blurb: >-
-      Who is building this — companies and research teams, cut by paradigm. The org-level
+      Who is building this, companies and research teams, cut by paradigm. The org-level
       companion to the paper tables. Rendered from orgs.yml.
     cell: meta
     paradigm: foundations

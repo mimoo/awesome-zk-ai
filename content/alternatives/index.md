@@ -5,7 +5,7 @@ order: 10
 lede: >-
   Verifiability is not a synonym for zero knowledge. ZK buys a succinct,
   non-interactive, cryptographic guarantee. The alternatives buy a weaker but crisply
-  stateable one, for a small fraction of the cost — and for most deployments that is
+  stateable one, for a small fraction of the cost, and for most deployments that is
   the better trade.
 papers: [opml, opp-ai, zk-opml, optimistic-tee-rollups, tee-confidential-llm, proof-of-sampling, proof-of-quality, lightweight-sampling-inference]
 status: reviewed
@@ -20,7 +20,7 @@ trusting no hardware and no counterparty, and that stays valid forever without a
 staying online. Some deployments need exactly that. Most do not.
 
 The table below is not about speed. The right way to compare the rows in it is **not on
-speed** at all. It is on the trust assumption — what, precisely, must be true for the
+speed** at all. It is on the trust assumption, what, precisely, must be true for the
 guarantee to hold, and who is in a position to make it false.
 
 {{ table:alternatives_to_zk }}
@@ -37,23 +37,23 @@ blockchain. It is also an assumption about the
 **Optimistic systems assume someone will bother.** [[opml]] and its relatives are secure
 under *AnyTrust*: any single honest challenger can force correct behaviour. That is a
 genuinely weak requirement and it is why the overhead is roughly nothing. It is also
-three requirements dressed as one — an honest party must **exist**, must be **watching**,
-and must find it **worth paying** to challenge — and it buys a guarantee that only holds
+three requirements dressed as one, an honest party must **exist**, must be **watching**,
+and must find it **worth paying** to challenge, and it buys a guarantee that only holds
 *after a challenge window elapses*. [The optimistic page](/alternatives/optimistic/) takes
 that apart.
 
 **TEEs assume a hardware vendor.** [[tee-confidential-llm]] is the row that frames the
 entire field, because its overhead is a rounding error next to ZK's. If your verifier will
 accept an attestation signed by NVIDIA, then ZK is an extremely expensive way to buy a
-confidence you could have had for free. ZK's answer is not that TEEs are bad — they are
-what is actually in production — but that *some verifiers cannot make that assumption*.
+confidence you could have had for free. ZK's answer is not that TEEs are bad, they are
+what is actually in production, but that *some verifiers cannot make that assumption*.
 [The TEE page](/alternatives/tees/) states the trade without sneering at it.
 
 **Sampling assumes a rational adversary.** [[proof-of-sampling]] and
 [[lightweight-sampling-inference]] do not try to make cheating impossible. They make it
 *detectable with some probability* and *expensive when detected*, and then rely on the
 prover being economically rational. This is the only family with a **tunable, quantifiable**
-guarantee — you can dial the soundness error — which makes it the most intellectually
+guarantee, you can dial the soundness error, which makes it the most intellectually
 honest of the alternatives and the one we spend the most time on, on
 [the sampling page](/alternatives/sampling/).
 
@@ -73,8 +73,8 @@ because the name works against comprehension:
 | **Proof of Quality** | *Some* model produced an output that a BERT cross-encoder scored highly. |
 
 Those are not the same claim at three price points. The third is a different claim. **Model
-substitution — the precise attack zkML exists to prevent — is not prevented.** It is made
-*unprofitable for a rational node* by tuning a reward parameter — and the reward function depends
+substitution, the precise attack zkML exists to prevent, is not prevented.** It is made
+*unprofitable for a rational node* by tuning a reward parameter, and the reward function depends
 only on the assessors' scores, so any model that scores the same collects the same payout. The
 authors do not concede this; they *assume* it away, in a hypothesis stipulating that no cheaper
 model is as good as a dearer one.
@@ -88,14 +88,14 @@ Llama3-70b, i.e. anti-correlated on one of the five models tested.
 :::
 
 The authors are candid about why: they acknowledge that the cross-encoder "is unable to identify
-the subtle difference on the accuracy of the information itself" — which is precisely the failure
+the subtle difference on the accuracy of the information itself", which is precisely the failure
 mode you most want to catch. **A verification scheme is only as sound as its verifier**, and this
-one is barely correlated with the thing it is verifying — which is exactly the regime where a
+one is barely correlated with the thing it is verifying, which is exactly the regime where a
 subtly wrong answer passes.
 
 None of that makes it useless. Assessment costs well under a second and consensus settles in
-milliseconds, so for a decentralized *marketplace* — where the real risk is a node collecting fees
-for garbage rather than an adversary steering one classification — it is a sensible mechanism. It
+milliseconds, so for a decentralized *marketplace*, where the real risk is a node collecting fees
+for garbage rather than an adversary steering one classification, it is a sensible mechanism. It
 is a good answer to "did I get my money's worth." It is not an answer to "was this computed
 correctly," and the word *proof* in its title should not be read as claiming otherwise: there is no
 proof object, no soundness error, and no extractor. It is mechanism design with a statistical judge.
@@ -123,7 +123,7 @@ The naive framing is "ZK is slow, therefore ZK loses on latency." That is not qu
 happens at scale, and [[opml]]'s own framing makes the sharper point: an optimistic system
 reaches finality after a **fixed** challenge window, while a ZK system reaches finality
 after a proving time that **grows with model size**. Past some model size, the proof takes
-longer than the challenge period — and the optimistic system, the one with the weaker
+longer than the challenge period, and the optimistic system, the one with the weaker
 guarantee, is also *the faster one to finality*.
 
 So the trade is not "pay more, wait longer, get a better guarantee." Above a certain
@@ -138,12 +138,12 @@ Four situations, and they are narrower than the literature's enthusiasm suggests
 1. **The verifier is adversarial or anonymous.** No challenger will show up on your
    behalf. Nobody will trust your attestation.
 2. **The model or the input must stay private**, and the proof must still convince a
-   third party. This is the combination no alternative on the table offers — optimistic
+   third party. This is the combination no alternative on the table offers, optimistic
    verification requires re-execution, which requires the weights.
 3. **Verification must be non-interactive and permanent.** A proof settled on-chain is
    checked by parties who were not present, years later. A challenge window that has
    closed is not a proof.
-4. **No hardware root of trust is acceptable** — a regulator, a competing counterparty, a
+4. **No hardware root of trust is acceptable**, a regulator, a competing counterparty, a
    public chain.
 
 Outside those four, one of the rows above is probably cheaper by a margin that no protocol
@@ -151,7 +151,7 @@ improvement is going to close.
 
 :::gap  Nobody has published the composed security statement
 Every hybrid on this page combines two or three trust models, and not one paper states
-the resulting guarantee as a single theorem — what an adversary must corrupt, and with
+the resulting guarantee as a single theorem, what an adversary must corrupt, and with
 what probability they succeed. The security models are described in prose and composed by
 vibes. For a field that prides itself on proofs, that is a conspicuous hole.
 :::

@@ -17,12 +17,12 @@ verifiability column cites any paper in the privacy column, or the reverse. Not 
 **On 2026-07-13 that stopped being true, and the way it stopped being true is better than the
 finding it replaced.**
 
-We finally read the two papers the finding had always rested on — [[sirnn]] and [[cheetah]] — which
+We finally read the two papers the finding had always rested on, [[sirnn]] and [[cheetah]], which
 had been sitting in the graph as `external:` stubs, unread, for the entire life of the project. (That
 is its own indictment and it is dealt with below.) Promoting them to real papers created exactly
 **two** crossing edges, and the validator's tripwire fired, as it was built to.
 
-Neither edge is a cryptographic citation. Both are about **numerics** — which is what this page has
+Neither edge is a cryptographic citation. Both are about **numerics**, which is what this page has
 been arguing all along, and now it is arguing it with evidence instead of with an absence.
 
 | Crossing edge | Direction | What it actually is |
@@ -36,14 +36,14 @@ paper is invisible to it.
 
 So the finding does not die. It sharpens, into something you can actually defend:
 
-> **The two literatures do not read each other as cryptography.** Where they touch — and they do
-> touch — they touch at the **numerics**, and they touch *without noticing*.
+> **The two literatures do not read each other as cryptography.** Where they touch, and they do
+> touch, they touch at the **numerics**, and they touch *without noticing*.
 
 {{ chart:citations }}
 
 ## Three nodes are cited by both columns
 
-Rebuild the graph and ask a different question — not "does A cite B", but "is there any node that
+Rebuild the graph and ask a different question, not "does A cite B", but "is there any node that
 *both* columns point at?" There are exactly three, and they are all from the MPC world:
 
 | Shared node | What it is | Cited by (privacy) | Cited by (verifiability) |
@@ -53,19 +53,19 @@ Rebuild the graph and ask a different question — not "does A cite B", but "is 
 | **[[secfloat]]** (S&P '22) | accurate IEEE-754 floating point under 2PC | [[bolt]] | [[zkpot-garg]], [[zklp]] |
 
 :::gap  We argued from three papers for a year and had read one of them
-Until July 2026, [[sirnn]] and [[cheetah]] were `external:` nodes — names in a YAML file, with no
+Until July 2026, [[sirnn]] and [[cheetah]] were `external:` nodes, names in a YAML file, with no
 PDF, no entry, and no page. The single most-quoted claim in this repo rested on three papers, and we
 had read exactly one of them ([[secfloat]]).
 
 It is worth being blunt about what that means. The finding turned out to be *right*, and reading the
-papers made it sharper rather than weaker. But it was right by luck, and the `external:` mechanism —
-which exists so you can name a building block without studying it — had quietly become a way of
+papers made it sharper rather than weaker. But it was right by luck, and the `external:` mechanism, 
+which exists so you can name a building block without studying it, had quietly become a way of
 holding load-bearing evidence at arm's length. **A node your headline depends on is not a building
 block.** It is a paper you owe a reading.
 :::
 
-Add the fourth-order case and the picture completes: [[garg-fp]] — a *zero-knowledge* paper, CCS
-'22 — takes its floating-point cost baseline from [[archer-ieee]], which is an *MPC* paper, and
+Add the fourth-order case and the picture completes: [[garg-fp]], a *zero-knowledge* paper, CCS
+'22, takes its floating-point cost baseline from [[archer-ieee]], which is an *MPC* paper, and
 uses it in the body, not the bibliography. [[zklp]] does the same thing, from the same source.
 
 So the real shape is not "two communities that never talk." It is:
@@ -75,8 +75,8 @@ So the real shape is not "two communities that never talk." It is:
 
 Both columns have to turn a real number into a finite-field element, multiply, and then squeeze a
 wide accumulator back down. Both have to do it without a division. The MPC world solved a large
-part of that problem first — [[secfloat]], SIRNN and the Catrina–Saxena fixed-point line go back to
-2010 — and the ZK world has been quietly drawing on it while ignoring everything the same authors
+part of that problem first, [[secfloat]], SIRNN and the Catrina–Saxena fixed-point line go back to
+2010, and the ZK world has been quietly drawing on it while ignoring everything the same authors
 built on top.
 
 {{ papers:numerics_primitives }}
@@ -87,10 +87,10 @@ These are not incidental bibliography entries. In the papers that cross, the MPC
 load-bearing.
 
 **[[hao-et-al]] (USENIX Security '24) is a zero-knowledge paper built on an MPC math library.** It
-proves softmax, GELU, division and reciprocal square root in ZK — the exact operator set the rest
+proves softmax, GELU, division and reciprocal square root in ZK, the exact operator set the rest
 of this repo is fighting. Its exponential protocol is inspired by SIRNN's digit-decomposition idea,
 its reciprocal-square-root initial approximation cites SIRNN, and it inherits SIRNN's
-hyperparameters — but the digit-decomposition building block is its own, and it explicitly rejects
+hyperparameters, but the digit-decomposition building block is its own, and it explicitly rejects
 SIRNN's Msnzb construction as too costly before re-deriving one. (The Goldschmidt iteration it uses
 is attributed to Goldschmidt's 1964 thesis and to the MPC line generally, not to SIRNN.) The
 borrowing is real but selective, and the paper says so:
@@ -114,7 +114,7 @@ division and m = 6 for reciprocal square root.
 :::
 
 **[[zkpot-garg]] (CCS '23) crosses because its proof system *is* an MPC protocol.** It is
-MPC-in-the-head, so it needs a fixed-point MPC protocol as its engine, and it takes one — the
+MPC-in-the-head, so it needs a fixed-point MPC protocol as its engine, and it takes one, the
 Catrina–Saxena secure-truncation construction. The consequence lands in the place this section
 cares about most: the numerics substrate *chooses its field*.
 
@@ -125,8 +125,8 @@ Section 2.4). We expect that finding a way to avoid this and instead using a 64-
 further speed up the protocol and reduce proof size.
 :::
 
-That is the same causal chain the index page draws for zkML — *numeric format → field size → prover
-cost* — arriving in a ZK paper by way of an MPC truncation protocol. And the bridge here is not
+That is the same causal chain the index page draws for zkML, *numeric format → field size → prover
+cost*, arriving in a ZK paper by way of an MPC truncation protocol. And the bridge here is not
 even a citation. It is a person:
 
 :::quote{src="zkPoT (Garg et al.)" sec="Acknowledgements"}
@@ -137,7 +137,7 @@ Deevashwer Rathee is the first author of both SIRNN and [[secfloat]]. The one pl
 literatures genuinely touch, they touch through the acknowledgements section.
 
 **[[zklp]] is the only paper in this repo that reads *both* float literatures on purpose.** Its
-related work walks the MPC line — Aliasgari, Kamm, [[archer-ieee]], Pullonen–Siim, [[secfloat]] —
+related work walks the MPC line, Aliasgari, Kamm, [[archer-ieee]], Pullonen–Siim, [[secfloat]], 
 and then turns to the ZK one, treating them as two lines on one problem:
 
 :::quote{src="ZKLP (Ernstberger et al.)" sec="§6, Related Works — Floating-Point Secure Computing"}
@@ -156,7 +156,7 @@ and efficient in-circuit trigonometric approximations for SNARKs.
 :::
 
 *MPC has this; SNARKs do not.* That sentence is the entire finding of this page, written by
-someone who was looking at both shelves at once — and it appears in a paper about **location
+someone who was looking at both shelves at once, and it appears in a paper about **location
 privacy**, which is why nobody in zkML has read it.
 
 ## The bridge does not pass through the middle of either column
@@ -165,7 +165,7 @@ Here is the part that matters most, and it corrects the tempting version of this
 
 It is *not* true that "the ZK side reaches into the MPC toolbox." Four papers do. None of them is
 a mainstream zkML prover. I checked every flagship system in the verifiability column for any
-mention — body or bibliography — of the three shared nodes:
+mention, body or bibliography, of the three shared nodes:
 
 | Paper | What it is | Mentions Cheetah / SIRNN / SecFloat |
 |---|---|---|
@@ -189,7 +189,7 @@ first principles, in a field where a math library for exactly those operations h
 2021.
 
 [[bionetta]] is the newest entry in that table and the cleanest demonstration of the pattern,
-because it does not merely fail to cite the numerics literature — **it redoes it.** Appendix C of a
+because it does not merely fail to cite the numerics literature, **it redoes it.** Appendix C of a
 December 2025 technical report derives, from scratch, the error bound for multiplying two
 fixed-point numbers:
 
@@ -198,7 +198,7 @@ $$\varepsilon_\rho := \left|D_{2\rho}\big(\hat{x}\hat{y}\big) - xy\right| \;\le\
 That is a foundational result in the [[secfloat]] / [[prob-truncation]] line. The paper contains
 zero occurrences of "MPC", "homomorphic", "SIRNN", "Cheetah" or "SecFloat". Four years after a
 library shipped that does exactly this, a team building a **deployed** system proved it again by
-hand — and, on the evidence of the bibliography, did not know there was anything to look up.
+hand, and, on the evidence of the bibliography, did not know there was anything to look up.
 
 ## Is the one-way traffic real, or an artifact of our corpus?
 
@@ -209,8 +209,8 @@ chance: more ZK papers means more chances for a ZK→MPC edge, and fewer MPC pap
 chances for the reverse. **Counting edges cannot settle this.**
 
 So I did not count edges. I ran a test that is immune to corpus size, because it is a property of
-each document on its own: **does this paper contain the word "zero-knowledge" — or "SNARK", or
-"GKR", or "sum-check" — anywhere at all, body or bibliography?**
+each document on its own: **does this paper contain the word "zero-knowledge", or "SNARK", or
+"GKR", or "sum-check", anywhere at all, body or bibliography?**
 
 | MPC-side paper | Any ZK vocabulary, anywhere |
 |---|---|
@@ -224,7 +224,7 @@ each document on its own: **does this paper contain the word "zero-knowledge" �
 | [[bolt]] | once ("zero-knowledge proofs for HE", about MUSE) |
 
 Six of the eight MPC-side PDFs we hold never use the word. Not in the related work, not in the
-references, not once. That is not something a small sample can fake — it is eight independent
+references, not once. That is not something a small sample can fake, it is eight independent
 documents, and six of them are silent. The asymmetry is real *for these papers*.
 
 :::gap  What the asymmetry does not establish
@@ -236,19 +236,19 @@ cited [[deepprove]] (2026). A "recent ZK cites older MPC" pattern is partly just
 What survives that objection is the recent end: [[bolt]] (S&P '24) and [[nimbus]] (NeurIPS '24) are
 contemporaneous with [[zkllm]] (CCS '24) and do not cite it, and [[bootstrapping-fhe]] (2026) is
 contemporaneous with [[deepprove]] and cites nothing in the zkML line. And [[prob-truncation]]
-(AAAI '25) is an analysis of *truncation* — the shared problem, at the shared layer, published
-late — and it does not contain the word "zero-knowledge".
+(AAAI '25) is an analysis of *truncation*, the shared problem, at the shared layer, published
+late, and it does not contain the word "zero-knowledge".
 
 **Selection explains part of it.** All five privacy papers that appear in the graph are private
-*transformer inference* systems — we hold no PDF for the private-training entries, so they
+*transformer inference* systems, we hold no PDF for the private-training entries, so they
 contribute no edges. That is a genre with no reason to cite a prover. An MPC paper on verifiable or
 maliciously-secure computation would plausibly cite ZK work heavily, and we hold none. The honest
 scope of the claim is therefore narrow: *private-transformer-inference papers do not read zkML*.
 It is **not** "MPC does not read ZK", and we have no evidence for the broader statement.
 
-**The proxy is coarse.** An edge in this graph means "A's text mentions B" — body or reference
+**The proxy is coarse.** An edge in this graph means "A's text mentions B", body or reference
 list. Two of the edges the graph draws turn out to be bibliography-only on inspection
-([[hao-et-al]] lists Cheetah but never uses it), and one real edge is *missing* — [[zklp]] cites
+([[hao-et-al]] lists Cheetah but never uses it), and one real edge is *missing*, [[zklp]] cites
 [[archer-ieee]] as its reference [21], in the body, and the extractor does not catch it. Every
 edge this page leans on has been checked by hand against the PDF; the graph itself has not.
 :::
@@ -262,7 +262,7 @@ a division. Both answer it with *piecewise approximation selected by a lookup on
 Both discover that the cost is not the arithmetic but the rounding. Both find that the calibrated
 range is where the soundness or the accuracy actually lives.
 
-And where a technique genuinely *cannot* transfer, the reason is the threat model, not ignorance —
+And where a technique genuinely *cannot* transfer, the reason is the threat model, not ignorance, 
 which is worth stating precisely, because it is the one place the disconnection is justified.
 MPC's probabilistic truncation is cheap because it accepts a small per-operation failure
 probability, and when it fails it fails with a large error. On a random input that is an accuracy
@@ -271,7 +271,7 @@ an accuracy cost becomes a **soundness** hole. [[prob-truncation]] is the analys
 mode; it is an MPC paper; and no ZK paper cites it.
 
 That is the correct summary of this whole section. **The two columns can share the numerics, and
-they do — but they cannot share the *guarantees* built on top of it, and they have never sat down
+they do, but they cannot share the *guarantees* built on top of it, and they have never sat down
 together to work out which is which.** Nobody is doing that work. The shared seabed is
 uninhabited.
 
@@ -285,7 +285,7 @@ Two experiments, neither expensive:
    analysis, and they are approximating the same curves on the same models.
 2. **Ask whether [[zklp]]'s result changes the 2PC picture too.** ZKLP shows that lookup arguments
    make bit-exact IEEE floats affordable *in a circuit*, and finds fixed point losing to floats on
-   its workload. The 2PC line quantizes for the same reason zkML does — fixed point is what the
+   its workload. The 2PC line quantizes for the same reason zkML does, fixed point is what the
    primitives support. If the "floats are infeasible" premise is retired on one side of the table,
    somebody should check whether it survives on the other.
 :::

@@ -196,6 +196,17 @@ citations:
     - zip
     - zkml-survey
     - zkpot-garg
+  # Remainder (Modulus Labs, 2024), decision-forest GKR. Edges read out of remainder.pdf by
+  # citegraph.py and confirmed by eye: it builds on GKR and reuses the zkCNN/vCNN GKR-for-ML
+  # lineage, and cites Modulus's own "Cost of Intelligence" report. All four edges stay inside
+  # the verifiability column -- no crossing edge. (Its own id has no alias in citegraph.py on
+  # purpose: "Remainder" is also a common arithmetic term -- see zkPyTorch/ZEN's "remainder-based
+  # verification" -- so an alias would manufacture false INBOUND edges.)
+  remainder:
+    - gkr
+    - modulus-cost-of-intelligence
+    - vcnn
+    - zkcnn
   safetynets:
     - gkr
   secfloat:

@@ -21,7 +21,7 @@ representation is right for a whole neural network, so the thing worth optimisin
 
 That third conversion is the one that separates Mystique from everything else in this collection.
 [[zkllm]], [[deepprove]] and [[jolt-atlas]] all quantize the entire network and then spend their
-prover budget fighting the consequences — requantization, clamping, lookup-table domains, outlier
+prover budget fighting the consequences, requantization, clamping, lookup-table domains, outlier
 smoothing. Mystique refuses. Non-linearities are computed on honest IEEE-754 floats, which is why
 its accuracy holds up across a hundred layers and why it needs no calibration story at all. The
 `Requant` operator that costs [[deepprove]] the largest single slice of its prover *does not exist
@@ -34,7 +34,7 @@ dot product, with communication independent of the inner dimension.
 
 ## What it actually proves
 
-**That a committed CNN was correctly evaluated on a private image — interactively, to exactly one
+**That a committed CNN was correctly evaluated on a private image, interactively, to exactly one
 verifier, who had to be online for the whole thing.**
 
 This is a genuinely different object from the proofs elsewhere in this section, and the differences
@@ -42,7 +42,7 @@ are not cosmetic.
 
 **There is no proof.** Mystique is a *designated-verifier interactive* protocol. What it produces is
 a conversation, not an artifact. The prover and verifier co-generate the transcript, and the
-transcript convinces nobody who did not participate in it — the verifier's authentication key is
+transcript convinces nobody who did not participate in it, the verifier's authentication key is
 what makes it sound, so anyone holding that key could have forged it. You cannot post it on a chain,
 cache it in a CDN, hand it to a regulator, or let a second customer check the same proof. The paper
 is admirably direct about this in its conclusion:
@@ -66,13 +66,13 @@ scaling *out* to a cluster and shipping a proof measured in megabytes. Neither i
 different bets about which resource is scarce.
 
 **Three settings, three prices.** Model and image can each be private or public, and Table 3 prices
-all three combinations separately. The cheapest is the one where the model is public — which is to
+all three combinations separately. The cheapest is the one where the model is public, which is to
 say, the one where nothing about the model is hidden and the motivating threat (a service provider
 lying about which model it ran) is the only thing being addressed. See the audit note below; this
 distinction has already gone missing once.
 
 **It is a CNN paper.** LeNet-5, ResNet-50, ResNet-101, CIFAR-10. No attention, no softmax over a
-sequence, no autoregression. Reading it as an LLM result is a category error — but reading its
+sequence, no autoregression. Reading it as an LLM result is a category error, but reading its
 *mechanism* as inapplicable to LLMs would also be a mistake, which is why it now carries scheme
 entries on the operator atlas.
 
@@ -80,11 +80,11 @@ entries on the operator atlas.
 
 :::audit `papers.yml` records the setting where the model is *not* private
 The ResNet-101 row in `papers.yml` (262 s, 990 MB, `numbers_source: survey`) is exactly Table 3's
-**public-model, private-image** column at 200 Mbps — the cheapest of the three settings, and the one
+**public-model, private-image** column at 200 Mbps, the cheapest of the three settings, and the one
 in which the model parameters are revealed to the verifier.
 
-The setting Mystique actually sells — a *private, publicly committed* model, i.e. the "ZK proofs of
-correct inference" application from its own introduction — is roughly twice that on both axes
+The setting Mystique actually sells, a *private, publicly committed* model, i.e. the "ZK proofs of
+correct inference" application from its own introduction, is roughly twice that on both axes
 (535 s, 1.98 GB). And the end-to-end application including the commitment pull is the abstract's
 headline: an inference "using a committed (private) ResNet-101 model in 28 minutes", against "the
 same task when the model is public in 5 minutes".
@@ -103,8 +103,8 @@ which are costly to maintain accuracy.
 :::
 
 This is the honest reading of Mystique: it does not escape the non-linearity tax that dominates
-[[deepprove]] and [[zkllm]]. It *relocates* it — out of lookup tables and into arithmetic–Boolean
-conversion — and then pays it in the same proportion. A normalization layer costing the majority of
+[[deepprove]] and [[zkllm]]. It *relocates* it, out of lookup tables and into arithmetic–Boolean
+conversion, and then pays it in the same proportion. A normalization layer costing the majority of
 the prover is the single most reproducible finding in this whole literature. [[hao-et-al]] exists
 precisely to attack this bill, and is the paper to read next.
 
@@ -129,12 +129,12 @@ be amortized over multiple private inferences.
 
 Amortized over multiple inferences *for the same verifier*. Authenticated values are bound to the
 verifier's MAC key, so a second verifier means redoing the pull, and the whole interaction, from
-scratch. In the MLaaS setting the paper motivates — one model owner, many clients — the pull is
+scratch. In the MLaaS setting the paper motivates, one model owner, many clients, the pull is
 therefore **per-client**, not one-off, and does not amortize in the direction the sentence implies.
 This is the designated-verifier limitation resurfacing as an economic one, and it is the strongest
 argument for why the succinct lineage won despite being slower per proof.
 
 **Credit where due.** The accuracy evaluation is the best in this cluster: the full CIFAR-10 test
-set, a reported accuracy delta against the plaintext model, and — unusually — the ℓ₂ distance
+set, a reported accuracy delta against the plaintext model, and, unusually, the ℓ₂ distance
 between the plaintext and ZK probability vectors, not just top-1 agreement. Nobody in the sum-check
 lineage reports the distribution of the error. They should.

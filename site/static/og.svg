@@ -13,9 +13,9 @@
   <text x="96" y="368" font-family="Georgia, serif" font-size="27" fill="#a8a89f">zkML · MPC · FHE · TEEs · proofs of training.</text>
   <!-- stats -->
   <line x1="70" y1="440" x2="1130" y2="440" stroke="#28323a" stroke-width="1"/>
-  <text x="70"  y="500" font-family="Georgia, serif" font-size="46" fill="#d99a3f">116</text>
+  <text x="70"  y="500" font-family="Georgia, serif" font-size="46" fill="#d99a3f">118</text>
   <text x="70"  y="530" font-family="Menlo, monospace" font-size="14" letter-spacing="3" fill="#6f7d86">PAPERS INDEXED</text>
-  <text x="330" y="500" font-family="Georgia, serif" font-size="46" fill="#d99a3f">40</text>
+  <text x="330" y="500" font-family="Georgia, serif" font-size="46" fill="#d99a3f">42</text>
   <text x="330" y="530" font-family="Menlo, monospace" font-size="14" letter-spacing="3" fill="#6f7d86">READ &amp; WRITTEN UP</text>
   <text x="640" y="500" font-family="Georgia, serif" font-size="46" fill="#5fb0b7">0</text>
   <text x="640" y="530" font-family="Menlo, monospace" font-size="14" letter-spacing="3" fill="#6f7d86">CITATIONS BETWEEN THE</text>

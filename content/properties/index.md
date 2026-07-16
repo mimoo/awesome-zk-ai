@@ -4,7 +4,7 @@ section: properties
 order: 10
 lede: >-
   Inference, testing and training all prove that a computation ran correctly. These
-  systems prove that a model *is* something — fair, licensed, uncensored, compliant. That
+  systems prove that a model *is* something, fair, licensed, uncensored, compliant. That
   is a fourth objective, and the prior surveys do not have a slot for it.
 papers: [fairproof, fairzk, oath, zkaudit, zk-software-auditing, e2e-ai-pipeline-verifiability, zkprov, zkml-survey, zkcnn, deepprove, zkml-kang, eiffel, prio]
 status: reviewed
@@ -18,7 +18,7 @@ Depending on the stage of the ML pipeline being certified, verifiable machine le
 :::
 
 Note the axis it slices on: **the stage of the pipeline being certified.** Training, then
-testing, then inference — one bucket per stage, and every bucket contains proofs *that a
+testing, then inference, one bucket per stage, and every bucket contains proofs *that a
 computation was performed as declared*. It is a good taxonomy and it exhausts its axis.
 
 The systems on this page do not fit it, and the reason is not that they are a fourth
@@ -30,7 +30,7 @@ about whether a matmul was computed correctly, and you cannot reach any of them 
 proving harder that one was.
 
 We treat that as a **fourth verification objective**. It is the one place where this SoK
-departs structurally from the surveys it builds on — see [Surveys](/surveys/) for the
+departs structurally from the surveys it builds on, see [Surveys](/surveys/) for the
 other two departures.
 
 {{ table:proving_properties }}
@@ -40,7 +40,7 @@ other two departures.
 The obvious objection is that a property proof is just an inference proof wearing a hat:
 to prove fairness, run the model on a dataset and prove the outputs satisfy a predicate.
 That works, and it is what the first generation of these systems did. It also does not
-scale, and — more importantly — it proves the wrong thing.
+scale, and, more importantly, it proves the wrong thing.
 
 **It does not scale**, because a property of a *model* quantifies over inputs, while a
 proof of *inference* is about one input. Proving a group-fairness property by inference
@@ -50,15 +50,15 @@ whole [inference section](/zk-inference/) multiplied by the size of the set.
 [[fairzk]] is the system that breaks this, and the unlock is conceptual rather than
 cryptographic: it derives fairness bounds from the **model parameters plus aggregated
 input statistics**, rather than by proving inference over a specific dataset. That is a
-different mathematical object — a bound on the model's behaviour, not a transcript of its
-behaviour — and it is why FairZK reaches a parameter count that inference-based fairness
+different mathematical object, a bound on the model's behaviour, not a transcript of its
+behaviour, and it is why FairZK reaches a parameter count that inference-based fairness
 proofs cannot (see the table).
 
 **It proves the wrong thing**, because a property proved *on a dataset* is a property of
 the dataset as much as of the model. Prove fairness on the evaluation set and a malicious
 provider will hand you a model that is fair on the evaluation set. [[oath]] is the system
-that takes this seriously: it targets **online** group fairness — fairness on the traffic
-the model actually serves, under distribution shift and under provider malfeasance — using
+that takes this seriously: it targets **online** group fairness, fairness on the traffic
+the model actually serves, under distribution shift and under provider malfeasance, using
 a cut-and-choose protocol over statistical properties of the fairness definition, with a
 ZK proof of correct inference as a *subroutine* rather than as the whole mechanism. Note
 what that composition says: property proofs sit **on top of** the inference systems in this
@@ -75,8 +75,8 @@ not.**
 
 Correctness has a referent. There is a fact of the matter about what $A \times B$ is, the
 prover and verifier agree on it in advance, and a soundness bug is a discrepancy against
-that fact. Fairness has no such referent. It has a *literature* — demographic parity,
-equalized odds, predictive parity, individual fairness, counterfactual fairness — whose
+that fact. Fairness has no such referent. It has a *literature*, demographic parity,
+equalized odds, predictive parity, individual fairness, counterfactual fairness, whose
 central results include the impossibility theorems establishing that the major group-fairness
 criteria **cannot in general be satisfied simultaneously**. Choosing one is choosing a
 side in a normative argument, and it is a choice the *prover* is making when they write
@@ -103,7 +103,7 @@ The load-bearing questions are upstream of it:
   labels the prover supplied is a proof about the prover's labels.
 - **What distribution is it over?** A property proven on a dataset the prover selected is a
   property of that selection. This is [[oath]]'s entire reason for existing.
-- **What is the quantifier?** [[fairproof]] certifies *local* fairness — a certificate
+- **What is the quantifier?** [[fairproof]] certifies *local* fairness, a certificate
   about the model's behaviour in a neighbourhood of a point. That is a genuinely different
   claim from a global one, and a reader skimming for the word "fairness" will not notice
   the difference.
@@ -113,7 +113,7 @@ accepted. No constraint is missing. The circuit computes exactly what it says. T
 still worthless.
 :::
 
-This is not a reason to dismiss the work — it is a reason to *read it correctly*. The
+This is not a reason to dismiss the work, it is a reason to *read it correctly*. The
 cryptography is doing something real: it lets a provider demonstrate a property **while
 keeping the model confidential**, which is the only reason this is hard at all. Absent
 confidentiality, an auditor would just be given the weights. The proof is buying
@@ -131,12 +131,12 @@ definition in the middle. And it is the claim that copyright litigation, licensi
 compliance, and the EU AI Act's data-governance provisions actually turn on.
 
 [[zkaudit]] is the most complete system here and it straddles both. Its first phase,
-`ZKAudit-T`, proves the model was trained by SGD on a committed dataset — that is a
+`ZKAudit-T`, proves the model was trained by SGD on a committed dataset, that is a
 zero-knowledge proof of training, and it cross-lists into
 [the training section](/zk-training/). Its second phase, `ZKAudit-I`, then audits arbitrary
 user-defined properties over the hidden data and weights: copyright, censorship detection,
-counterfactuals. The layering is the right architecture — pin the artefact first, then
-interrogate it — and it is why zkAudit supports property audits that the fairness systems'
+counterfactuals. The layering is the right architecture, pin the artefact first, then
+interrogate it, and it is why zkAudit supports property audits that the fairness systems'
 narrower approach cannot express.
 
 zkAudit also makes a design choice with consequences well beyond this page: **the weights
@@ -144,7 +144,7 @@ stay secret but the architecture is public.** That is exactly the mitigation
 [the Fiat–Shamir/GKR question](/zk-inference/proof-systems/) turns on. A system that pins its
 architecture is a system whose prover did not get to choose its circuit.
 
-[[zkprov]] is the cheap version of the same idea — prove *which dataset* a model was
+[[zkprov]] is the cheap version of the same idea, prove *which dataset* a model was
 trained on, without proving the training computation at all. Weaker claim, far weaker
 cost, and for a licensing dispute it may be the entire claim anyone wanted.
 
@@ -154,7 +154,7 @@ Two entries reach past the model to the thing the model is embedded in, and we h
 neither, so they are listed rather than assessed. [[zk-software-auditing]] audits an
 AI-enabled *system* for regulatory compliance rather than auditing a model. And
 [[e2e-ai-pipeline-verifiability]] frames data ingestion, training and inference as a single
-verifiable pipeline — which is, in effect, the argument that the three-objective taxonomy
+verifiable pipeline, which is, in effect, the argument that the three-objective taxonomy
 should be replaced by one continuous chain of custody rather than extended by a fourth
 bucket.
 
@@ -170,7 +170,7 @@ not read it, and we do not know whether anyone has built it.
 ## The people are the same people
 
 Worth noticing, because it explains why these clusters share techniques. [[fairproof]] is
-Yadav, Roy Chowdhury, Boneh, Chaudhuri — Roy Chowdhury also wrote [[eiffel]], and Boneh
+Yadav, Roy Chowdhury, Boneh, Chaudhuri, Roy Chowdhury also wrote [[eiffel]], and Boneh
 co-authored Prio, both in [federated aggregation](/federated/). [[fairzk]] includes Yupeng
 Zhang, who co-authored [[zkcnn]] and [[deepprove]]. [[zkaudit]] comes from the group behind
 [[zkml-kang]].

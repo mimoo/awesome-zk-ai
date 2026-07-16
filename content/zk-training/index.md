@@ -21,7 +21,7 @@ checkpoints and your batch indices; the verifier re-executes the $Q$ **largest**
 epoch and checks they reproduce. Valid gradient steps are small, so an adversary faking a cheaper run
 must introduce error, and error is loudest in the big steps. Elegant, cheap, and deployed.
 
-Its security — *no adversary can forge a proof more cheaply than honestly training* — is **never
+Its security, *no adversary can forge a proof more cheaply than honestly training*, is **never
 proved.** It is offered as **Conjecture 1**, and the authors say plainly they are "not aware of a
 mechanism to prove those formally."
 
@@ -29,16 +29,16 @@ It was then broken twice.
 
 **[[pol-adversarial]]** (S&P '22) fakes a training step by *optimizing the data*: exactly as you would
 craft an adversarial example, gradient-descend on the input batch until it "generates" the stolen
-weights. **[[pol-broken]]** (EuroS&P '23) — written largely by the *original PoL team* — does much
+weights. **[[pol-broken]]** (EuroS&P '23), written largely by the *original PoL team*, does much
 better, and much worse. Its infinitesimal-update attack interpolates the checkpoints and then logs a
 learning rate of ~0, so every update is smaller than the verification threshold and the difference
-between logged and replayed is trivially below it. Cost: **no training at all** — one floating-point
+between logged and replayed is trivially below it. Cost: **no training at all**, one floating-point
 operation per parameter, bounded by a single forward pass. Its blindfold attack then defeats the
 top-$Q$ heuristic by making exactly $Q$ real updates with a huge learning rate, so the verifier's
 "check the biggest steps" rule lands on precisely the $Q$ honest ones and never looks at the fakes.
 
 And here is why the two breaks belong in a cryptography SoK. **Both conclude, independently, that the
-fix is cryptography** — and one of them prices it:
+fix is cryptography**, and one of them prices it:
 
 :::quote{src="Zhang et al." sec="§V, Countermeasures"}
 This mechanism is valid, but it will introduce an overwhelming overhead.
@@ -46,12 +46,12 @@ This mechanism is valid, but it will introduce an overwhelming overhead.
 
 That sentence is about SNARKs. It is the cell you are reading.
 
-:::gap  The scheme is unproven, not disproven — and the difference matters
+:::gap  The scheme is unproven, not disproven, and the difference matters
 [[pol-broken]] is careful in a way its citers are not. It does **not** show that PoL's guarantee is
 false; it shows that it is **unprovable with current understanding**: *"one cannot develop a provably
 robust PoL verification mechanism without further understanding of optimization in deep learning."*
 Its own experiments find that data-ordering attacks and synthesized data both **fail** to reach the
-target weights from an independent initialization — so knowledge of the final weights does appear
+target weights from an independent initialization, so knowledge of the final weights does appear
 essential to a spoofer.
 
 This is the same soundness-versus-statement distinction that runs through the entire SoK, and here it
@@ -68,7 +68,7 @@ A proof of training (zkPoT) is supposed to discharge a sentence like this:
 Read that sentence carefully, because almost none of it is about arithmetic. It quantifies over
 a dataset the verifier never sees, over a procedure that is stochastic, and over a computation
 that ran for a long time. [[zkpot-garg]] is the paper that pinned the definition down and then
-demonstrated it on logistic regression — the contribution is the definition and the feasibility
+demonstrated it on logistic regression, the contribution is the definition and the feasibility
 experiment, not the scale. Everything that came after is an attempt to make that sentence cost
 less by proving less of it.
 
@@ -83,7 +83,7 @@ separate ways, and each of them is a distinct engineering problem.
 **The witness is the whole run, not the final state.** An inference proof's witness is the
 activations of one pass. A training proof's witness is every activation, every gradient, and
 every weight delta of every minibatch of every epoch. The final weights are a rounding error in
-that object. This is why the interesting per-system trick is almost always about *composition* —
+that object. This is why the interesting per-system trick is almost always about *composition*, 
 [[kaizen]] recursively composes a per-iteration proof so that proof size and verifier time stay
 independent of how many iterations there were, and [[zkdl]]'s `FAC4DNN` circuit design
 deliberately aggregates across layers *and across training steps* without being bound by their
@@ -97,19 +97,19 @@ the two known escapes, and both are the load-bearing idea of their paper rather 
 optimization detail.
 
 **The statement is about data the verifier cannot see.** Inference proofs let the verifier hold
-the input. Training proofs cannot — the dataset is the asset. So the dataset has to be
+the input. Training proofs cannot: the dataset is the asset. So the dataset has to be
 *committed*, and the proof must additionally establish that the same commitment was consumed at
 every step. This is where cost quietly relocates: [[artemis]] exists because the consistency
 checks binding committed parameters and data to the circuit can dominate the proof. It measures
 that on a single forward pass, and we have not seen the equivalent measured for a committed
-training set — which is the case a zkPoT actually needs.
+training set, which is the case a zkPoT actually needs.
 
 **Randomness is part of the statement, and it is adversarially useful.** Initialization,
 minibatch order, dropout, augmentation: a training run is a function of its random tape. If the
 prover chooses the tape freely, "I trained correctly" is a much weaker claim than it sounds,
 because the prover may search over tapes until the run lands somewhere it likes. The honest
-version of the claim requires the randomness to be bound — committed in advance, or derived from
-a public beacon — before the prover knows what it will produce.
+version of the claim requires the randomness to be bound, committed in advance, or derived from
+a public beacon, before the prover knows what it will produce.
 
 :::gap  Only one paper here tells us how the random tape is bound
 [[zkpot-garg]] puts the randomness inside the statement: its commitment is to (data, rand), and it
@@ -127,7 +127,7 @@ Finite fields have no floats. Every system here therefore proves a *quantized* t
 training is far less forgiving of that than inference is: quantization error in a forward pass is
 absorbed once, whereas quantization error in a gradient is fed back into the weights and
 compounds across steps. [[zkboost]] is the system that makes this visible, because it cannot
-simply prove XGBoost — it has to define a fixed-point XGBoost and then argue that the fixed-point
+simply prove XGBoost, it has to define a fixed-point XGBoost and then argue that the fixed-point
 variant reaches the same accuracy as the standard one.
 
 The consequence is worth stating plainly, because papers in this cell tend not to: a zkPoT
@@ -137,14 +137,14 @@ weights. If a deployment then serves the float model, the proof covers a differe
 the one answering queries. Nothing in the literature we can see addresses that seam.
 
 :::audit  What an auditor should ask a zkPoT first
-Not "how fast is the prover." Ask: (1) what exactly is committed — data, hyperparameters, random
+Not "how fast is the prover." Ask: (1) what exactly is committed, data, hyperparameters, random
 tape, architecture, initial weights? (2) is the final committed model the model that gets served,
 bit for bit? (3) how many iterations does the proven run actually cover, and is that the whole
 run or one iteration extrapolated? (4) what happens if the prover restarts the run and only
 proves the attempt it liked?
 :::
 
-## The scale gap is not a detail, it is the field
+## The scale gap is not a detail: it is the field
 
 Read the table with the model column in mind rather than the timing column. The systems that
 prove *every step* prove them for logistic regression, a small CNN, a modest DNN, or a

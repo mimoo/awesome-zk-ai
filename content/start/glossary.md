@@ -15,7 +15,7 @@ status: reviewed
 
 This SoK's central structural result is computed on every build and rendered in the
 [citation graph](graph/): **no paper in the verifiability column cites any paper in the privacy
-column, or the reverse.** Not rarely — not at all. Two communities work the two columns of the
+column, or the reverse.** Not rarely, not at all. Two communities work the two columns of the
 same 2x2, bottleneck on the [same three operators](nonlinearities/) (GELU, Softmax, LayerNorm),
 publish at the same venues, and do not read each other.
 
@@ -25,7 +25,7 @@ consequence, and it is the reason this page exists:
 > **Two literatures that do not cite each other have not agreed on what to call anything.**
 
 They have different words for the same operation. They have the same word for different
-operations — which is worse, because it lets a reader believe they have understood a paper they
+operations, which is worse, because it lets a reader believe they have understood a paper they
 have not. And each has a large vocabulary for which the other has no word at all, which is usually
 a sign that one of them is not thinking about the problem.
 
@@ -34,14 +34,14 @@ organising question is, for each concept: *what does each side call it, and does
 even have it?*
 
 Every equivalence below was checked against the PDFs in `references/`. The ones we could not
-check, we did not assert — they are in [the gap at the bottom](#what-we-would-not-assert), and
+check, we did not assert, they are in [the gap at the bottom](#what-we-would-not-assert), and
 that list is the more important half of the page.
 
 ## The root of the split: a ring and a field
 
 Before the vocabulary diverges, the substrate does, and almost everything else follows from it.
 
-**The privacy column computes in a ring**, $\mathbb{Z}_{2^\ell}$ — integers modulo a power of two.
+**The privacy column computes in a ring**, $\mathbb{Z}_{2^\ell}$, integers modulo a power of two.
 That is not an aesthetic choice: secret sharing and oblivious transfer are cheapest there, and the
 hardware word is already a $\mathbb{Z}_{2^{64}}$ element. **The verifiability column computes in a
 prime field**, $\mathbb{F}_p$, because that is what a polynomial commitment and a sum-check need.
@@ -50,14 +50,14 @@ The words follow the substrate exactly. *Ring* is a load-bearing term in [[iron]
 [[ciphergpt]], [[nimbus]] and [[prob-truncation]], and does not appear in [[deepprove]], [[zkgpt]],
 [[zkllm]], [[zkpytorch]] or [[jolt-atlas]] at all. *Field* runs the other way.
 
-And the consequence is not cosmetic. $\mathbb{Z}_{2^\ell}$ hands you **two's complement** — so a
+And the consequence is not cosmetic. $\mathbb{Z}_{2^\ell}$ hands you **two's complement**, so a
 negative number is a bit pattern, a sign is a bit, and an arithmetic right shift *is* a
 floor-division by a power of two. $\mathbb{F}_p$ hands you none of that: negatives are a
 convention ($-5$ is "the element $p-5$, and we all agree to read it that way"), there is no sign
 bit, and [there is no division](numerics/). The same operation is therefore *free-ish* on one side
 and *the single most expensive primitive* on the other.
 
-[[hao-et-al]] is the one paper that had to translate between the two, and it says so precisely —
+[[hao-et-al]] is the one paper that had to translate between the two, and it says so precisely, 
 notice that it reasons about two's complement while working in a field:
 
 :::quote{src="Hao et al." sec="§2, Technical Overview — Truncation"}
@@ -96,7 +96,7 @@ To address this, DeepProve employs re-quantization after every few layers to red
 of intermediate values back to a manageable size.
 :::
 
-[[prob-truncation]] describes the identical problem in the vocabulary of secret sharing — and, in
+[[prob-truncation]] describes the identical problem in the vocabulary of secret sharing, and, in
 one sentence, uses **both** dialects' words for it:
 
 :::quote{src="Probabilistic truncation in PPML" sec="Abstract"}
@@ -111,14 +111,14 @@ considered as a right shift". They are computing the same function.
 **Where they are genuinely not equal, and it matters:** zkML's requantization is the *more general*
 operation. It rescales from one calibrated per-tensor scale to a different one, so it carries an
 arbitrary float ratio $S_xS_w/S_y$ and an additive **zero-point**, neither of which appears in the
-MPC papers — they carry a single global fractional scale and no zero-point at all. But strip the
+MPC papers, they carry a single global fractional scale and no zero-point at all. But strip the
 affine wrapper off and the hard kernel is the same floor-division, with the same negative-number
 problem, and it is [the dominant cost on both sides](numerics/). The right statement is *nested*,
 not *identical*: **MPC's truncation is the kernel of zkML's requantization.**
 
 And there is one direction the transfer provably cannot run, which is the exception that proves the
 rule: MPC's cheap **probabilistic truncation** accepts a small per-operation failure probability, and
-in ZK the prover chooses the input, so a rare failure is not rare — an accuracy cost becomes a
+in ZK the prover chooses the input, so a rare failure is not rare, an accuracy cost becomes a
 soundness hole. That argument is [made in full on the numerics page](numerics/), and it is about
 *one* technique, not a licence to ignore the rest.
 
@@ -139,7 +139,7 @@ They look like alternatives. They are not, because they buy different things:
   server holds its own share and may compute with whatever it likes.
 
 Which is why the [threat-models page](threat-models/) can put the same entry in the last row of
-every private-inference column — **output correctness: not guaranteed** — and why the privacy
+every private-inference column, **output correctness: not guaranteed**, and why the privacy
 column's honest summary is that it protects the *query*, not the *answer*. The two columns are not
 two ways of doing one thing. They are the two halves of one thing, and neither has the other half.
 
@@ -150,12 +150,12 @@ each other. Do not.
 
 **Soundness** is a property of an *argument system*: a cheating prover cannot convince the verifier
 of a false statement. It says nothing about privacy, and in the verifiability column a **malicious
-prover is the default assumption** — it is what the system is *for*. The word appears throughout
+prover is the default assumption**, it is what the system is *for*. The word appears throughout
 [[deepprove]], [[zkgpt]], [[zip]], [[hao-et-al]] and [[zklp]].
 
 **Malicious (active) security** is a property of a *protocol*: simulation-based security that
 survives a party deviating arbitrarily, covering privacy *and* correctness. In the privacy column
-it is an **aspiration, not a baseline** — every 2PC system in [the private-inference
+it is an **aspiration, not a baseline**, every 2PC system in [the private-inference
 section](private-inference/) assumes a semi-honest counterparty, which the
 [threat-models page](threat-models/) shows is the single most load-bearing assumption they make.
 
@@ -171,7 +171,7 @@ So the honest cross-dialect sentence is not "soundness ≈ malicious security". 
 ### Both sides approximate the same three curves. Only one side has the theory.
 
 Both columns converged on the same technique for GELU, Softmax and LayerNorm: **piecewise
-approximation, with the piece selected by a table indexed on the high bits of the input** — which is
+approximation, with the piece selected by a table indexed on the high bits of the input**, which is
 what a lookup argument is, and also what [[ciphergpt]]'s spline GELU is. That convergence is
 [worked through on the non-linearities page](nonlinearities/).
 
@@ -191,7 +191,7 @@ approximant, deriving a trigonometric Remez algorithm to find it, on the argumen
 ($L^\infty$) error is the right metric when one bad activation ruins the run.
 
 Neither *minimax* nor *Remez* appears in [[deepprove]], [[zkgpt]], [[zkllm]], [[zkpytorch]],
-[[jolt-atlas]] or [[zip]]. Among the ZK *systems* we hold, the words occur only in [[zklp]] —
+[[jolt-atlas]] or [[zip]]. Among the ZK *systems* we hold, the words occur only in [[zklp]], 
 which is, predictably, [one of the four papers that reads both literatures](bridge/). The one other
 ZK-side hit is secondhand: [[zkml-survey]] records "Remez-style approximations" in the older
 verifiable-training systems VeriML and zkMLaaS, whose PDFs we do not hold.
@@ -202,16 +202,16 @@ there is no error curve to minimise and no need for Remez. The asymmetry is a re
 real design difference, not simple ignorance.
 
 :::gap  But the excuse runs out at exactly one system
-[[zip]] does not use tables to be exact — it fits **piecewise polynomials** to GELU, SeLU and ELU
+[[zip]] does not use tables to be exact, it fits **piecewise polynomials** to GELU, SeLU and ELU
 and proves the result lies within a relative-error ball $\delta$ of the fit. That is an
 approximation problem with a worst-case error bound, which is the precise problem the Remez
 exchange algorithm solves optimally and which [[bolt]] and [[bootstrapping-fhe]] both invoke it
 for. ZIP surveys Taylor, Chebyshev and splines as its options; minimax and Remez are not among
 them.
 
-Whether a minimax fit would shrink ZIP's $\delta$ — and therefore shrink the [slack available to a
+Whether a minimax fit would shrink ZIP's $\delta$, and therefore shrink the [slack available to a
 malicious prover](numerics/), which on its flagship activation is looser than bfloat16's machine
-epsilon — is unexamined. It is a one-citation question, and the citation is in the other column.
+epsilon, is unexamined. It is a one-citation question, and the citation is in the other column.
 :::
 
 ### "Cost" does not survive translation at all
@@ -220,7 +220,7 @@ The last row of the table is the one that most often produces a false comparison
 columns publish a headline number and call it performance.
 
 Verifiability counts **prover seconds, proof bytes, and peak prover memory**. Privacy counts
-**communication bytes and rounds** — and a 2PC runtime is not a property of a protocol at all but a
+**communication bytes and rounds**, and a 2PC runtime is not a property of a protocol at all but a
 function of a network the paper picked, which is [the argument of the cost-model
 page](cost-model/). The phrase *prover time* does not occur in any of the five private-inference
 papers, because there is no prover. The word *communication* is nearly absent from the zkML
@@ -228,7 +228,7 @@ provers, because after Fiat–Shamir there is no interaction to pay for.
 
 There is no exchange rate between these units, and nobody has proposed one. A reader who puts a
 zkML throughput next to a 2PC bandwidth figure has not made a comparison; they have made a
-category error. (The zkML numbers do not even survive comparison *with each other* — see
+category error. (The zkML numbers do not even survive comparison *with each other*, see
 [what is actually being proven](what-is-proven/).)
 
 ## False friends: the same word, different things
@@ -253,7 +253,7 @@ information about the LLM (like hidden parameters) beyond merely confirming the 
 inference result.
 :::
 
-That is honest-verifier zero-knowledge — a qualifier on the *privacy* property — and the **prover
+That is honest-verifier zero-knowledge, a qualifier on the *privacy* property, and the **prover
 is still assumed fully malicious.** Grep two papers for "semi-honest", find a hit in each, and
 conclude they share a threat model, and you will have inverted the meaning of both. [[zip]] uses
 the word the same way zkLLM does.
@@ -270,7 +270,7 @@ Both columns say it constantly. They are not naming the same object.
   **privacy**. The index is secret.
 
 One proves a read happened correctly; the other performs a read without revealing it. They share a
-*strategy* — piecewise approximation selected by the high bits — and not a primitive. The strategy
+*strategy*, piecewise approximation selected by the high bits, and not a primitive. The strategy
 is the transferable thing; the cryptography is not.
 
 ### "Malicious"
@@ -337,18 +337,18 @@ demonstrably touch](bridge/).
 Where this SoK has coined a term, it says so. Passing a house coinage off as standard vocabulary
 would be the same sin as a false equivalence, one level up.
 
-- **`claim_kind`** — our field in `papers.yml`, tagging what a system's headline number actually
+- **`claim_kind`**, our field in `papers.yml`, tagging what a system's headline number actually
   certifies: a full generated sequence, one token, a single forward pass, or unknown. **No paper
   uses this term.** We introduced it because throughput numbers in this literature are not
   comparable without it, and [that is a finding, not a schema decision](what-is-proven/).
-- **"Properties" as a fourth objective** — [[zkml-survey]] gives the canonical taxonomy, and it has
+- **"Properties" as a fourth objective**, [[zkml-survey]] gives the canonical taxonomy, and it has
   three slots: training, testing, inference. We [add a fourth](properties/) for systems that prove a
   model *is* something (fair, licensed, uncensored) rather than that a computation ran. **The
   surveys do not have this bucket**; it is our departure from them, and we argue for it rather than
   assuming it.
-- **"The rescale seam"** — our name for the join between two matmuls where the accumulator must be
+- **"The rescale seam"**, our name for the join between two matmuls where the accumulator must be
   squeezed back down. The papers describe the thing constantly; none of them names it.
-- **"The two columns"** — our shorthand for the verifiability and privacy literatures, from the
+- **"The two columns"**, our shorthand for the verifiability and privacy literatures, from the
   2x2. Nobody in either literature uses it, because [nobody in either literature is looking at the
   other one](graph/).
 
@@ -376,7 +376,7 @@ property of an argument system about a *statement*, the other is simulation-base
 
 **"Prover : verifier" :: "server : client".** Rejected as a *role* mapping, kept as a *deployment*
 mapping. The same two real parties appear in both columns, and in both the model owner is the one
-holding the secret — but the ZK property in zkML protects the **model owner** from the verifier
+holding the secret, but the ZK property in zkML protects the **model owner** from the verifier
 (see [[zkllm]] above), while 2PC additionally protects the **client's input** from the server.
 Mapping the roles without saying that would hide the entire difference.
 
@@ -392,7 +392,7 @@ temptation to is how cross-column comparisons get fabricated.
 
 ## What follows from a glossary
 
-If the two columns had a shared vocabulary, the transfers would already have happened — because
+If the two columns had a shared vocabulary, the transfers would already have happened, because
 once you can *say* that requantization and truncation are the same floor-division, the next
 question asks itself.
 

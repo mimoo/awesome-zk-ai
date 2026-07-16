@@ -12,9 +12,9 @@ status: reviewed
 ---
 
 The paper is vague where the code is specific. Its operator descriptions read like *"non-linear
-operations use lookup arguments"* — but reading the source, every operator has a concrete,
+operations use lookup arguments"*, but reading the source, every operator has a concrete,
 dedicated sum-check-plus-lookup protocol, and the recurring machinery underneath them is worth
-learning once. (For what *kind* of proof system this is — not a circuit, not a zkVM — see
+learning once. (For what *kind* of proof system this is, not a circuit, not a zkVM, see
 [Proof systems](./proof-systems/).)
 
 ## The recurring machinery
@@ -25,13 +25,13 @@ they are cross-cutting, which is exactly why they matter.
 - **Shout one-hot lookups.** Every table lookup (`exp`, `SatClamp`, `UnsignedLessThan`, ReLU,
   the activation tables) is proven the same way: the prover commits a **one-hot address
   polynomial** `ra` selecting a table row, a read-checking + read-address-fingerprint sum-check
-  proves `output = Σ ra(k)·table(k)`, and `ra`'s well-formedness is pinned by a **trio** —
+  proves `output = Σ ra(k)·table(k)`, and `ra`'s well-formedness is pinned by a **trio**, 
   booleanity (`ra ∈ {0,1}`), hamming-weight-one (exactly one row hot), and ra-virtualisation.
 - **Prefix-suffix table decomposition.** A $2^{64}$-entry table (e.g. `SatClamp<64>`) is never
   materialised; its multilinear extension is expressed over small prefix/suffix tables refreshed
   every couple of rounds. This is what lets the prover stream, and what fits GPT-2 in 16 GB.
 - **The fused-rebase seam.** Quantised ops need a divide-by-$2^S$ after each integer matmul. Jolt
-  Atlas never proves a division node — the operator's own sum-check *starts* from a reconstructed
+  Atlas never proves a division node, the operator's own sum-check *starts* from a reconstructed
   claim `acc = rescaled·2^S + R`, where `rescaled` and remainder `R` are prover **advice**, `R`
   is range-checked into $[0,2^S)$, and the saturating clamp is a `SatClamp` lookup on `rescaled`.
   It is the single most reused gadget in the codebase.
@@ -48,7 +48,7 @@ arities together under one Fiat–Shamir transcript, with a Gruen split-eq produ
 ## Matrix multiplication is one engine
 
 The paper treats matmul monolithically. In the code, **one generic engine (`einsum/dot.rs`)
-proves all ~11 einsum patterns** — and attention scores $Q\cdot K^\top$ and the context product
+proves all ~11 einsum patterns**, and attention scores $Q\cdot K^\top$ and the context product
 $\cdot V$ are the *same code path* as a feed-forward matmul. Each pattern supplies three hooks:
 `fold` (collapse the non-contracted output axes into eq-weights at the output randomness), an
 `EqSchedule` (where a batch eq-poly rides in the round order), and `operand_points`. After
@@ -69,7 +69,7 @@ pub fn fused_input_claim<F: JoltField>(...) -> F {
 }
 ```
 
-## Softmax — the flagship correction
+## Softmax, the flagship correction
 
 The paper's softmax note is *"cannot be expressed as polynomial relations… uses lookup
 arguments."* The code has a **four-stage batched sum-check protocol** (with a linked design
@@ -82,11 +82,11 @@ write-up), and it never proves a division. Output → input:
    a flat ~65k table), recombined as $\exp_q = \lfloor \exp_{hi}\exp_{lo}/S\rfloor$ with a
    range-checked remainder.
 3. **Sum and reciprocate.** The verifier recomputes $\text{inv\_sum} = \lfloor S^2/\exp\_sum\rfloor$
-   itself from a prover-sent auxiliary vector — no committed reciprocal, no proven division.
+   itself from a prover-sent auxiliary vector, no committed reciprocal, no proven division.
 4. **Normalise.** $\exp_q\cdot\text{inv\_sum} = \text{softmax}_q\cdot S + R$.
 
 The max is pinned **without a comparator**: a `MaxIndicator` sum-check forces $\max_k = x$ at the
-one-hot argmax, and an *operand link* reconstructs the input so non-negativity does the rest —
+one-hot argmax, and an *operand link* reconstructs the input so non-negativity does the rest, 
 
 ```rust
 let z_c_eval = z_hi_eval * F::from_u64(lut.base) + z_lo_eval;
@@ -95,7 +95,7 @@ let x_r2 = max_k_eval - z_c_eval - sat_diff_eval;   // == committed X, or the pr
 ```
 
 and the clamp is made *unique* by a complementary-slackness sum-check
-($\text{sat\_diff}\cdot(z_{bound}-1-z_c)=0$) — a reusable pattern for any saturating quantised op.
+($\text{sat\_diff}\cdot(z_{bound}-1-z_c)=0$), a reusable pattern for any saturating quantised op.
 
 ## Embedding, norm, activations, positional
 
@@ -123,6 +123,6 @@ accumulation is re-executed into a `ClampAcc` virtual MLE (never committed), tie
 committed operands by a cheap linear equality, then clamped by the shared `SatClamp` lookup.
 `Div` proves the Euclidean identity `right·q + R − left = 0` with a committed quotient and an
 `UnsignedLessThan`-range-checked remainder. So even the "trivial" ops route through the same
-fused-rebase-plus-lookup machinery as everything else — which is the real lesson of reading the
+fused-rebase-plus-lookup machinery as everything else, which is the real lesson of reading the
 source: **there is no special case; an operator is a little program of lookups and sum-checks,
 and the same half-dozen primitives compose all of them.**

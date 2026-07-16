@@ -11,8 +11,8 @@ The first break of [[pol]], and the idea is lovely.
 To fake a training step you need a data batch whose gradient carries you from one logged checkpoint
 to the next. So **optimize the data.**
 
-Exactly as you would craft an adversarial example — gradient descent on the *input* rather than on the
-weights — the attacker synthesizes a batch that makes an update land on the stolen final model. The
+Exactly as you would craft an adversarial example, gradient descent on the *input* rather than on the
+weights, the attacker synthesizes a batch that makes an update land on the stolen final model. The
 attack is explicit that it exploits an assumption the original paper granted it: that the adversary
 "has full access to the training dataset and can modify it."
 
@@ -33,13 +33,13 @@ And empirically the spoof is *better than the real thing*: it passes verificatio
 
 ## What it kills
 
-[[pol]]'s Property 2 — the claim that spoofing costs at least as much as training. The paper is blunt
+[[pol]]'s Property 2, the claim that spoofing costs at least as much as training. The paper is blunt
 about the status of that claim: Jia et al. "did not provide a proof to back their claim."
 
 ## Why it matters here
 
-Because its proposed fix is this entire SoK. §V lists verifiable computation — citing SNARKs and
-STARKs by name — as the sound alternative, and then prices it in a single sentence:
+Because its proposed fix is this entire SoK. §V lists verifiable computation, citing SNARKs and
+STARKs by name, as the sound alternative, and then prices it in a single sentence:
 
 > *"This mechanism is valid, but it will introduce an overwhelming overhead."*
 
@@ -48,11 +48,11 @@ is an attempt to make that sentence false.
 
 ## What to distrust
 
-The follow-up, [[pol-broken]], substantially corrects this paper — and it is worth reading the
+The follow-up, [[pol-broken]], substantially corrects this paper, and it is worth reading the
 correction before citing the attack. Attack 1 here is **not reproducible**: neither the original team
 nor the [[pol-broken]] authors could make it work. And Attack 2 assumes the adversary controls the
 checkpoint interval $k$ and the threshold $\delta$, which "should be set by the verifier and is thus
-out of the attacker's control" — reduce them by an order of magnitude and the attack does not
+out of the attacker's control", reduce them by an order of magnitude and the attack does not
 converge.
 
 So the break is real, but it is weaker than it reads, and it targets a weakened instantiation of the

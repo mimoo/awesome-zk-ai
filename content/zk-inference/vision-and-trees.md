@@ -6,7 +6,7 @@ lede: >-
   Before transformers, the field proved convolutional nets and decision trees. Its
   techniques survived into the LLM era. Its assumptions mostly did not -- and it is worth
   knowing which ones broke.
-papers: [safetynets, zkcnn, vcnn, zen, mystique, hao-et-al, zkpytorch, zkdt, pvcnn, deepprove, jolt-atlas, spagkr]
+papers: [safetynets, zkcnn, vcnn, zen, mystique, hao-et-al, zkpytorch, zkdt, remainder, pvcnn, deepprove, jolt-atlas, spagkr]
 status: draft
 ---
 
@@ -20,7 +20,7 @@ the assumptions that the LLM papers spent the next four years breaking.
 
 [[safetynets]] (NeurIPS 2017) is the oldest system in this section and the ancestor of the
 entire GKR-for-ML lineage: SafetyNets → [[zkcnn]] → [[zkllm]] / [[spagkr]] / [[zkgpt]] /
-[[zkpytorch]] → [[deepprove]]. Its move was the one everything since has copied — represent
+[[zkpytorch]] → [[deepprove]]. Its move was the one everything since has copied, represent
 the network as an arithmetic circuit and prove it with sum-check, rather than shoving it
 into a general-purpose SNARK. It composes Thaler's time-optimal interactive proof for
 regular arithmetic circuits (a refinement of GKR) over the matmul layers with a *new*
@@ -38,31 +38,31 @@ in the final output layer.
 
 No ReLU. No sigmoid. No softmax except at the very end. Sum pooling, not max pooling. And a
 second-order consequence that is easy to miss: quadratic activations *square the magnitude
-at every layer*, so the values compound, and the field has to be large enough to hold them —
+at every layer*, so the values compound, and the field has to be large enough to hold them, 
 which is why SafetyNets picks its prime by task, and why its scaling factors are bounded
 from above by field growth rather than by accuracy.
 
 **Essentially the entire subsequent literature is the story of removing this one
 restriction.** Lookup arguments, `tlookup`, `zkAttn`, digit decomposition,
-result-as-witness — every one of them exists so that a network can have a real
-non-linearity. Read that way, [[hao-et-al]] (which proves individual non-linear operators —
-ReLU, Softmax, GELU, normalization — and never an end-to-end model) is not a niche paper; it
+result-as-witness, every one of them exists so that a network can have a real
+non-linearity. Read that way, [[hao-et-al]] (which proves individual non-linear operators, 
+ReLU, Softmax, GELU, normalization, and never an end-to-end model) is not a niche paper; it
 is the field working directly on the thing SafetyNets could not do.
 
 Two more properties make SafetyNets structurally unlike its descendants, and both are the
 point of reading it.
 
-It is **genuinely interactive** — live verifier challenges, no Fiat–Shamir — so
+It is **genuinely interactive**, live verifier challenges, no Fiat–Shamir, so
 the Fiat–Shamir/GKR attack, which hangs over every FS-compiled GKR system in this section,
 *cannot reach it*. The vulnerability was introduced by the very step that made the lineage
 practical.
 
 And it is **not zero-knowledge.** It buys integrity only; the weights and the input are not
-hidden, and the paper says so. Which is why its prover overhead — reported as a percentage
-over plain unverified execution rather than in absolute seconds — is not a data point you
+hidden, and the paper says so. Which is why its prover overhead, reported as a percentage
+over plain unverified execution rather than in absolute seconds, is not a data point you
 can put in the same column as anything else in the table. It is the **floor**: the price of
 proving when you drop ZK, drop commitments, and let the model be restricted. No other system
-here even reports its cost as a multiple of unverified execution — which is itself the
+here even reports its cost as a multiple of unverified execution, which is itself the
 finding. That distance *is* the cost of everything the field has added since.
 
 ## The convolutional generation
@@ -74,7 +74,7 @@ tell you exactly what they chose.
 still underappreciated: a **linear-prover-time sum-check for 2D convolution, asymptotically
 faster than computing the convolution directly**, plus a linear-time sum-check for FFT,
 beating the conventional $O(N \log N)$. It is the reason GKR won this field. Every GKR-based
-LLM system in the table either descends from it or reuses its primitives outright —
+LLM system in the table either descends from it or reuses its primitives outright, 
 [[zkpytorch]] explicitly imports zkCNN's convolution rather than inventing its own. The
 lookup-argument line ([[jolt-atlas]]) is the exception: it descends from Jolt/Lasso, not
 from zkCNN.
@@ -85,19 +85,19 @@ and the testing objective largely dies with the vision generation.
 
 **[[vcnn]]** used zk-SNARKs with quadratic polynomial programs for convolution. The proving
 time we carry for its VGG16 is a survey figure measured on a consumer quad-core i5, against
-[[zkcnn]]'s server-class EPYC, and we have not read the vCNN paper — so read the gap in the
+[[zkcnn]]'s server-class EPYC, and we have not read the vCNN paper, so read the gap in the
 table as directional, not as a controlled comparison. It is here to show the trajectory: in
 this field, changing the protocol has bought more than tuning the implementation ever did.
 
 **[[zen]]** went the R1CS/Groth16 route, and got what Groth16 gives you: the smallest proof
-in the inference table by a wide margin, constant size — at the price of a trusted setup and
+in the inference table by a wide margin, constant size, at the price of a trusted setup and
 a very small model. Its thesis is worth restating because the LLM papers have half-forgotten
 it: **quantization choice, not protocol choice, is where the constraint count goes.** But
 read its measurement with the caveat in [[zen]]'s deep-dive: the reported saving divides the
-*network* constraints only and leaves the in-circuit model commitment out of the ratio — and
+*network* constraints only and leaves the in-circuit model commitment out of the ratio, and
 on the smallest model the commitment dominates, so the end-to-end saving is far smaller than
 the headline. It is still one of the few direct measurements of what quantization actually
-buys. [[spagkr]]'s ternary speedup is another — and [[deepprove]], inside the LLM literature,
+buys. [[spagkr]]'s ternary speedup is another, and [[deepprove]], inside the LLM literature,
 reports a third: it measures what raising the bit width costs its prover, and finds it close
 to nothing. See [Quantization](./quantization/).
 
@@ -105,10 +105,10 @@ to nothing. See [Quantization](./quantization/).
 object at all: it is interactive, designated-verifier communication, bound to one verifier's
 key, and it runs to the gigabyte scale. The figure usually quoted is its *public-model*
 configuration, where the weights are revealed; hiding the model costs substantially more (see
-[[mystique]]). That is not a bug — it is what a non-succinct interactive protocol costs, and
+[[mystique]]). That is not a bug, it is what a non-succinct interactive protocol costs, and
 it bought a fast prover on the largest CNN anyone had proven at the time. It is also the
 most-cited paper in the graph: nearly everything in the verifiability column points at it,
-from [[deepprove]] and [[zkgpt]] down to the training and numerics clusters — though nothing
+from [[deepprove]] and [[zkgpt]] down to the training and numerics clusters, though nothing
 in the privacy column does.
 
 ## Trees
@@ -121,16 +121,27 @@ times sample count.
 
 The tree line then had a second life that has no analogue on the neural side. Later work
 revisits zkDT through **matrix lookup arguments** (cq+, zkcq+, cq++), encoding the tree as a
-committed matrix and proving that the reached leaf's row belongs to it — which removes the
+committed matrix and proving that the reached leaf's row belongs to it, which removes the
 prover's dependence on tree size *entirely*. That is a strictly stronger result than
 anything the CNN literature achieved, and it is a reminder that "zkML" is not one problem:
 tree inference is a lookup problem, and it was solved by treating it as one.
 
-[[pvcnn]] sits between the two worlds — homomorphic encryption plus collaborative inference
+[[remainder]] (Modulus Labs, 2024) is the tree line's other branch: it scales zkDT's
+structured-circuit idea up to **gradient-boosted forests**, proving each tree path by
+data-parallel sum-check rather than a matrix-subset argument, and it shipped for a real
+on-chain price oracle. It earns a place here for a reason that has nothing to do with trees,
+though: the same GKR engine was carried into Worldcoin (which acquired Modulus) and pointed
+at iris recognition, where it **inverts the threat model** from hide-the-model (the forest's
+weights are IP) to hide-the-input (the user's biometric is the secret, the model is public).
+One engine, both ends of the [privacy switch](../../landscape/); read its
+[deep-dive](../../papers/remainder/) for why the paper's numbers and the deployed workload are
+not the same claim.
+
+[[pvcnn]] sits between the two worlds, homomorphic encryption plus collaborative inference
 plus zk-SNARKs, splitting the model into private and public components to prove *testing*
 accuracy. Its proof sizes are enormous and its lineage is mostly dead, but it is the one
 system here that buys privacy with homomorphic encryption rather than with zero-knowledge
-alone, and it tried to buy verifiability and privacy at the same time — the question the
+alone, and it tried to buy verifiability and privacy at the same time, the question the
 whole [2×2](../) is organised around.
 
 ## What the vision generation assumed, and what broke
@@ -147,7 +158,7 @@ Five assumptions. Four of them are gone.
 
 The abandoned one is the most interesting. The vision generation could prove *"this model
 gets this accuracy on this dataset"*, and did. The LLM generation cannot, and does not try.
-Yet "the provider swapped in a weaker model" — the threat every LLM paper opens with — is
+Yet "the provider swapped in a weaker model", the threat every LLM paper opens with, is
 fundamentally an *accuracy* claim, not an execution claim. Proving that some forward pass ran
 correctly does not tell you the model was any good; it tells you the arithmetic was right.
 

@@ -1760,6 +1760,109 @@ inference:
         proof_size_mb: null
         verification_time_s: null
 
+  - id: remainder
+    name: Remainder
+    claim_kind: pass  # one decision-forest inference over a batch of inputs. NOT tokens. The paper
+                      # proves a FOREST; the 2026 Remainder_CE codebase reuses the same GKR engine to
+                      # prove an iris-code filter bank + a 3-party MPC sharing -- a different workload
+                      # with no published numbers. See notes: the paper and the shipped code diverge.
+    title: "Scaling Intelligence: Verifiable Decision Forest Inference with Remainder"
+    url: https://github.com/Modulus-Labs/Papers/blob/master/remainder-paper.pdf
+    pdf: https://raw.githubusercontent.com/Modulus-Labs/Papers/master/remainder-paper.pdf
+    venue: "Modulus Labs technical report (not peer-reviewed)"
+    date: 2024-03-13
+    year: 2024
+    authors: [Modulus Labs]  # corporate author -- the report carries no per-person byline.
+    authors_verified: true  # title page reads "Modulus Labs", March 13 2024; no individual authors listed.
+    affiliation: Modulus Labs (acquired by Tools for Humanity / World in 2026)
+    proof_system: >-
+      Structured, data-parallel GKR (linear-time sum-check prover from [Tha13]/Giraffe [WJB+17], not
+      Libra [XZZ+19]) with a multi-stage claim-aggregation optimization, made non-interactive by
+      Fiat-Shamir over a Poseidon random oracle. The GKR input layer is committed with the Ligero PCS.
+      The shipped Remainder_CE codebase adds a Hyrax/Pedersen zero-knowledge wrapper (BN256 G1) as a
+      second, optional commitment backend.
+    commitment_scheme: ["Ligero (transparent, Reed-Solomon + Poseidon-Merkle, >=200 opened columns)", "Hyrax/Pedersen (added in the CE codebase, for zero-knowledge)"]
+    hardware:
+      value: null
+      note: >-
+        The report does not clearly state the benchmark machine (CPU / core count / RAM) in the text
+        we could extract. The prover is CPU-only (no GPU), per the codebase. Do not attribute a
+        specific machine to the 54 s / 180x figures.
+    threat_model: >-
+      The FRAMEWORK is visibility-configurable and can hide either side -- per-input-layer
+      LayerVisibility::Committed|Public, confirmed by a source-reading workflow over Remainder_CE. The
+      two known applications sit on OPPOSITE ends of that switch, which is the single most important
+      thing to record. (a) The PAPER's motivating application -- Upshot's on-chain NFT price oracle --
+      hides the MODEL: a 2500+ gradient-boosted-tree appraisal model whose parameters are IP, committed
+      once, with each appraisal accompanied by a GKR proof against the hiding+binding commitment
+      (classic MLaaS, prover = model owner, secret = weights). (b) The Remainder_CE codebase's shipped
+      application -- Worldcoin/World ID self-custody -- INVERTS this: it hides the INPUT (a user's iris
+      image) against a PUBLIC model (a fixed Gabor-style filter bank baked into the circuit), proving
+      client-side that the iris code was computed correctly, then that it was Shamir-secret-shared to a
+      3-party MPC. Same GKR engine, inverse threat model. Do not collapse the two.
+    open_source: yes
+    repo: https://github.com/worldcoin/Remainder_CE
+    open_source_note: >-
+      Fully open (dual MIT / Apache-2.0) as "Remainder_CE" -- Community Edition -- now under
+      Worldcoin/Tools for Humanity, NOT Modulus Labs' original repo. Five Rust crates: shared_types,
+      prover (the GKR engine), ligero, hyrax, frontend. Ships a 4.6 MB `world.circuit` (a bincode
+      serialization of the combined V3 iris-code + 3-party-MPC circuit description) and a Least
+      Authority 2025 audit PDF. The README states it is NOT deployed in production and carries NO
+      security guarantees; the iris end-to-end tests are `#[ignore]`'d as slow. So the shipped code is
+      the CE cut, not necessarily bit-identical to what runs on the Orb.
+    numbers_source: primary  # read the PDF (abstract, Sec 1.2/1.3/4) AND ran a 9-agent source-reading
+                             # workflow over the Remainder_CE tree (proving pipeline, PCS, ZK scope,
+                             # iris circuit, benchmarks/Makefile). See content/papers/remainder.md.
+    objectives: [inference]
+    quantization:
+      bits: null
+      bits_note: >-
+        NO "bit width" in the sense the LLM rows mean it, and that is a finding, not an omission. This
+        is a decision forest, not a quantized neural net: values are BN256 field elements, and the only
+        bit-level work is a signed BIT DECOMPOSITION (SgnBitDecomp) used to prove each node's
+        threshold comparison thr_k - v_k and its sign. The iris application in Remainder_CE uses a
+        complementary base-256 (8-bit-digit) decomposition range-checked with a LogUp lookup for the
+        same purpose. Neither is an activation-precision knob.
+      scheme: >-
+        Threshold comparisons proven via signed bit decomposition of thr_k - v_k plus a range check; no
+        fixed-point activation quantization.
+    benchmarks:
+      - model: Decision forest (128 trees, height 9)
+        params: null
+        params_note: "128 trees x height 9, batched over 128 inputs of 64 features each."
+        proving_time_s: 54  # "in under 54 seconds" (abstract); per-tree-per-sample ~0.003 s.
+        proving_overhead_x: 180  # prover blowup vs raw CPU evaluation; bottoms out at 27 trees x 27 samples.
+        proof_size_mb:
+          value: null
+          note: >-
+            No single figure. The paper claims proofs "ranging from kilobytes to megabytes" generically,
+            and flags that the Ligero input-layer commitment is "relatively large" -- it sends >=200
+            columns of field elements. No end-to-end proof size for the 128-tree forest is stated.
+        verification_time_s: null  # claimed "sublinear in model size"; no absolute figure given.
+        hardware: null
+    notes: >-
+      A tree paper that became an iris prover -- and the gap between the two is the entry. THE PAPER
+      (Modulus Labs, March 2024) is verifiable DECISION-FOREST inference: structured data-parallel GKR
+      + Ligero, built for Upshot's on-chain NFT price oracle (2500+ gradient-boosted trees). Its
+      contributions are real and measured: a multi-stage claim-aggregation optimization reducing
+      per-stage prover cost from O(m.n.2^n) to O(m.(n-k).2^n) (a 40-60% wall-clock improvement on the
+      forest circuit), and a data-parallel generalization of the [XZZ+19] linear-time prover
+      ("Libra-Giraffe"). It descends from [[zkdt]]'s structured-circuit idea but proves tree paths by
+      sum-check rather than a matrix subset argument. Model-hiding MLaaS: the server proves, the weights
+      are the secret.
+      THE CODE (Remainder_CE, 2026, now Worldcoin) is the same GKR engine carried forward and pointed at
+      a completely different job: proving that a private iris image was correctly turned into a Worldcoin
+      iris code by a PUBLIC linear filter bank, then secret-shared to a 3-party MPC -- ten Hyrax proofs
+      in all. That path adds the Hyrax/Pedersen ZK wrapper the paper did not use, and INVERTS the threat
+      model from hide-the-model to hide-the-input.
+      What to distrust: the shipped iris pipeline has NO published performance numbers anywhere in the
+      repo -- no proving time, no proof size, no verifier time. The ONLY quantitative figure in the
+      codebase is a MEMORY TARGET: the sequential 10-proof World prover is asserted to run in under
+      300 MB RAM (Makefile MEM_LIM=300, enforced via `docker run --memory=300m`). That is a target, not
+      a measured typical cost, and it is not comparable to any proving-time row here. So the ONLY primary
+      benchmark we can tabulate is the paper's 2024 DECISION-FOREST number, on a workload nobody deploys
+      anymore; the deployed workload (iris) is unmeasured in public. Record both facts; conflate neither.
+
 numerics_primitives:
   # NOT ML systems. These are the arithmetic building blocks underneath zkML: how you represent a
   # real number in a circuit at all. They matter because the entire zkML literature justifies
@@ -3791,6 +3894,58 @@ alternatives_to_zk:
       asserted in content/alternatives/tees.md as though this paper said it. The claim may well be
       TRUE; it is simply not this paper's. Attribute it to phala.network / openrouter.ai directly,
       or drop it.
+
+  - id: nvidia-confidential-compute
+    name: NVIDIA Confidential Computing (Hopper H100)
+    title: "Confidential Compute on NVIDIA Hopper H100 (WP-11459-001)"
+    url: https://www.nvidia.com/en-us/data-center/solutions/confidential-computing/
+    pdf: https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/HCC-Whitepaper-v1.0.pdf
+    venue: "NVIDIA whitepaper WP-11459-001 v1.0 (vendor document, not peer-reviewed)"
+    date: 2023-07  # v1.0. Hopper CC-On shipped with the H100 generation.
+    year: 2023
+    authors: [NVIDIA]  # corporate author; whitepaper has no per-person byline.
+    authors_verified: true  # cover page: NVIDIA, "Confidential Compute on NVIDIA Hopper H100", WP-11459-001.
+    affiliation: NVIDIA
+    approach: >-
+      GPU trusted execution environment. The H100 is the first GPU to offer confidential computing: it
+      boots in "CC-On" mode behind an on-die hardware ROOT OF TRUST, runs only NVIDIA-signed firmware
+      (secure + measured boot), and pairs with a CPU confidential VM (AMD SEV-SNP or Intel TDX) over an
+      encrypted, authenticated SPDM channel. Data moves CPU<->GPU through an encrypted "bounce buffer";
+      the GPU decrypts inside its package, computes, and re-encrypts on the way out.
+    trust_assumption: >-
+      Trust NVIDIA's key infrastructure and the attestation chain. Attestation is a cryptographically
+      SIGNED SET OF MEASUREMENTS of the GPU identity + firmware, verified against NVIDIA's Remote
+      Attestation Service (NRAS) and a Reference Integrity Manifest (RIM). It proves WHAT ran on genuine
+      NVIDIA silicon -- NOT that what ran was correct, honest, or the advertised model. No public
+      verifiability of the computation; a verifier who cannot trust NVIDIA gets nothing.
+    mentions_zk: false  # a hardware spec; it makes no verifiable-computation / SNARK claim. The TEE-vs-ZK
+                        # framing is OURS. This is the PRIMARY vendor source for the H100 CC hardware that
+                        # tee-confidential-llm benchmarks and optimistic-tee-rollups builds on.
+    numbers_source: primary  # read the whitepaper (32 pp): root of trust, secure/measured boot, SPDM,
+                             # bounce buffer, attestation, in-scope vs out-of-scope threats, side channels.
+    security_gap_note: >-
+      TWO gaps matter for anyone reasoning about it as a trust anchor. (1) MEMORY: independent
+      measurement ([[tee-confidential-llm]], ETH Zurich) found the H100 leaves its HBM UNENCRYPTED,
+      where the CPU TEEs it interoperates with do encrypt memory -- so the GPU side of the boundary is
+      the weaker one, and NVIDIA expects the successor part (Blackwell) that closes the gap to add
+      non-negligible overhead. (2) SIDE CHANNELS are explicitly OUT OF SCOPE in the whitepaper's own
+      threat model -- a documented exclusion, not an oversight, and exactly the attack class the
+      academic TEE-breaking literature has repeatedly demonstrated. See content/alternatives/tees.md.
+    durability_note: >-
+      An attestation is worth what NVIDIA's signing key is worth ON THE DAY YOU CHECK IT. Unlike a ZK
+      proof -- verifiable forever -- a TEE attestation is PERISHABLE: if the key later leaks or the part
+      is later broken, past attestations are retroactively worthless. This is the sharpest structural
+      difference from cryptographic verifiability, and it is independent of throughput.
+    notes: >-
+      The hardware everyone in this section actually runs on -- filed as its own PRIMARY entry because
+      the corpus previously had only third-party views of it: a benchmark paper ([[tee-confidential-llm]])
+      and a rollup design ([[optimistic-tee-rollups]]) that uses H100 CC as a component. This is the
+      vendor's own spec of the mechanism. The load-bearing point for this SoK is threat-model point 4
+      on the TEEs page: attestation proves the binary's hash, not that the weights inside are the ones
+      advertised -- the model-substitution question verifiable inference exists to answer -- and whether
+      the attestation even covers the weights is a deployment choice. It is, by a wide margin, the most
+      deployed answer to "verifiable/confidential inference" today; its assumption (trust NVIDIA, for
+      now, against your adversary) is the thing the ZK case must be argued against, not around.
 
   - id: proof-of-sampling
     name: Proof of Sampling

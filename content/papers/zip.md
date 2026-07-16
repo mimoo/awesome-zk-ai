@@ -1,5 +1,5 @@
 ---
-title: ZIP — Zero-Knowledge AI Inference with High Precision
+title: ZIP, Zero-Knowledge AI Inference with High Precision
 paper: zip
 status: reviewed
 ---
@@ -9,7 +9,7 @@ status: reviewed
 ## What is new
 
 ZIP is the counter-philosophy of this whole collection, and it is worth having in the SoK for that
-reason alone. Every other prover here **bends the model to fit the prover** — quantize to 4, 8, 12 or
+reason alone. Every other prover here **bends the model to fit the prover**, quantize to 4, 8, 12 or
 16 bits, approximate GeLU with a spline or a quadratic, replace softmax with a lookup table. ZIP
 **bends the prover to fit the model**: it proves inference in native IEEE-754 double precision,
 with the actual activation functions, and eats the cost.
@@ -20,7 +20,7 @@ IEEE-754 semantics), ZIP has the prover supply the activation's output, proves i
 piecewise-polynomial approximation stored in a lookup table, and then constrains the *relative
 error* between the true value and the approximation to lie within a bound δ. It also hardens the
 underlying lookup and range proofs with additional arithmetic constraints against a malicious
-prover — an audit-minded touch that is rare in this literature.
+prover, an audit-minded touch that is rare in this literature.
 
 The resulting constraint count per double-precision activation is a genuine multiple-orders-of-
 magnitude reduction over hardcoding IEEE-754 semantics into a circuit, and I believe it.
@@ -32,20 +32,20 @@ proof-of-concept prototype whose verifier is not succinct in any useful sense.**
 
 - The models are LeNet-5 (MNIST, ~60K params) and mini-BERT (SST-2, ~11M params, 4 layers, hidden
   size 256), plus a ~250K-param CNN on UTKFace for the precision study. **This is not an LLM prover
-  and it is not a graph point.** mini-BERT is a text classifier, not a generative model — no decode,
+  and it is not a graph point.** mini-BERT is a text classifier, not a generative model, no decode,
   no sampling, no autoregression.
 - It is genuinely zero-knowledge and model-private: commit-and-prove over PlonK, with the model
   weights as the committed witness. On that axis it is in the same class as [[zkllm]] and ahead of
   [[zkgpt]] and [[deepprove]].
 - The precision claim is real and is the point. There is no quantization, so there is no calibration
-  set, no scale factor, no zero-point, no bit width — and therefore none of the audit surface that
+  set, no scale factor, no zero-point, no bit width, and therefore none of the audit surface that
   the rest of this repo worries about. That is a real security argument, not just an accuracy one.
 
 ## What to distrust
 
 **ZIP optimizes the component that is not the bottleneck in its own largest experiment.** The
 paper's entire contribution is reducing the cost of *non-linear* layers. On mini-BERT, its own
-Table 7 shows the **linear** layers consuming 34.53 of 37.06 prover-hours — 93% of the total — and
+Table 7 shows the **linear** layers consuming 34.53 of 37.06 prover-hours, 93% of the total, and
 they are not ZIP's work at all; they are delegated wholesale to a prior scheme. The non-linear
 layers ZIP exists to accelerate account for the remaining 7%.
 
@@ -57,7 +57,7 @@ tables.
 
 **The verifier is not succinct.** LeNet-5 verifies in minutes. mini-BERT verifies in **most of an
 hour**. For an 11M-parameter model, a client could run the plaintext inference itself millions of
-times over in that window. The cause is structural, not incidental — ZIP "employs two multi-lookup
+times over in that window. The cause is structural, not incidental, ZIP "employs two multi-lookup
 arguments per activation with four pairing[s] per lookup proof during verification," so verifier
 work is **linear in the activation count**. A commit-and-prove zkSNARK whose verifier scales with
 the circuit has given up the property that makes a SNARK worth having. Compare [[zkgpt]] (sub-second
@@ -102,6 +102,6 @@ Table 4 shows a single double-precision GeLU costing hundreds of times more prov
 fixed-point schemes it is arguing against, and the paper puts that table in the body rather than an
 appendix, calls the comparison "conservative," and concedes in the Discussion that "our prototype is
 just a proof of concept to demonstrate correctness and feasibility, not performance optimization."
-That is exactly the right disclosure. The problem is not that ZIP is dishonest about its costs — it
+That is exactly the right disclosure. The problem is not that ZIP is dishonest about its costs, it
 is that the *benefit* those costs buy is established only against a baseline the paper declines to
 specify.

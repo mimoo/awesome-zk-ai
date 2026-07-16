@@ -12,7 +12,7 @@ cryptography and two of them are machine learning.
 **The cryptography.** A better ciphertext packing for matrix-matrix multiplication that stops wasting
 SIMD slots, plus a baby-step giant-step rotation schedule that cuts the ciphertext rotations the new
 packing would otherwise require. And a **polynomial pre-processing technique** that reduces the
-multiplication count when evaluating a fixed polynomial on secret-shared input — a generic MPC
+multiplication count when evaluating a fixed polynomial on secret-shared input, a generic MPC
 result the authors correctly flag as independently useful. Where Iron used HE for matmul and OT for
 everything else, BOLT pushes more of the computation into HE specifically to trade communication for
 computation, on the bet that compute is what gets cheaper.
@@ -26,7 +26,7 @@ Both halves work. It matters enormously which half you credit for the headline.
 
 ## What it actually proves
 
-Nothing — no proof. Privacy against a semi-honest counterparty, on BERT-base, across four GLUE
+Nothing, no proof. Privacy against a semi-honest counterparty, on BERT-base, across four GLUE
 tasks, with the parameters stated (37-bit ring, scale 12, and the HE parameters given explicitly).
 The reporting discipline here is better than the zkML column's: bit widths, ring, scale, HE modulus,
 network settings, and an ablation table all appear.
@@ -59,8 +59,8 @@ BOLT's own Table 3, end-to-end communication for one BERT-base inference:
 | **BOLT, no word elimination** | **59.61 GB** | **4.71×** |
 | BOLT, with word elimination | 25.74 GB | 10.91× |
 
-The purely cryptographic contribution — the packing, the BSGS rotations, the polynomial
-pre-processing, the low-degree GELU and Softmax — is **4.71×**. The other 2.3× comes from
+The purely cryptographic contribution, the packing, the BSGS rotations, the polynomial
+pre-processing, the low-degree GELU and Softmax, is **4.71×**. The other 2.3× comes from
 [eliminating] "tokens scoring below the median." BOLT processes roughly half the sequence that Iron
 processes.
 
@@ -68,14 +68,14 @@ The headline number in the abstract, in `papers.yml`, and in the README is 10.91
 compares protocol against protocol on the same workload is 4.71×.
 :::
 
-**And the model itself is different.** BOLT does not merely quantize BERT — it **fine-tunes** it, with
+**And the model itself is different.** BOLT does not merely quantize BERT, it **fine-tunes** it, with
 word elimination active in the forward pass, so the network learns to cope both with the fixed-point
 arithmetic and with having half its tokens deleted. "Matches the accuracy of plaintext models" is
 therefore comparing a *retrained* model against a *non-retrained* floating-point baseline. This is
 the "bend the model" move, executed twice, and [[ciphergpt]] criticizes exactly this class of
 approach: "all such solutions require retraining the model, which is less desirable to machine
-learning practitioners." BOLT's own defence — fine-tuning is a one-time cost amortized over
-inferences — is reasonable, but it does not make the accuracy comparison apples-to-apples.
+learning practitioners." BOLT's own defence, fine-tuning is a one-time cost amortized over
+inferences, is reasonable, but it does not make the accuracy comparison apples-to-apples.
 
 The paper does state the mechanism plainly ("word elimination introduces negligible accuracy drops,
 and can significantly improve the performance of BOLT") and it does publish the ablation. The
@@ -90,7 +90,7 @@ the system, and the number people quote is the one achieved against the narrowes
 
 **Accuracy beats plaintext again.** BOLT with word elimination scores *above* the floating-point
 baseline on SST-2, and Iron scores above it on two tasks. These are within the reported standard
-deviation of the plaintext baseline, which is the right explanation — but it also means that the
+deviation of the plaintext baseline, which is the right explanation, but it also means that the
 sub-1% accuracy deltas this entire cluster reports are inside the noise floor, and "comparable
 accuracy to floating-point" is not a claim any of these papers has the statistical power to
 distinguish from its negation. More curiously, BOLT reports that dropping half the tokens *improves*

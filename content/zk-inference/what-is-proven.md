@@ -34,35 +34,35 @@ as Softmax (zkLLM, CCS'24).
 Its throughput figure is therefore the only one in the table that covers a whole generation
 rather than a single pass. But look at the numerator. DeepProve's tokens-per-minute is the
 benchmark *sequence length* divided by proving time, and a sequence is prompt plus
-completion — the paper's own plaintext comparison is run on "prompts with 128 input and 128 output tokens (sequence length 256)".
+completion, the paper's own plaintext comparison is run on "prompts with 128 input and 128 output tokens (sequence length 256)".
 Half of that numerator was never decoded. It is a proven-tokens-per-minute rate over a
 certified sequence, which is a stronger claim than anyone else in the table makes, and still
 not the decode rate a casual reader assumes.
 
 Note carefully *how* it gets there. DeepProve does not put the autoregressive loop in a
-circuit — it "achieves end-to-end verification by certifying the correctness of the output
+circuit, it "achieves end-to-end verification by certifying the correctness of the output
 sequence rather than encoding the expensive inference computation in-circuit," which it
 says would force circuit size quadratic in the sequence length or in-circuit RAM. That is a
 design decision with a cost profile, not a free lunch: among the succinct provers in the
 table, DeepProve's proofs are orders of magnitude larger than [[zkgpt]]'s. That is not,
 however, the price of the sequence: DeepProve's proof size barely moves as its benchmark
 sequence length grows, while swapping its polynomial commitment scheme moves it a great
-deal. The proof-size gap is a commitment-scheme choice — BaseFold/HyperKZG against zkGPT's
-Hyrax — which is one more axis on which these two systems are not comparable.
+deal. The proof-size gap is a commitment-scheme choice, BaseFold/HyperKZG against zkGPT's
+Hyrax, which is one more axis on which these two systems are not comparable.
 
 **2. Exactly one forward pass.** [[zkgpt]] proves a single token. So, in effect, do
-[[zkml-kang]], [[artemis]], [[lu-et-al]] and [[zktorch]] — their reported quantity is
+[[zkml-kang]], [[artemis]], [[lu-et-al]] and [[zktorch]], their reported quantity is
 *seconds to produce one proof of one pass*. Where `papers.yml` carries a tokens-per-minute
-entry for them at all it is tagged `derived` — we computed it, by dividing sixty by their
+entry for them at all it is tagged `derived`, we computed it, by dividing sixty by their
 proving time; that is where zkGPT's and ZKML's figures come from. For [[artemis]] and
 [[lu-et-al]] we record no rate at all, and for [[zktorch]] the field is deliberately `null`:
 the paper reports no throughput, and its LLM benchmarks are forward passes over one- or
 two-token inputs, so deriving a decode rate from them would be a category error rather than
 a conservative estimate. Nobody in those papers claims a decode rate, and nobody should. ([[deepprove]]
-characterises [[zktorch]] the same way — "proofs of correctness for one output token at a
+characterises [[zktorch]] the same way, "proofs of correctness for one output token at a
 time".)
 
-The derivation is not merely conservative — it is *generous to the wrong system*. Sustained
+The derivation is not merely conservative, it is *generous to the wrong system*. Sustained
 generation is not one forward pass repeated. It has a growing KV cache, growing attention
 cost per step, and a batching structure that a one-shot prover never has to confront. A
 single-pass prover extrapolated to a rate is being credited with solving a problem it
@@ -71,7 +71,7 @@ never faced.
 **3. A batched circuit over a sequence, with the loop decoupled.** [[zkpytorch]] does
 something more interesting than either, and it is routinely missed because the paper is
 filed as "a compiler". At its model level it observes that a proof only *verifies* the
-output — it does not compute it — so the token-by-token dependency can be broken and all
+output, it does not compute it, so the token-by-token dependency can be broken and all
 tokens proven in a single batched circuit, turning many small matmuls into one large one.
 That is the same insight DeepProve builds a whole system around, published earlier, in a
 paper whose headline number is a per-token cost on a *single CPU core*.
@@ -89,7 +89,7 @@ generation" as a claim we are relaying, not one we have verified.
 **4. Nobody knows.** [[jolt-atlas]] reports an end-to-end proving time for GPT-2 and states
 neither the sequence length nor the token count. It never discusses autoregression or KV
 caching anywhere in the paper. Its GPT-2 result cannot be converted into a rate, cannot be
-placed on the throughput axis, and cannot be compared to anything above — not because the
+placed on the throughput axis, and cannot be compared to anything above, not because the
 number is bad, but because the *unit is unknown*. `papers.yml` records its
 `tokens_per_minute` as `null` and its `context_window` as `null`, and that is the honest
 entry.
@@ -104,26 +104,26 @@ There is a further degree of freedom, and it is the one most likely to invalidat
 comparison outright: **the network in the circuit may not be the network in the model zoo.**
 
 [[deepprove]]'s related-work section makes a specific and checkable accusation against
-[[zkgpt]] — that it proves a modified GPT-2 which "doesn't contain residual connections,
+[[zkgpt]], that it proves a modified GPT-2 which "doesn't contain residual connections,
 attention masks, and the final projection layer," and that these relaxations "significantly
 circumvent the outlier issues" that make quantization hard. It levels a second one at
 [[zkml-kang]], calling its GPT-2 "slightly modified" too.
 
 We cannot confirm the implementation from the outside. What we can confirm is the paper:
 **the strings "residual", "attention mask" and "projection layer" do not appear anywhere in
-[[zkgpt]]'s text** — a full-text search of the PDF returns nothing. That is not proof of the
+[[zkgpt]]'s text**, a full-text search of the PDF returns nothing. That is not proof of the
 accusation, but for a paper whose central claim is proving GPT-2, the silence is
 conspicuous. A GPT-2 without residual connections is a different function, and residual
 paths are precisely where the large-magnitude activations that make quantization hard tend
 to live.
 
 :::debate  Whose GPT-2?
-The LLM rows people actually compare mostly say "GPT-2" — and the label is doing less work
+The LLM rows people actually compare mostly say "GPT-2", and the label is doing less work
 than it looks. If [[zkgpt]] proves a GPT-2 without residuals,
 attention masks and the final projection, and [[deepprove]] proves the whole thing, then the
-two systems are not proving the same function — and the throughput gap between them is
+two systems are not proving the same function, and the throughput gap between them is
 partly a measurement of how much of GPT-2 each chose to include. The accusation comes from a
-competitor and should be weighed as such. It is also *checkable in principle* — DeepProve is
+competitor and should be weighed as such. It is also *checkable in principle*, DeepProve is
 open source; `papers.yml` records zkGPT's availability as unknown, which is itself part of
 the problem. Until someone checks, this belongs alongside bit width and context length on
 the list of confounders, not in the footnotes.
@@ -143,10 +143,10 @@ two systems at the top of the table:
 | **Bit width** | The faster system runs at the *lower* precision. Lookup-table cost scales with bit width. See [Quantization](./quantization/). |
 | **Hardware** | CPU core counts, clock speeds and memory differ across every row. [[zkgpt]] says it "mainly" attributes its deficit against [[zkllm]] to CPU-versus-GPU rather than to protocol — while claiming a protocol win on top of it. |
 
-Every one of those pushes in the same direction — they all flatter the same system. That
+Every one of those pushes in the same direction, they all flatter the same system. That
 does not make its result wrong. DeepProve is, by a wide margin, the fastest reported LLM
 prover, and its lead is large enough to survive a lot of normalization. But the headline
-ratio between it and [[zkgpt]] — the one people quote — is *not a protocol comparison*, and
+ratio between it and [[zkgpt]], the one people quote, is *not a protocol comparison*, and
 **nobody has isolated the protocol contribution.** The honest statement is that the two
 systems are far apart on a rate whose definition differs between them, and that the gap is
 not bit-width-normalised, not context-normalised, and not a protocol measurement.
@@ -163,7 +163,7 @@ thing from this page: **a hollow marker is not a slower system, it is a differen
 
 ## Hardware is not held constant either
 
-[[zkgpt]] is CPU-only. [[jolt-atlas]] deliberately runs on a laptop with consumer memory —
+[[zkgpt]] is CPU-only. [[jolt-atlas]] deliberately runs on a laptop with consumer memory, 
 its entire thesis is on-device proving, and its numbers should be read as *what a laptop can
 do*, which is a far more impressive framing than the row it occupies in the table.
 [[zkllm]] is a datacenter GPU. [[zkml-kang]] and [[artemis]] use very large multi-core
@@ -181,7 +181,7 @@ None of the systems here report all five of these. Most report one or two.
 1. **The sequence length** used in the benchmark, and the **number of tokens** the proof
    covers. Without these the throughput figure has no unit.
 2. **The bit width**, and the **accuracy delta** it costs on a named metric and dataset. A
-   throughput number with unbounded accuracy loss is not a result — any system can go
+   throughput number with unbounded accuracy loss is not a result, any system can go
    arbitrarily fast by quantizing to garbage.
 3. **The hardware**, including thread count, and which machine the *headline* figure came
    from when several were used. ([[deepprove]] is exemplary here and it still takes care:
@@ -195,7 +195,7 @@ None of the systems here report all five of these. Most report one or two.
 
 :::gap  Nobody has done this
 Not one system in this section reports sequence length, token count, bit width *and* an
-accuracy delta together. The two that come closest — [[deepprove]] and [[zkgpt]] — each
+accuracy delta together. The two that come closest, [[deepprove]] and [[zkgpt]], each
 miss at least one, and the field's fastest laptop prover ([[jolt-atlas]]) misses all four.
 Until a paper does, cross-system throughput ranking is a genre convention, not a
 measurement.

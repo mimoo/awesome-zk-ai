@@ -1,19 +1,22 @@
 ---
-title: TEEs — the assumption that is actually deployed
+title: TEEs, the assumption that is actually deployed
 section: alternatives
 order: 30
 lede: >-
   Confidential-computing GPUs run real models in production today at a throughput penalty
   ZK cannot approach. The side-channel literature against TEEs is also extensive. Both
   facts are load-bearing, and the honest position is uncomfortable.
-papers: [tee-confidential-llm, optimistic-tee-rollups]
+papers: [nvidia-confidential-compute, tee-confidential-llm, optimistic-tee-rollups]
 status: reviewed
 paradigm: tee
 ---
 
 A trusted execution environment runs the model on hardware that attests, cryptographically,
 to what it ran. The verifier checks a signature chain rooted in a manufacturer's key and
-concludes: this binary, on genuine hardware, produced this output.
+concludes: this binary, on genuine hardware, produced this output. [[nvidia-confidential-compute]]
+is the vendor spec for the GPU case: the H100 boots behind an on-die root of trust, runs only
+NVIDIA-signed firmware, and pairs with a CPU confidential VM over an encrypted channel to produce
+that attestation.
 
 It is worth being blunt about the position TEEs occupy in this SoK, because the ZK
 literature has a habit of dismissing them in a subordinate clause and moving on. Of every
@@ -25,14 +28,14 @@ a model that fits on it, the overhead is a rounding error next to ZK's:
 {{ table:alternatives_to_zk cols=platform,overhead_percent,overhead_metric }}
 
 It is not a general constant, and the paper is candid about that. Confidential H100
-instances lose RDMA and GPUdirect, so every byte crosses the CPU and multi-GPU serving —
-which is to say, serving anything that does not fit on one card — falls off a cliff. The
+instances lose RDMA and GPUdirect, so every byte crosses the CPU and multi-GPU serving, 
+which is to say, serving anything that does not fit on one card, falls off a cliff. The
 H100's HBM is left unencrypted, where the CPU TEEs it is measured against do encrypt
 memory, and the authors expect the successor part that closes the gap to cost more. And
 the network protection they say is required on top of both CPU and GPU TEEs costs far more
 than the headline. The engineering conversation is over for the single-GPU case and open
-above it. Vendors advertise the same thing in production — Phala's GPU TEEs are offered
-for inference on OpenRouter — though that is their claim, not this paper's. There is no
+above it. Vendors advertise the same thing in production, Phala's GPU TEEs are offered
+for inference on OpenRouter, though that is their claim, not this paper's. There is no
 zkML deployment of comparable scale, and there will not be one soon.
 
 So the case for zkML cannot be that TEEs are impractical. They are the practical option.
@@ -44,12 +47,12 @@ Trusting a TEE means trusting, at minimum:
 
 1. **The hardware vendor's key infrastructure.** The attestation is a signature. Someone
    holds that signing key, and that someone can attest to anything.
-2. **The silicon's isolation guarantees**, as implemented — not as specified. The paper
+2. **The silicon's isolation guarantees**, as implemented, not as specified. The paper
    cited above documents a live instance of the gap: the confidential H100 leaves its HBM
    unencrypted, which the CPU TEEs it is compared against do not.
 3. **The attestation chain and its revocation infrastructure**, including the vendor's
    ability and willingness to revoke a compromised part.
-4. **The measured binary being the thing you think it is** — attestation proves *what*
+4. **The measured binary being the thing you think it is**, attestation proves *what*
    ran, not that what ran was correct or honest. A TEE will faithfully attest to a
    backdoored model.
 
@@ -57,8 +60,8 @@ Point 4 is routinely elided and it is the important one for this SoK's purposes.
 tells you the provider ran *the binary whose hash is X*. Whether the weights inside that
 binary are the weights they advertised is a question about what got measured, and it is
 exactly the model-substitution question that verifiable inference exists to answer. A TEE
-can answer it — if the attestation covers the weights. Whether it does, or whether the
-measurement stops at the container that loads them, is a deployment choice — and it is the
+can answer it, if the attestation covers the weights. Whether it does, or whether the
+measurement stops at the container that loads them, is a deployment choice, and it is the
 choice that decides whether the TEE answers that question at all.
 
 ## The side-channel literature is not a talking point
@@ -76,8 +79,8 @@ I have, and I will get told when it isn't.**"
 That is a defensible assumption for a great many threat models. It is a completely
 untenable one for a few:
 
-- **An adversary with physical access to the machine.** In decentralised inference — the
-  setting most of this literature is written for — the node operator *is* the adversary
+- **An adversary with physical access to the machine.** In decentralised inference, the
+  setting most of this literature is written for, the node operator *is* the adversary
   and *does* have physical access. This is close to the worst case for a TEE and it is
   precisely the deployment being proposed.
 - **A verifier who must not trust a single US corporation.** A regulator, a foreign
@@ -90,17 +93,17 @@ untenable one for a few:
 That last one is, to us, the sharpest distinction and the least discussed. **ZK proofs are
 durable and attestations are perishable.** For an on-chain settlement or a compliance
 artefact that must hold up in a dispute years later, that difference is the entire ball
-game — and it has nothing to do with throughput.
+game, and it has nothing to do with throughput.
 
 :::debate  Does the side-channel record actually change the deployment decision?
 The ZK partisan's argument: TEEs are broken on a schedule, and building a trust
 infrastructure on them is building on sand. The TEE partisan's reply: every TEE break has
 been patched, none has produced a mass compromise of confidential-computing workloads in
-the wild, and meanwhile zkML has produced no deployments at all — a perfect security record
+the wild, and meanwhile zkML has produced no deployments at all, a perfect security record
 that nobody is relying on is not a security record. Both are right. The disagreement is not
 really about side channels; it is about whether a probabilistic, patchable, vendor-mediated
 guarantee is *the same kind of thing* as a cryptographic one. It is not, and that is the
-whole point — but "not the same kind of thing" does not automatically mean "worse for your
+whole point, but "not the same kind of thing" does not automatically mean "worse for your
 threat model."
 :::
 
@@ -108,7 +111,7 @@ threat model."
 
 [[optimistic-tee-rollups]] is the most thoughtful construction in this section precisely
 because it does not treat the question as a binary. It uses H100 confidential computing
-for throughput, optimistic fraud proofs for finality, and — the good idea — **stochastic ZK
+for throughput, optimistic fraud proofs for finality, and, the good idea, **stochastic ZK
 spot-checks** whose sole purpose is to bound the risk that the hardware was compromised.
 
 Read that as a design pattern rather than a paper: ZK is used *not* as the verification
@@ -130,7 +133,7 @@ architecture; it does not state the theorem. Neither does any other hybrid in th
 ## The honest summary
 
 If your verifier will accept an NVIDIA attestation, zero knowledge is an extraordinarily
-expensive way to buy a confidence you already had — and the overhead table above is not
+expensive way to buy a confidence you already had, and the overhead table above is not
 close, even once every caveat above it is paid. The reason to reach for ZK is not that TEEs
 don't work. It is that **some verifiers cannot make that assumption**, and no amount of
 engineering will make them able to. That is a small set of deployments. It is not an empty

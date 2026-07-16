@@ -9,7 +9,7 @@ status: draft
 Everything else in this section fits the whole computation trace into one circuit and then
 fights the size of it. Zator asks the other question: **fold the network one layer at a time.**
 It is the first system in this file to prove a neural network with an *incrementally verifiable
-computation* scheme rather than a monolithic one — Nova folds a per-layer R1CS step circuit N
+computation* scheme rather than a monolithic one, Nova folds a per-layer R1CS step circuit N
 times into a single relaxed instance, and only that one instance is handed to Spartan and
 actually proven. Two years before [[zktorch]] made accumulation respectable with a paper, a
 week-long hackathon project made the argument with a running system.
@@ -21,15 +21,15 @@ thing it proves the existence of is the design pattern the accumulation line is 
 ## What it actually proves
 
 **One forward pass of a 512-layer convolutional network on one MNIST digit, quantized, against
-weights the proof commits to — in three proofs, not one.**
+weights the proof commits to, in three proofs, not one.**
 
 The commitment structure is the part worth studying, and it is genuinely nice. Each backbone
 step takes the previous layer's activation hash as a public input, re-hashes the activations it
-was handed, and checks the two agree — so the chain of steps cannot be spliced. Alongside it
+was handed, and checks the two agree, so the chain of steps cannot be spliced. Alongside it
 runs a *running hash* of the weights, $p_n = H(p_{n-1} \| H(W_n) \| H(b_n))$, which means the
 final folded instance is bound to one specific model and not merely to *some* model of the right
 shape. That is the model-substitution defence, built directly into the step circuit, and it is
-the reason the weight *hashing* — not the weight arithmetic — ends up driving the design.
+the reason the weight *hashing*, not the weight arithmetic, ends up driving the design.
 
 The three proofs are the tell. Nova can only fold a step function that is the same every time,
 and a network's first and last layers are not the same as its middle: the head has to project
@@ -41,14 +41,14 @@ SuperNova as the fix, with a footnote that SuperNova was not implemented yet.
 
 ## What the benchmark shows, which is not what the headline says
 
-The headline is depth — a network "as deep or deeper than the majority of production AI models
+The headline is depth, a network "as deep or deeper than the majority of production AI models
 today", roughly two and a half billion constraints. The table above it is MNIST, and the better
 part of a working day of proving.
 
 **Read the two together and the lesson is that depth was never the binding constraint.** Nova
 does dissolve it, exactly as advertised: the recursive overhead really is about ten thousand
 constraints per step, negligible against the layer being proven. And the field still could not
-prove a useful model afterwards — because the cost was never in the *number* of layers, it was
+prove a useful model afterwards, because the cost was never in the *number* of layers, it was
 in the *width* of each one, and folding does nothing whatsoever about width. Zator is the clean
 experiment that shows this, and it shows it by winning: it went deeper than anything else in
 this file, and arrived at a handwritten-digit classifier.
@@ -64,7 +64,7 @@ Zator's backbone is 510 *identical* convolution layers, and the network was desi
 because the prover demanded it. Convolutions rather than dense layers for the same reason: the
 step circuit must *hash* its weights to bind them to the running commitment, and the README
 prices a single 784×784 dense layer at "~350M constraints to hash when using 220 rotations on
-MiMC" — before proving one multiplication.
+MiMC", before proving one multiplication.
 
 So the deepest network anyone had snarked is a stack of clones with no dense layer in it, and
 this is not an incidental choice. It is what folding costs when the step function has to be
@@ -79,8 +79,8 @@ seven of those blocks that have no accumulation support and must be steered arou
 factors and floor division, the bit width is never stated, and the README volunteers that the
 resulting error is "a significant limitation of the network we snarked". A proof that a
 quantized network computed what it computed is worth exactly as much as the network, and we have
-no evidence about the network. This is not a hidden flaw — it is disclosed, and the project
-explicitly defers performance and compilation quality to [[ezkl]] — but it does mean no
+no evidence about the network. This is not a hidden flaw, it is disclosed, and the project
+explicitly defers performance and compilation quality to [[ezkl]], but it does mean no
 correctness claim here transfers to anything.
 
 **The benchmark is the backbone, not the system.** The table measures 510 folded layers. Head

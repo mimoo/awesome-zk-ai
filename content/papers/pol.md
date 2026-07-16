@@ -15,16 +15,16 @@ The verifier checks the initialization was drawn from the claimed distribution (
 test), then **re-executes the $Q$ largest weight updates per epoch** and fails if the replayed
 weights diverge from the logged ones by more than a slack parameter $\delta$.
 
-Why the largest updates? Because valid gradient-descent steps are small — you do not want to overshoot
-— so an adversary faking a cheaper run has to introduce estimation error, and error is most visible in
+Why the largest updates? Because valid gradient-descent steps are small, you do not want to overshoot
+so an adversary faking a cheaper run has to introduce estimation error, and error is most visible in
 the big steps. It is a genuinely elegant heuristic, and it is doing all the work.
 
 ## What it actually proves
 
 Less than it looks like, and the paper is honest about this in a way its citers are not.
 
-The security property everyone wants — *no adversary can produce a valid proof more cheaply than
-honestly training* — is **Property 2**, and it is **never proved.** What is offered instead is:
+The security property everyone wants, *no adversary can produce a valid proof more cheaply than
+honestly training*, is **Property 2**, and it is **never proved.** What is offered instead is:
 
 :::quote{src="Proof-of-Learning" sec="§VII-B3, Conjecture 1"}
 Inverting a training sequence using numerical root finding methods will always be at least as
@@ -41,14 +41,14 @@ Because the failure of this scheme is the *reason* for everything in the [traini
 cell](/zk-training/). Both breaks reach the same conclusion by different routes, and one of them names
 the answer explicitly:
 
-[[pol-adversarial]] lists verifiable computation — citing SNARKs and STARKs by name — as the sound
+[[pol-adversarial]] lists verifiable computation, citing SNARKs and STARKs by name, as the sound
 alternative, and prices it in one sentence: *"This mechanism is valid, but it will introduce an
 overwhelming overhead."*
 
 [[pol-broken]] concludes: *"One possible solution to circumvent these fundamental limits in ML theory
 and our understanding of optimization, is to rely more on cryptography."*
 
-Kaizen, zkDL, VeriML, zkPoT — every system in this category is an attempt to pay that overwhelming
+Kaizen, zkDL, VeriML, zkPoT, every system in this category is an attempt to pay that overwhelming
 overhead. The cell exists because this paper was spoofed.
 
 ## What to distrust
@@ -63,5 +63,5 @@ substantial hole, and the paper says so.
 hashing does not work, "due to the error accumulated when the verifier reconstructs the weights."
 
 **The guarantee degrades with reuse:** "our probability of success for our verification scheme
-degrades multiplicatively with each usage," which bounds how long a chain of proofs can get — relevant
+degrades multiplicatively with each usage," which bounds how long a chain of proofs can get, relevant
 to any provenance story that wants to chain fine-tunes.
