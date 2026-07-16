@@ -5,13 +5,19 @@ phase](../README.md) map. Only papers whose PDFs we could actually obtain are he
 entries in [`../papers.yml`](../papers.yml) are abstract-level only and have no PDF.
 
 ```
-proving-inference/   zkML inference — DeepProve, Jolt Atlas, zkPyTorch, zkGPT, zkLLM
+proving-inference/   zkML inference — DeepProve, Jolt Atlas, zkPyTorch, zkGPT, zkLLM, zkCNN…
+proving-training/    zkPoT — Kaizen, zkDL, VeriLoRA, Optimum Vicinity, ZKBoost
 privacy-inference/   secure 2PC/FHE inference — Iron, CipherGPT, BOLT, Nimbus, Bootstrapping-FHE
+federated/           verifiable FL & secure aggregation — ACORN, EIFFeL, PRoVeFL
+numerics/            the shared fixed/float substrate — garg-fp, secfloat, archer-ieee…
+alternatives/        non-ZK verifiability — opML, TEEs, sampling
 surveys/             ZKP-VML survey, Modulus "Cost of Intelligence" report
 ```
 
-*(No `proving-training/` or `privacy-training/` folders yet — we have those papers indexed in
-`papers.yml` but haven't obtained their PDFs. Add them here when we do.)*
+Cell directory names match the `references/<cell>/` convention in
+[`AGENTS.md`](../AGENTS.md). Many entries in [`../papers.yml`](../papers.yml) are abstract-level
+only and have no PDF here yet — that gap is deliberately visible (`make check` warns about PDFs
+held-but-unread, and papers with no PDF at all).
 
 ## Citation graph
 

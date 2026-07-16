@@ -11,9 +11,11 @@ references/<cell>/*.pdf     the PDFs we have actually read.
 references/citation-graph.yml   edge A -> B means "A's text cites/mentions B".
 content/<section>/*.md      prose. THIS is what you write.
 content/papers/<id>.md      optional deep-dive appended to an auto-generated paper page.
+site/sections.yml           the left-menu sections (cell axis) and top-menu paradigms.
 site/vendor/                KaTeX. Source, not output -- copied into docs/ on each build.
 site/build.py               joins them all -> docs/
 site/validate.py            fails the build when they drift apart.
+AGENTS.md                   how to add a paper end-to-end (find repo, clone, run a Workflow).
 docs/                       GENERATED, and GITIGNORED. Never hand-edit; it is not even in
                             the repo. CI builds it and publishes it to GitHub Pages.
 ```
@@ -30,6 +32,25 @@ The rule is about *asserting*, not *mentioning*. Quoting a paper's own claim —
 this SoK exists to do. So figures inside quotation marks, and inside `:::quote` and
 `:::audit` callouts, are exempt. Everywhere else, use a shortcode.
 
+## Voice: dry, direct, one claim per sentence
+
+Less text, more clarity. The reader is skimming for the finding; give it to them and let the
+generated table prove it. The rules are enforceable — a reviewer should be able to point at a
+line, not argue taste:
+
+- **Lead each section with its conclusion,** not its setup.
+- **One claim per sentence.** Two independent claims joined by "and" → split them.
+- **Present tense, active voice.** "Iron needs 280 GB", not "it was found that Iron would require".
+- **Cut hedges and throat-clearing:** "it is worth noting", "interestingly", "arguably", "as we
+  saw above", "in order to".
+- **Paragraphs of four sentences or fewer.**
+
+The one mechanism behind all of it — **the body/callout contract:** the body is a spine of
+claims a hurried reader follows top to bottom. The moment a paragraph stops asserting the page's
+claim and starts *teaching, warning, quoting, or hedging*, it leaves the body and becomes a
+callout. A 40-line block explaining one system, or a four-point lecture on quantization sitting
+inline, is the same failure: educative material left in the spine.
+
 ## Frontmatter
 
 Every `content/**/*.md` starts with:
@@ -44,6 +65,9 @@ lede: >-
   things, and only one of them is an end-to-end claim.
 papers: [deepprove, zkgpt, zkllm]   # ids from papers.yml. Validated. Renders a "papers on this page" rail.
 status: draft                # draft | reviewed. draft renders a banner.
+# paradigm: tee              # OPTIONAL. Overrides the section's default top-menu bucket for
+#                            # this page only -- used when one section spans two paradigms
+#                            # (see content/alternatives/tees.md). Almost never needed.
 ---
 ```
 
@@ -81,10 +105,38 @@ calibrated range is not merely inaccurate -- it is unprovable.
 We run inference on the GPT-2 and Gemma 3 models using DeepProve using 12-bit
 quantization level.
 :::
+
+:::intuition  Why a lookup is cheap
+A range check asks "is x in [0, 2^b)?". Instead of proving it arithmetically, commit a
+table of every legal value and prove x is one row of it. The prover cost is the table
+size, not the bit width -- which is why lookups win exactly where bit-decomposition loses.
+:::
+
+:::note
+Cheetah and SIRNN are the two OT-based building blocks nearly every 2PC paper here reuses.
+:::
 ```
 
 Quotes must be **verbatim from the PDF in `references/`**. If you cannot copy-paste it
 out of `pdftotext`, you do not get to use `:::quote`. Paraphrase in your own prose instead.
+
+Pick the callout by its **trigger**, not by vibe. The four adversarial ones are the point of
+the SoK; `:::intuition` is the one non-adversarial slot, so teaching lands there instead of
+bloating the body; `:::note` is a quiet true aside.
+
+| Callout | Colour | Use it when… | Not for |
+|---|---|---|---|
+| `:::gap` | rose, dashed | a **boundary of knowledge**: nobody has done X, no paper reports Y, a claim is scoped narrower than it sounds | a thing to distrust (audit); a disagreement (debate) |
+| `:::debate` | violet | **two sources or two readings genuinely disagree** and this SoK does not resolve it | one-sided criticism (audit) |
+| `:::audit` | amber | **what to distrust**: a bug's hiding place, a security surface, an unverified vendor claim, a soundness question | general teaching (intuition); a scope limit (gap) |
+| `:::intuition` | cyan | **educative expansion**: the mental model, why a mechanism works, background a reader can skip | anything adversarial |
+| `:::note` | grey | a **true tangential aside** — a definition, a pointer | anything load-bearing; if it matters, it belongs in the body |
+| `:::quote` | rule | **verbatim from a PDF** in `references/`, to hold a paper to its own words | paraphrase; your own summary |
+
+Rule of thumb: **gap** = "here be dragons", **debate** = "we don't know which", **audit** =
+"don't trust this", **intuition** = "here's the picture", **note** = "by the way", **quote** =
+"in their words". (`:::warning` does not exist on purpose — "watch out" is what `:::audit`
+already means.)
 
 **Shortcodes** — the generator injects live data from `papers.yml`, so it can never go stale:
 
@@ -124,4 +176,25 @@ An agent that reads a new PDF touches **four** files. All four, or the build fai
    (single pass? one token? a whole sequence?), and **what to distrust**. If you have
    nothing to say under "what to distrust", you have not read the paper carefully enough.
 
-Then `make site && make check`.
+Then `make site && make check`. For the full paper↔repo procedure (find the code, clone it,
+run a Workflow to learn how it really works before you write the entry), see
+[`../AGENTS.md`](../AGENTS.md).
+
+## Checklist before `make check`
+
+Read your page top to bottom and confirm:
+
+```
+[ ] Every section's FIRST sentence states its conclusion, not its setup.
+[ ] One claim per sentence. Two independent claims joined by "and" -> split them.
+[ ] No number in body prose. Use {{ perf }} / {{ table }} / a [[paper]] link, or move the
+    number into a :::quote or :::audit (those are rule-exempt).
+[ ] Body = the claim; callout = the expansion. Any paragraph that teaches, warns, quotes,
+    or hedges belongs in a callout, not the spine.
+[ ] Each callout matches its trigger: gap=scope limit, debate=unresolved conflict,
+    audit=distrust-this, intuition=mental model, note=aside, quote=verbatim-from-PDF.
+[ ] Every paper is a [[wikilink]] on first mention.
+[ ] Cut hedges: "it is worth noting", "interestingly", "arguably", "as we saw above".
+[ ] Paragraphs are four sentences or fewer.
+[ ] Your paper page says what to DISTRUST. If it can't, you haven't read it closely enough.
+```

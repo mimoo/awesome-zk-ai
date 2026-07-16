@@ -113,6 +113,7 @@ class Page:
     status: str
     src: Path
     html: str = ""
+    paradigm: str = ""  # optional per-page override of the section's paradigm (multi-paradigm sections)
     headings: list = field(default_factory=list)
 
     @property
@@ -129,6 +130,8 @@ PAPERS_BY_CAT: dict[str, list] = {}
 STUBS: dict[str, list] = {}  # papers.yml entries with no id: backlog, not yet read
 SECTIONS: list[dict] = []
 GENERATED: list[dict] = []
+PARADIGMS: list[dict] = []  # top-menu buckets (crypto machinery), orthogonal to the cell 2x2
+SECTION_PARADIGM: dict[str, str] = {}  # section key -> its default paradigm bucket
 SECTION_DIR: dict[str, str] = {}
 PAGES: list[Page] = []
 PAGES_BY_SECTION: dict[str, list] = {}
@@ -137,6 +140,7 @@ CITES: dict[str, list] = {}
 CITED_BY: dict[str, list] = {}
 EXTERNAL: dict[str, str] = {}
 OPERATORS: dict = {}
+ORGS: dict = {}  # orgs.yml — the org-level landscape (companies/teams), rendered by {{ landscape }}
 PAPER_NOTES: dict[str, dict] = {}
 DISCUSSED_IN: dict[str, list] = {}
 WARNINGS: list[str] = []
@@ -179,12 +183,14 @@ def guess_family(p: Paper) -> str:
 
 
 def load():
-    global SECTIONS, GENERATED, OPERATORS
+    global SECTIONS, GENERATED, PARADIGMS, OPERATORS, ORGS
     cfg = load_yaml(SITE / "sections.yml", {})
     SECTIONS = cfg.get("sections", [])
     GENERATED = cfg.get("generated", [])
+    PARADIGMS = cfg.get("paradigms", [])
     for s in SECTIONS:
         SECTION_DIR[s["key"]] = s["dir"]
+        SECTION_PARADIGM[s["key"]] = s.get("paradigm", "foundations")
     for g in GENERATED:
         SECTION_DIR[g["key"]] = g["dir"]
 
@@ -227,6 +233,7 @@ def load():
             CITED_BY.setdefault(d, []).append(src)
 
     OPERATORS = load_yaml(ROOT / "operators.yml", {}) or {}
+    ORGS = load_yaml(ROOT / "orgs.yml", {}) or {}
 
     load_content()
 
@@ -271,6 +278,7 @@ def load_content():
             papers=list(fm.get("papers") or []),
             status=fm.get("status") or "draft",
             src=f,
+            paradigm=fm.get("paradigm") or "",
         )
         for pid in pg.papers:
             if pid not in PAPERS:
@@ -378,7 +386,7 @@ def rel(from_url: str, to_url: str) -> str:
 #   5. put math + shortcodes back
 # ---------------------------------------------------------------------------
 CALLOUT_RE = re.compile(
-    r"^:::(?P<kind>gap|debate|audit|quote|note)(?P<attrs>\{[^}\n]*\})?[ \t]*(?P<title>[^\n]*)\n"
+    r"^:::(?P<kind>gap|debate|audit|quote|intuition|note)(?P<attrs>\{[^}\n]*\})?[ \t]*(?P<title>[^\n]*)\n"
     r"(?P<body>.*?)\n:::[ \t]*$",
     re.S | re.M,
 )
@@ -453,6 +461,18 @@ def expand_callouts(text: str, ctx: Ctx) -> str:
             sec = attrs.get("sec", "")
             cite = f"<cite><b>{E(src)}</b>" + (f" · {E(sec)}" if sec else "") + "</cite>" if src else ""
             return f'<blockquote class="q">{body}{cite}</blockquote>'
+        if kind == "intuition":
+            # Non-adversarial teaching: the mental model, why a mechanism works, skippable
+            # background. Cyan -- the design system's "mechanism" colour. The other four
+            # callouts are all adversarial (limit / conflict / distrust / verbatim); this is
+            # the one that is not, so educative expansion lands here instead of in the body.
+            return f'<div class="intuition"><span class="intuition-h">{E(title or "Intuition")}</span>{body}</div>'
+        if kind == "note":
+            # A true tangential aside. Neutral grey, deliberately quiet. Previously `note`
+            # fell through to the amber `audit` branch below and silently rendered as
+            # "distrust this" styling -- a bug in the style system itself.
+            head = f'<span class="note-h">{E(title)}</span>' if title else ""
+            return f'<div class="note">{head}{body}</div>'
         return f'<div class="audit">{body}</div>'
 
     return CALLOUT_RE.sub(sub, text)
@@ -589,6 +609,8 @@ def render_shortcode(name: str, arg: str, ctx: Ctx) -> str:
         }[key](ctx)
     if name == "coverage":
         return sc_coverage(ctx)
+    if name == "landscape":
+        return sc_landscape(ctx)
     raise KeyError(f"unknown shortcode '{name}'")
 
 
@@ -1051,6 +1073,49 @@ def sc_coverage(ctx: Ctx) -> str:
     )
 
 
+def sc_landscape(ctx: Ctx) -> str:
+    """The org-level landscape from orgs.yml. Structured rows for the ZK-core companies, with the
+    `project` cell linking to the paper page where this repo has actually read the system."""
+    orgs = ORGS.get("orgs") or []
+    if not orgs:
+        return '<div class="banner stub">orgs.yml not present yet — the landscape table will appear once it is.</div>'
+    modes = ORGS.get("privacy_modes") or {}
+    out = []
+    for g in ORGS.get("groups") or []:
+        rows = [o for o in orgs if o.get("group") == g["key"]]
+        if not rows:
+            continue
+        body = []
+        for o in rows:
+            pid = o.get("paper")
+            proj = E(str(o.get("project", "")))
+            url = o.get("url")
+            if pid and pid in PAPERS:
+                proj_cell = f'<a href="{ctx.link(PAPERS[pid].url)}">{proj}</a>'
+            elif url:
+                proj_cell = f'<a href="{E(str(url))}" target="_blank" rel="noopener">{proj}</a>'
+            else:
+                proj_cell = proj
+            pm = modes.get(o.get("privacy")) or {}
+            badge = E(str(pm.get("badge", "")))
+            priv = (
+                f'<span class="pbadge pb-{E(str(o.get("privacy","")))}" '
+                f'title="{E(str(pm.get("desc","")))}">{badge}</span>' if badge else ""
+            )
+            note = render_md(str(o.get("note", "")), ctx, inner=True)
+            body.append(
+                f"<tr><td><b>{E(str(o.get('org','')))}</b></td>"
+                f"<td>{proj_cell}</td><td>{priv}</td><td>{note}</td></tr>"
+            )
+        out.append(f'<h3>{E(str(g["title"]))}</h3>')
+        out.append(
+            '<div class="scrollx"><table class="orgs"><thead><tr>'
+            "<th>Org</th><th>Project</th><th>Privacy</th><th>What to know</th>"
+            "</tr></thead><tbody>" + "".join(body) + "</tbody></table></div>"
+        )
+    return "".join(out)
+
+
 # ---------------------------------------------------------------------------
 # shell / nav
 # ---------------------------------------------------------------------------
@@ -1078,9 +1143,17 @@ SHELL = """<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{root}vendor/katex/katex.min.css">
 <link rel="stylesheet" href="{root}style.css">
+<script>
+try{{
+  var _t=localStorage.getItem('theme');
+  if(_t!=='light'&&_t!=='dark')_t=window.matchMedia&&window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark';
+  document.documentElement.setAttribute('data-theme',_t);
+}}catch(e){{}}
+</script>
 </head>
 <body>
 <button class="burger" id="burger" aria-label="Toggle menu">☰</button>
+<nav class="topbar">{topnav}<button class="themetoggle" id="themetoggle" aria-label="Toggle light/dark theme" title="Toggle theme"><span class="t-dark">☾</span><span class="t-light">☀</span></button></nav>
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <div class="brand">
@@ -1138,15 +1211,65 @@ if(t){{t.oninput=()=>{{
   }});
   document.getElementById('ptable-count').textContent=n+' shown';
 }};}}
+var _tb=document.getElementById('themetoggle');
+if(_tb)_tb.onclick=function(){{
+  var n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',n);
+  try{{localStorage.setItem('theme',n)}}catch(e){{}}
+}};
 </script>
 </body>
 </html>
 """
 
 
-def build_nav(cur_url: str) -> str:
+def page_paradigm(pg: Page) -> str:
+    """A page's effective paradigm: its own override, else its section's default."""
+    return pg.paradigm or SECTION_PARADIGM.get(pg.section, "foundations")
+
+
+def section_paradigms(key: str) -> set:
+    """Every paradigm bucket a section surfaces under = its default + any page overrides.
+    A section shows in a top bucket if that bucket is in this set."""
+    pars = {SECTION_PARADIGM.get(key, "foundations")}
+    for p in PAGES_BY_SECTION.get(key, []):
+        pars.add(page_paradigm(p))
+    return pars
+
+
+def paradigm_for_url(url: str) -> str:
+    """Which top bucket owns this URL — drives which bucket is `.on` and which left menu shows.
+    A page's own paradigm wins; otherwise the longest-matching section dir decides; generated
+    pages (papers, graph) and the home map fall to Foundations."""
+    for pg in PAGES:
+        if pg.url == url:
+            return page_paradigm(pg)
+    best_key, best_len = None, -1
+    for key in SECTION_PARADIGM:
+        d = SECTION_DIR.get(key, "")
+        if d and (url == f"{d}/index.html" or url.startswith(d + "/")) and len(d) > best_len:
+            best_key, best_len = key, len(d)
+    return SECTION_PARADIGM.get(best_key, "foundations")
+
+
+def build_topnav(active: str, root: str) -> str:
+    """The full-width top bar: one link per crypto-paradigm bucket. Orthogonal to the cell 2x2
+    (which the home map and citation graph still use); this cut is by machinery, and it scopes
+    the left menu below it."""
+    out = []
+    for p in sorted(PARADIGMS, key=lambda x: x.get("order", 99)):
+        home = p.get("home", "") or "index.html"
+        cls = "top" + (" on" if p["key"] == active else "")
+        out.append(f'<a class="{cls}" href="{root}{home}">{E(p["title"])}</a>')
+    return "".join(out)
+
+
+def build_nav(cur_url: str, active: str) -> str:
     out = []
     for s in SECTIONS:
+        # scope the left menu: only sections that surface under the active top bucket
+        if active not in section_paradigms(s["key"]):
+            continue
         pages = PAGES_BY_SECTION.get(s["key"], [])
         d = s["dir"]
         idx_url = f"{d}/index.html" if d else "index.html"
@@ -1162,9 +1285,13 @@ def build_nav(cur_url: str) -> str:
         for p in pages:
             if p.slug == "index" and d:
                 continue
+            # in a multi-paradigm section, a page only shows under its own bucket
+            if page_paradigm(p) != active:
+                continue
             cls = "nav" + (" sub" if d else "") + (" on" if cur_url == p.url else "")
             miss = '<span class="miss">draft</span>' if p.status == "draft" else ""
             out.append(f'<a class="{cls}" href="{rel(cur_url, p.url)}">{E(p.title)}{miss}</a>')
+    # the Index (papers, citation graph) is corpus-global -- reachable from every bucket.
     out.append('<div class="navgroup">Index</div>')
     for g in GENERATED:
         u = f'{g["dir"]}/index.html'
@@ -1198,6 +1325,7 @@ def emit(url: str, title: str, desc: str, body: str):
     p = DOCS / url
     p.parent.mkdir(parents=True, exist_ok=True)
     root = "../" * url.count("/")
+    active = paradigm_for_url(url)
     p.write_text(
         SHELL.format(
             title=E(title),
@@ -1206,7 +1334,8 @@ def emit(url: str, title: str, desc: str, body: str):
             base=BASE_URL,
             url=url if url != "index.html" else "",
             stamp=E(build_stamp()),
-            nav=build_nav(url),
+            topnav=build_topnav(active, root),
+            nav=build_nav(url, active),
             body=body,
         )
     )

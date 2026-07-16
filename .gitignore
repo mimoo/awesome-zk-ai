@@ -5,15 +5,4 @@ docs/
 __pycache__/
 *.pyc
 
-# Podcast script, work in progress. Not part of the SoK.
-podcast-outline.md
-script.md
-script-notes.md
-script-full-120min.md
-script-pre-bionetta.md
-.podcast-parts/
-.podcast-cut/
-.podcast-rev/
-podcast.mp3
-
 .DS_Store

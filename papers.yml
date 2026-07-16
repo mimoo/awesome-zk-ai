@@ -3901,7 +3901,7 @@ sampling_based_verification:
     year: 2026
     authors: [Pranay Anchuri, Matteo Campanelli, Paul Cesaretti, Rosario Gennaro, Tushar M. Jois, Hasan S. Kayman, Tugce Ozdemir]
     authors_verified: true
-    objective: inference
+    objectives: [inference]
     approach: >-
       Prover commits to the inference execution trace via Merkle-tree vector commitments, then
       reveals only sampled entries along random paths from output back to input. No full proof

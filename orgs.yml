@@ -1,0 +1,137 @@
+# Organizations building verifiable / private ML — the DATA layer behind the landscape page.
+#
+# This is the org-level cut of the same field papers.yml covers paper-by-paper. Numbers live
+# in papers.yml; an org here carries no benchmark figure, only WHO / WHAT / the caveat.
+#
+#   paper    OPTIONAL papers.yml id — the system this repo has actually read. Cross-checked by
+#            validate.py, and rendered as a link to that paper's page. `null` = not read here.
+#   privacy  which of privacy_modes below the product delivers. The single most-flattened
+#            column in vendor decks, so it is data, not prose.
+#   note     the characterization / what to distrust. Markdown, but NO benchmark numbers.
+#
+# Only the ZK-core companies are structured here (they have paper cross-refs and a privacy
+# nuance worth validating). The FHE / MPC / adjacent landscape is prose on the page itself —
+# a list of names earns no machine check.
+
+# The privacy column has three distinct meanings. 🔒model and 🔒input are INVERSES, not degrees
+# of one thing: hiding the model protects an owner's IP from whoever runs inference; hiding the
+# input protects a user's data from a public model. Opposite threat models, non-comparable costs.
+privacy_modes:
+  integrity: {badge: "integrity",  desc: "Integrity only — nothing is hidden; model, input and output are all public."}
+  model:     {badge: "hides model", desc: "Genuine zero-knowledge — the model weights are hidden from whoever runs inference."}
+  input:     {badge: "hides input", desc: "Client-side — the user's input is hidden; the model is public."}
+  config:    {badge: "configurable", desc: "Per-tensor visibility is a config choice — can hide the model, the input, or neither."}
+
+groups:
+  - {key: zk-core, title: "Specialized ZK inference — companies & integrators"}
+
+orgs:
+  - org: Lagrange Labs
+    group: zk-core
+    project: DeepProve
+    paper: deepprove
+    privacy: integrity
+    url: https://github.com/Lagrange-Labs/deep-prove
+    note: >-
+      A proving network plus enterprise AI attestation. The current frontier — first to prove
+      *every generated token* end-to-end. Its design centre is integrity, not privacy: it commits
+      only weights and lookup witnesses (a cost optimization), and the repo does not credit it as
+      zero-knowledge the way it does zkLLM/zkGPT. Treat weight-hiding as unproven.
+
+  - org: EZKL / Zkonduit
+    group: zk-core
+    project: ezkl
+    paper: ezkl
+    privacy: config
+    url: https://github.com/zkonduit/ezkl
+    note: >-
+      The general-purpose ONNX→SNARK toolchain everyone benchmarks against. Per-tensor visibility
+      flags mean the guarantee is a config choice, not a fixed property. Its shipped Halo2 verifier
+      profile is heavier than the Halo2 reputation suggests.
+
+  - org: ICME Labs
+    group: zk-core
+    project: Jolt Atlas
+    paper: jolt-atlas
+    privacy: model
+    url: https://github.com/ICME-Lab/jolt-atlas
+    note: >-
+      On-device verifiable inference — prove on a laptop or phone, verify on-chain. ZK is via the
+      optional BlindFold technique, and the LLM benchmarks do not report whether it was enabled.
+      A code-grounded audit found ZK-path bindings not yet expressed as constraints.
+
+  - org: Polyhedra Network
+    group: zk-core
+    project: zkPyTorch
+    paper: zkpytorch
+    privacy: config
+    url: https://blog.polyhedra.network/zkpytorch/
+    note: >-
+      A PyTorch/ONNX→circuit compiler over the Expander backend, marketed for model-IP protection.
+      The primary paper is characterized in-repo as an integrity/compiler contribution; genuine
+      weight-hiding is claimed but not the demonstrated result. zkML is one line in a broader ZK
+      infrastructure business.
+
+  - org: Distributed Lab / Rarimo
+    group: zk-core
+    project: Bionetta
+    paper: bionetta
+    privacy: input
+    url: https://docs.rarimo.com/zkml-bionetta/
+    note: >-
+      Client-side biometrics — prove a face/iris match on your phone without revealing the
+      biometric. **Inverted threat model**: public model, private input, weights baked into the
+      circuit as constants. Powers privacy-preserving proof-of-personhood. The Circom generator
+      is not public.
+
+  - org: Tools for Humanity / World
+    group: zk-core
+    project: World ID iris zkML
+    paper: null
+    privacy: input
+    url: https://world.org/blog/engineering/zkml-ai-thats-verifiable-private-and-right-on-your-phone
+    note: >-
+      Proof-of-personhood — prove locally that an iris code came from the correct model, then
+      insert into the registry permissionlessly. **Acquired Modulus Labs** (Remainder, TensorPlonk,
+      RockyBot) as its applied-research team; track Modulus here, not as an independent company.
+
+  - org: Giza
+    group: zk-core
+    project: Orion → Giza Agents
+    paper: null
+    privacy: integrity
+    url: https://github.com/gizatechxyz/giza-agents
+    note: >-
+      Started as on-chain zkML (Cairo/Orion, in comparative benchmarks); **pivoted to on-chain AI
+      agents**, with zkML now a trust-minimization option rather than the headline. Check current
+      zkML emphasis project by project.
+
+  - org: Mina Foundation
+    group: zk-core
+    project: Mina zkML
+    paper: null
+    privacy: model
+    url: https://github.com/o1-labs
+    note: >-
+      ONNX→proof tooling with a Rust prover and verifier generation, positioned for proving
+      inference over private inputs on Mina.
+
+  - org: PSE (Ethereum Foundation)
+    group: zk-core
+    project: circomlib-ml
+    paper: null
+    privacy: integrity
+    url: https://github.com/privacy-scaling-explorations
+    note: >-
+      Reusable Circom circuits for conv/dense/activation layers. Enabling research, not an
+      inference platform.
+
+  - org: RISC Zero
+    group: zk-core
+    project: general-purpose zkVM
+    paper: null
+    privacy: integrity
+    url: https://github.com/risc0/risc0
+    note: >-
+      A general zkVM used for ML proofs (decision trees, general benchmarks) — enabling
+      infrastructure, not a dedicated zkML company.

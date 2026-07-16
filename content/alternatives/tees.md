@@ -8,6 +8,7 @@ lede: >-
   facts are load-bearing, and the honest position is uncomfortable.
 papers: [tee-confidential-llm, optimistic-tee-rollups]
 status: reviewed
+paradigm: tee
 ---
 
 A trusted execution environment runs the model on hardware that attests, cryptographically,

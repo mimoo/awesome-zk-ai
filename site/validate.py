@@ -109,6 +109,7 @@ FM = re.compile(r"^---\n(.*?)\n---\n", re.S)
 SECTION_KEYS = {s["key"] for s in sections.get("sections", [])}
 content_files = sorted(CONTENT.rglob("*.md")) if CONTENT.exists() else []
 covered: set[str] = set()
+page_paradigms: set[str] = set()  # per-page `paradigm:` overrides, for the paradigm check below
 
 for f in content_files:
     rel = f.relative_to(ROOT)
@@ -128,9 +129,48 @@ for f in content_files:
         err(f"{rel}: frontmatter section: '{fm.get('section')}' is not a key in site/sections.yml")
     if not fm.get("title"):
         err(f"{rel}: frontmatter is missing title:")
+    if fm.get("paradigm"):
+        page_paradigms.add(fm["paradigm"])
     for pid in fm.get("papers") or []:
         if pid not in PAPERS:
             err(f"{rel}: frontmatter papers: lists '{pid}', which is not a papers.yml id")
+
+# ---------------------------------------------------------------------------
+# 4b. paradigm axis: the top menu must be total and reachable
+#     - every section's paradigm is a declared bucket
+#     - every declared bucket is reachable (a section default, or a page override) and has a home
+#     A dangling top tab (a bucket no page lands under) or a section tagged with an unknown
+#     bucket is exactly the "wrong shape builds green" class this check closes.
+# ---------------------------------------------------------------------------
+PARADIGM_KEYS = {p["key"] for p in sections.get("paradigms", [])}
+section_paradigms = {s.get("paradigm", "foundations") for s in sections.get("sections", [])}
+for s in sections.get("sections", []):
+    par = s.get("paradigm", "foundations")
+    if par not in PARADIGM_KEYS:
+        err(f"sections.yml: section '{s['key']}' has paradigm '{par}', not a key in paradigms:")
+reachable = section_paradigms | page_paradigms
+for p in sections.get("paradigms", []):
+    if p["key"] not in reachable:
+        err(f"sections.yml: paradigm '{p['key']}' is a top-menu tab no section or page lands "
+            f"under -- it would render as a dead tab. Give a section/page paradigm: {p['key']}.")
+    if not p.get("home") and p["key"] != "foundations":
+        err(f"sections.yml: paradigm '{p['key']}' has no home: page to open to.")
+
+# ---------------------------------------------------------------------------
+# 4c. orgs.yml: every org's `paper:` cross-reference is a real papers.yml id, and every
+#     `privacy:` is a declared mode. Keeps the landscape's org↔paper links from rotting.
+# ---------------------------------------------------------------------------
+orgs_yml = load(ROOT / "orgs.yml", {}) or {}
+PRIVACY_MODES = set((orgs_yml.get("privacy_modes") or {}).keys())
+GROUP_KEYS = {g["key"] for g in orgs_yml.get("groups", [])}
+for o in orgs_yml.get("orgs", []):
+    pid = o.get("paper")
+    if pid is not None and pid not in PAPERS:
+        err(f"orgs.yml: org '{o.get('org')}' has paper: '{pid}', which is not a papers.yml id.")
+    if o.get("privacy") and o["privacy"] not in PRIVACY_MODES:
+        err(f"orgs.yml: org '{o.get('org')}' has privacy: '{o['privacy']}', not in privacy_modes:.")
+    if o.get("group") not in GROUP_KEYS:
+        err(f"orgs.yml: org '{o.get('org')}' has group: '{o.get('group')}', not in groups:.")
 
 # ---------------------------------------------------------------------------
 # 5. [[wikilinks]] resolve
@@ -215,21 +255,10 @@ for stem in sorted(pdfs):
     if stem not in PAPERS:
         warn(f"references/: {stem}.pdf has no papers.yml entry.")
 
-# ---------------------------------------------------------------------------
-# 9. soft: papers.yml entries the hand-written README does not mention
-#    (README is hand-maintained by choice, so this is a warning, never an error)
-# ---------------------------------------------------------------------------
-readme = (ROOT / "README.md").read_text() if (ROOT / "README.md").exists() else ""
-if readme:
-    missing = [
-        pid for pid, p in PAPERS.items()
-        if str(p.get("name", "")).lower() not in readme.lower()
-        and str(p.get("id")) not in readme
-    ]
-    if missing:
-        warn(f"README.md does not mention {len(missing)} paper(s) that are in papers.yml: "
-             f"{', '.join(sorted(missing)[:8])}{'…' if len(missing) > 8 else ''}. "
-             f"README is hand-maintained, so this is a note, not a failure.")
+# 9. (removed) The README used to be a full paper index, and this check warned when it fell
+#    behind papers.yml. The README is now deliberately a summary — the site is the index — so
+#    the check measured the wrong thing and is gone. The site's own section indexes, which ARE
+#    generated from papers.yml, cannot fall behind by construction.
 
 # ---------------------------------------------------------------------------
 # 10. THE HEADLINE FINDING IS A TRIPWIRE.

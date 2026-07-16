@@ -8,11 +8,27 @@
 #   title      shown in the sidebar group + page header
 #   blurb      one-liner for the section index card
 #   cell       which cell of the 2x2 this belongs to (verify/private x infer/train),
-#              or `meta` for cross-cutting. Drives colour.
+#              or `meta` for cross-cutting. Drives colour. THIS IS THE PRIMARY AXIS and
+#              the citation-graph node colouring depends on it -- do not repurpose it.
+#   paradigm   which top-menu bucket (crypto machinery) this section defaults to. A SECOND,
+#              orthogonal axis: `cell` = what guarantee/phase, `paradigm` = what machinery.
+#              A section surfaces in the left menu only when its bucket is the active top tab.
+#              A single mixed section (alternatives) spans two buckets by tagging individual
+#              pages with `paradigm:` in their frontmatter -- see content/alternatives/tees.md.
 #   papers_from  which top-level key(s) of papers.yml this section owns. The section
 #              index auto-lists them, and every paper there gets a page under
 #              /papers/<id>/. A paper key listed nowhere is a validator error --
 #              that is how we catch a new papers.yml category silently going unlisted.
+
+# Top-menu buckets, orthogonal to the cell 2x2. `home` is the root-relative page a bucket
+# opens to -- it must be a page whose effective paradigm IS that bucket, so landing there
+# lights the right tab. `order` sorts the bar left-to-right.
+paradigms:
+  - {key: foundations,    title: Foundations,            order: 0, home: "",                       blurb: Orientation, the shared numeric substrate, surveys, and the indexes.}
+  - {key: zk,             title: ZK,                     order: 1, home: zk-inference/index.html,   blurb: Prove a committed model ran correctly. zkML inference, testing, training, FL, properties.}
+  - {key: secure-compute, title: Secure Compute,         order: 2, home: private-inference/index.html, blurb: Hide the data or the model during the computation. 2PC / MPC / FHE.}
+  - {key: tee,            title: TEE,                     order: 3, home: alternatives/tees.html,    blurb: Verifiability or privacy from an attested enclave, not from cryptography.}
+  - {key: opt-sampling,   title: Optimistic & Sampling,  order: 4, home: alternatives/index.html,   blurb: Fraud proofs and randomized re-execution -- weaker, cheaper guarantees.}
 
 sections:
   - key: start
@@ -20,6 +36,7 @@ sections:
     title: Orientation
     blurb: The 2x2 map, how to read the numbers, and what this SoK is claiming.
     cell: meta
+    paradigm: foundations
     papers_from: []
 
   - key: zk-inference
@@ -29,6 +46,7 @@ sections:
       zkML: prove a forward pass (or a whole generation) ran correctly against a
       committed model. The most active cell by far.
     cell: verify-infer
+    paradigm: zk
     papers_from: [inference]
 
   - key: zk-testing
@@ -36,6 +54,7 @@ sections:
     title: Proving testing
     blurb: Prove a model achieves a claimed accuracy on a dataset it was not trained on.
     cell: verify-infer
+    paradigm: zk
     papers_from: [testing]
 
   - key: zk-training
@@ -45,6 +64,7 @@ sections:
       zkPoT: prove these weights are the result of correctly running this training
       procedure on this data. The hardest claim in the table.
     cell: verify-train
+    paradigm: zk
     papers_from: [training]
 
   - key: federated
@@ -54,6 +74,7 @@ sections:
       Verifiable federated learning and secure aggregation -- a hybrid cell, buying
       some verifiability and some privacy, usually against a weaker adversary.
     cell: verify-train
+    paradigm: zk
     papers_from: [verifiable_federated_learning]
 
   - key: numerics
@@ -68,8 +89,10 @@ sections:
     # three MPC papers into the *verifiability* column -- and any edge from them into Iron or
     # Cheetah would then have registered as "the two literatures now cite each other", which is
     # the corpus's headline finding, destroyed by a filing error rather than by evidence.
-    # These papers are a shared substrate consumed by both columns, so they belong to neither.
+    # These papers are a shared substrate consumed by both columns, so they belong to neither --
+    # which is also why the top menu files them under Foundations, not ZK or Secure Compute.
     cell: meta
+    paradigm: foundations
     papers_from: [numerics_primitives]
 
   - key: private-inference
@@ -79,6 +102,7 @@ sections:
       2PC, MPC and FHE transformer inference. Hides the data or the model from the
       counterparty. Proves nothing about correctness.
     cell: private-infer
+    paradigm: secure-compute
     # secure_inference_3pc added 2026-07-13, and the reason is the finding. This section held
     # five papers, all 2PC, all BERT-class, and from that sample the SoK concluded that private
     # inference "caps out at BERT-class". It does not. It caps out at BERT-class *in 2PC without
@@ -93,6 +117,7 @@ sections:
     title: Private training
     blurb: Training under MPC/HE. Confidentiality without a proof.
     cell: private-train
+    paradigm: secure-compute
     papers_from: [private_training_no_proofs]
 
   - key: properties
@@ -102,6 +127,7 @@ sections:
       Fairness, provenance, licensing. A claim about a *model*, not about a
       computation -- which is why it does not fit the other cells.
     cell: meta
+    paradigm: zk
     papers_from: [proving_properties]
 
 
@@ -112,13 +138,28 @@ sections:
       opML, TEEs, and sampling. Verifiability without paying 1000x -- for a weaker,
       and usually crisply stateable, guarantee.
     cell: meta
+    # Genuinely mixed machinery: TEEs vs optimistic/sampling. The section defaults to
+    # `opt-sampling`; content/alternatives/tees.md overrides its own `paradigm: tee`, so the
+    # one section surfaces under BOTH top tabs without splitting the papers.yml category.
+    paradigm: opt-sampling
     papers_from: [alternatives_to_zk, sampling_based_verification]
+
+  - key: landscape
+    dir: landscape
+    title: The landscape
+    blurb: >-
+      Who is building this — companies and research teams, cut by paradigm. The org-level
+      companion to the paper tables. Rendered from orgs.yml.
+    cell: meta
+    paradigm: foundations
+    papers_from: []
 
   - key: surveys
     dir: surveys
     title: Surveys & reports
     blurb: Prior surveys, and where we disagree with them.
     cell: meta
+    paradigm: foundations
     papers_from: [surveys]
 
   - key: backlog
@@ -126,9 +167,11 @@ sections:
     title: Backlog
     blurb: Indexed but not yet read. Honest about what we have not done.
     cell: meta
+    paradigm: foundations
     papers_from: [to_review]
 
-# Auto-generated sections (no content/ dir; build.py owns them entirely)
+# Auto-generated sections (no content/ dir; build.py owns them entirely). These are
+# corpus-global -- the nav shows them under an "Index" group in every paradigm.
 generated:
   - key: papers
     dir: papers
